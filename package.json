@@ -6,7 +6,15 @@
 		"onFileSystem:githubpr",
 		"onFileSystem:review"
 	],
+	"author": {
+		"email": "Land@Playform.Cloud",
+		"name": "Land",
+		"url": "HTTPS://Land.Playform.Cloud"
+	},
 	"browser": "./dist/browser/extension",
+	"bugs": {
+		"url": "HTTPS://GitHub.Com/CodeEditorLand/LandPullRequestGithub/issues"
+	},
 	"capabilities": {
 		"untrustedWorkspaces": {
 			"supported": true
@@ -2826,6 +2834,7 @@
 	"description": "%description%",
 	"devDependencies": {
 		"@playform/build": "0.0.7",
+		"@playform/document": "0.0.6",
 		"@types/chai": "4.3.14",
 		"@types/glob": "8.1.0",
 		"@types/lru-cache": "7.10.9",
@@ -2891,10 +2900,20 @@
 	"extensionDependencies": [
 		"vscode.github-authentication"
 	],
+	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/LandPullRequestGithub#readme",
 	"icon": "resources/icons/github_logo.png",
 	"l10n": "./dist/browser/extension",
+	"license": "SEE LICENSE IN LICENSE",
 	"main": "./dist/extension",
 	"name": "vscode-pull-request-github",
+	"private": false,
+	"publishConfig": {
+		"access": "public"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+HTTPS://github.com/CodeEditorLand/LandPullRequestGithub.git"
+	},
 	"scripts": {
 		"Document": "Document 'Source/**/*.ts'",
 		"browsertest": "yarn run browsertest:preprocess && node ./dist/browser/test/runTests.js",
@@ -2918,5 +2937,7 @@
 		"test:preprocess-svg": "node scripts/preprocess-svg --in ../resources/ --out out/resources",
 		"update-dts": "cd \"src/@types\" && npx vscode-dts main && npx vscode-dts dev",
 		"watch:web": "webpack --watch --mode development --config-name extension:webworker --config-name webviews"
-	}
+	},
+	"type": "module",
+	"version": "0.0.1"
 }
