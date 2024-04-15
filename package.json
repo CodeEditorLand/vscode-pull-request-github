@@ -1,25 +1,49 @@
 {
-	"activationEvents": [
-		"onStartupFinished",
-		"onFileSystem:newIssue",
-		"onFileSystem:pr",
-		"onFileSystem:githubpr",
-		"onFileSystem:review"
-	],
-	"author": {
-		"email": "Land@Playform.Cloud",
-		"name": "Land",
-		"url": "HTTPS://Land.Playform.Cloud"
-	},
-	"browser": "./dist/browser/extension",
+	"name": "vscode-pull-request-github",
+	"displayName": "%displayName%",
+	"version": "0.0.1",
+	"private": false,
+	"description": "%description%",
+	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/LandPullRequestGithub#readme",
 	"bugs": {
 		"url": "HTTPS://GitHub.Com/CodeEditorLand/LandPullRequestGithub/issues"
 	},
-	"capabilities": {
-		"untrustedWorkspaces": {
-			"supported": true
-		},
-		"virtualWorkspaces": true
+	"repository": {
+		"type": "git",
+		"url": "git+HTTPS://github.com/CodeEditorLand/LandPullRequestGithub.git"
+	},
+	"license": "SEE LICENSE IN LICENSE",
+	"author": {
+		"name": "Land",
+		"email": "Land@Playform.Cloud",
+		"url": "HTTPS://Land.Playform.Cloud"
+	},
+	"type": "module",
+	"main": "./dist/extension",
+	"browser": "./dist/browser/extension",
+	"scripts": {
+		"Document": "Document 'Source/**/*.ts'",
+		"browsertest": "yarn run browsertest:preprocess && node ./dist/browser/test/runTests.js",
+		"browsertest:preprocess": "tsc ./src/test/browser/runTests.ts --outDir ./dist/browser/test --rootDir ./src/test/browser --target es6 --module commonjs",
+		"bundle": "webpack --mode production --env esbuild",
+		"bundle:node": "webpack --mode production --config-name extension:node --config-name webviews",
+		"bundle:web": "webpack --mode production --config-name extension:webworker --config-name webviews",
+		"clean": "rm -r dist/",
+		"compile": "webpack --mode development --env esbuild",
+		"compile:node": "webpack --mode development --config-name extension:node --config-name webviews",
+		"compile:test": "tsc -p tsconfig.test.json",
+		"compile:web": "webpack --mode development --config-name extension:webworker --config-name webviews",
+		"hygiene": "node ./build/hygiene.js",
+		"postinstall": "yarn update-dts",
+		"lint:browser": "eslint --fix --cache --cache-location .eslintcache.browser --config .eslintrc.browser.json --ignore-pattern src/env/node/**/* \"{src,webviews}/**/*.{ts,tsx}\"",
+		"prepare": "husky install",
+		"prepublishOnly": "Build 'Source/**/*.ts'",
+		"test:preprocess": "yarn run compile:test && yarn run test:preprocess-gql && yarn run test:preprocess-svg && yarn run test:preprocess-fixtures",
+		"test:preprocess-fixtures": "node scripts/preprocess-fixtures --in src --out out",
+		"test:preprocess-gql": "node scripts/preprocess-gql --in src/github/queries.gql --out out/src/github/queries.gql && node scripts/preprocess-gql --in src/github/queriesExtra.gql --out out/src/github/queriesExtra.gql && node scripts/preprocess-gql --in src/github/queriesShared.gql --out out/src/github/queriesShared.gql && node scripts/preprocess-gql --in src/github/queriesLimited.gql --out out/src/github/queriesLimited.gql",
+		"test:preprocess-svg": "node scripts/preprocess-svg --in ../resources/ --out out/resources",
+		"update-dts": "cd \"src/@types\" && npx vscode-dts main && npx vscode-dts dev",
+		"watch:web": "webpack --watch --mode development --config-name extension:webworker --config-name webviews"
 	},
 	"contributes": {
 		"colors": [
@@ -2812,6 +2836,13 @@
 			}
 		]
 	},
+	"activationEvents": [
+		"onStartupFinished",
+		"onFileSystem:newIssue",
+		"onFileSystem:pr",
+		"onFileSystem:githubpr",
+		"onFileSystem:review"
+	],
 	"dependencies": {
 		"@octokit/rest": "20.1.0",
 		"@octokit/types": "13.4.0",
@@ -2831,7 +2862,6 @@
 		"uuid": "9.0.1",
 		"vsls": "1.0.4753"
 	},
-	"description": "%description%",
 	"devDependencies": {
 		"@playform/build": "0.0.7",
 		"@playform/document": "0.0.6",
@@ -2875,7 +2905,19 @@
 		"typescript-formatter": "7.2.2",
 		"vinyl-fs": "4.0.0"
 	},
-	"displayName": "%displayName%",
+	"extensionDependencies": [
+		"vscode.github-authentication"
+	],
+	"publishConfig": {
+		"access": "public"
+	},
+	"icon": "resources/icons/github_logo.png",
+	"capabilities": {
+		"untrustedWorkspaces": {
+			"supported": true
+		},
+		"virtualWorkspaces": true
+	},
 	"enabledApiProposals": [
 		"activeComment",
 		"codiconDecoration",
@@ -2897,47 +2939,5 @@
 		"tokenInformation",
 		"treeViewMarkdownMessage"
 	],
-	"extensionDependencies": [
-		"vscode.github-authentication"
-	],
-	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/LandPullRequestGithub#readme",
-	"icon": "resources/icons/github_logo.png",
-	"l10n": "./dist/browser/extension",
-	"license": "SEE LICENSE IN LICENSE",
-	"main": "./dist/extension",
-	"name": "vscode-pull-request-github",
-	"private": false,
-	"publishConfig": {
-		"access": "public"
-	},
-	"repository": {
-		"type": "git",
-		"url": "git+HTTPS://github.com/CodeEditorLand/LandPullRequestGithub.git"
-	},
-	"scripts": {
-		"Document": "Document 'Source/**/*.ts'",
-		"browsertest": "yarn run browsertest:preprocess && node ./dist/browser/test/runTests.js",
-		"browsertest:preprocess": "tsc ./src/test/browser/runTests.ts --outDir ./dist/browser/test --rootDir ./src/test/browser --target es6 --module commonjs",
-		"bundle": "webpack --mode production --env esbuild",
-		"bundle:node": "webpack --mode production --config-name extension:node --config-name webviews",
-		"bundle:web": "webpack --mode production --config-name extension:webworker --config-name webviews",
-		"clean": "rm -r dist/",
-		"compile": "webpack --mode development --env esbuild",
-		"compile:node": "webpack --mode development --config-name extension:node --config-name webviews",
-		"compile:test": "tsc -p tsconfig.test.json",
-		"compile:web": "webpack --mode development --config-name extension:webworker --config-name webviews",
-		"hygiene": "node ./build/hygiene.js",
-		"lint:browser": "eslint --fix --cache --cache-location .eslintcache.browser --config .eslintrc.browser.json --ignore-pattern src/env/node/**/* \"{src,webviews}/**/*.{ts,tsx}\"",
-		"postinstall": "yarn update-dts",
-		"prepare": "husky install",
-		"prepublishOnly": "Build 'Source/**/*.ts'",
-		"test:preprocess": "yarn run compile:test && yarn run test:preprocess-gql && yarn run test:preprocess-svg && yarn run test:preprocess-fixtures",
-		"test:preprocess-fixtures": "node scripts/preprocess-fixtures --in src --out out",
-		"test:preprocess-gql": "node scripts/preprocess-gql --in src/github/queries.gql --out out/src/github/queries.gql && node scripts/preprocess-gql --in src/github/queriesExtra.gql --out out/src/github/queriesExtra.gql && node scripts/preprocess-gql --in src/github/queriesShared.gql --out out/src/github/queriesShared.gql && node scripts/preprocess-gql --in src/github/queriesLimited.gql --out out/src/github/queriesLimited.gql",
-		"test:preprocess-svg": "node scripts/preprocess-svg --in ../resources/ --out out/resources",
-		"update-dts": "cd \"src/@types\" && npx vscode-dts main && npx vscode-dts dev",
-		"watch:web": "webpack --watch --mode development --config-name extension:webworker --config-name webviews"
-	},
-	"type": "module",
-	"version": "0.0.1"
+	"l10n": "./dist/browser/extension"
 }
