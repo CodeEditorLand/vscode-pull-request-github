@@ -34,7 +34,7 @@ export class BuiltinGitProvider implements IGit, vscode.Disposable {
 
 		try {
 			this._gitAPI = gitExtension.getAPI(1);
-		} catch (e) {
+		} catch (_Error) {
 			// The git extension will throw if a git model cannot be found, i.e. if git is not installed.
 			commands.setContext('gitNotInstalled', true);
 			throw e;

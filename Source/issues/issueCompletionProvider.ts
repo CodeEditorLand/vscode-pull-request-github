@@ -143,7 +143,7 @@ export class IssueCompletionProvider implements vscode.CompletionItemProvider {
 		try {
 			folderManager = this.repositoriesManager.getManagerForFile(uri);
 			repo = await folderManager?.getPullRequestDefaults();
-		} catch (e) {
+		} catch (_Error) {
 			// leave repo undefined
 		}
 		const issueData = this.stateManager.getIssueCollection(folderManager?.repository.rootUri ?? uri);

@@ -373,7 +373,7 @@ export function registerCommands(
 
 			try {
 				await folderManager.deleteLocalPullRequest(pullRequestModel);
-			} catch (e) {
+			} catch (_Error) {
 				if (e.gitErrorCode === GitErrorCodes.BranchNotFullyMerged) {
 					const action = await vscode.window.showErrorMessage(
 						vscode.l10n.t('The local branch \'{0}\' is not fully merged. Are you sure you want to delete it?', pullRequestModel.localBranchName ?? 'unknown branch'),
@@ -386,7 +386,7 @@ export function registerCommands(
 
 					try {
 						await folderManager.deleteLocalPullRequest(pullRequestModel, true);
-					} catch (e) {
+					} catch (_Error) {
 						error = e;
 					}
 				} else {
@@ -562,7 +562,7 @@ export function registerCommands(
 			isCheckingOutFromReadonlyFile = true;
 			try {
 				await ReviewManager.getReviewManagerForFolderManager(reviewsManager.reviewManagers, folderManager)?.switch(prModel);
-			} catch (e) {
+			} catch (_Error) {
 				vscode.window.showErrorMessage(vscode.l10n.t('Unable to check out pull request from read-only file: {0}', e instanceof Error ? e.message : 'unknown'));
 			}
 			isCheckingOutFromReadonlyFile = false;
@@ -669,7 +669,7 @@ export function registerCommands(
 						try {
 							newPR = await folderManager.mergePullRequest(pullRequest);
 							return newPR;
-						} catch (e) {
+						} catch (_Error) {
 							vscode.window.showErrorMessage(`Unable to merge pull request. ${formatError(e)}`);
 							return newPR;
 						}
@@ -699,7 +699,7 @@ export function registerCommands(
 							isDraft = (await pullRequest.setReadyForReview()).isDraft;
 							vscode.commands.executeCommand('pr.refreshList');
 							return isDraft;
-						} catch (e) {
+						} catch (_Error) {
 							vscode.window.showErrorMessage(
 								`Unable to mark pull request as ready to review. ${formatError(e)}`,
 							);
@@ -749,7 +749,7 @@ export function registerCommands(
 							vscode.commands.executeCommand('pr.refreshList');
 							_onDidUpdatePR.fire(newPR);
 							return newComment;
-						} catch (e) {
+						} catch (_Error) {
 							vscode.window.showErrorMessage(`Unable to close pull request. ${formatError(e)}`);
 							_onDidUpdatePR.fire();
 						}
@@ -1219,7 +1219,7 @@ ${contents}
 					await pullRequest?.markFiles([treeNode.path], true, 'viewed');
 					manager?.setFileViewedContext();
 				}
-			} catch (e) {
+			} catch (_Error) {
 				vscode.window.showErrorMessage(`Marked file as viewed failed: ${e}`);
 			}
 		}),
@@ -1241,7 +1241,7 @@ ${contents}
 					await pullRequest?.markFiles([treeNode.path], true, 'unviewed');
 					manager?.setFileViewedContext();
 				}
-			} catch (e) {
+			} catch (_Error) {
 				vscode.window.showErrorMessage(`Marked file as not viewed failed: ${e}`);
 			}
 		}),
@@ -1254,7 +1254,7 @@ ${contents}
 					await manager.activePullRequest?.unmarkAllFilesAsViewed();
 					manager.setFileViewedContext();
 				});
-			} catch (e) {
+			} catch (_Error) {
 				vscode.window.showErrorMessage(`Marked file as not viewed failed: ${e}`);
 			}
 		}),

@@ -185,7 +185,7 @@ export class GitHubPermalinkShareProvider extends AbstractShareProvider implemen
 					commit = log[0];
 				}
 				commitHash = commit.hash;
-			} catch (e) {
+			} catch (_Error) {
 				commitHash = repository.state.HEAD?.commit;
 			}
 		}

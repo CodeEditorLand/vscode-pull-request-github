@@ -794,7 +794,7 @@ export class IssueFeatureRegistrar implements vscode.Disposable {
 		let defaults: PullRequestDefaults | undefined;
 		try {
 			defaults = await currentIssue.manager.getPullRequestDefaults();
-		} catch (e) {
+		} catch (_Error) {
 			// leave defaults undefined
 		}
 		const stopWorkingText: string = vscode.l10n.t('{0} Stop working on #{1}', '$(primitive-square)', currentIssue.issue.number);
@@ -1094,7 +1094,7 @@ ${body ?? ''}\n
 					label: `${defaults.owner}/${defaults.repo}`,
 					repo: folderManager,
 				});
-			} catch (e) {
+			} catch (_Error) {
 				// ignore
 			}
 		}
@@ -1126,7 +1126,7 @@ ${body ?? ''}\n
 						const template = this.getDataFromTemplate(text);
 
 						return template;
-					} catch (e) {
+					} catch (_Error) {
 						Logger.warn(`Reading issue template failed: ${e}`);
 						return undefined;
 					}
@@ -1190,7 +1190,7 @@ ${body ?? ''}\n
 			progress.report({ message: vscode.l10n.t('Verifying that issue data is valid...') });
 			try {
 				origin = await folderManager.getPullRequestDefaults();
-			} catch (e) {
+			} catch (_Error) {
 				// There is no remote
 				vscode.window.showErrorMessage(vscode.l10n.t('There is no remote. Can\'t create an issue.'));
 				return false;
@@ -1268,7 +1268,7 @@ ${body ?? ''}\n
 		let uri: vscode.Uri;
 		try {
 			uri = await vscode.env.asExternalUri(file);
-		} catch (e) {
+		} catch (_Error) {
 			// asExternalUri can throw when in the browser and the embedder doesn't set a uri resolver.
 			return link;
 		}

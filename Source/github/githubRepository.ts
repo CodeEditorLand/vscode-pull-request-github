@@ -182,7 +182,7 @@ export class GitHubRepository implements vscode.Disposable {
 			this.commentsHandler = new PRCommentControllerRegistry(this.commentsController);
 			this._toDispose.push(this.commentsHandler);
 			this._toDispose.push(this.commentsController);
-		} catch (e) {
+		} catch (_Error) {
 			console.log(e);
 		}
 	}
@@ -255,7 +255,7 @@ export class GitHubRepository implements vscode.Disposable {
 		let rsp;
 		try {
 			rsp = await gql.query<T>(query);
-		} catch (e) {
+		} catch (_Error) {
 			Logger.error(`Error querying GraphQL API: ${e.message}${e.graphQLErrors ? `. ${(e.graphQLErrors as GraphQLError[]).map(error => error.extensions?.code).join(',')}` : ''}`, GitHubRepository.ID);
 			if (legacyFallback) {
 				query.query = legacyFallback.query;
@@ -301,7 +301,7 @@ export class GitHubRepository implements vscode.Disposable {
 		let rsp;
 		try {
 			rsp = await gql.mutate<T>(mutation);
-		} catch (e) {
+		} catch (_Error) {
 			if (legacyFallback) {
 				mutation.mutation = legacyFallback.mutation;
 				if (mutation.variables?.input) {
@@ -362,7 +362,7 @@ export class GitHubRepository implements vscode.Disposable {
 		try {
 			const { clone_url } = await this.getMetadata();
 			this.remote = GitHubRemote.remoteAsGitHub(parseRemote(this.remote.remoteName, clone_url, this.remote.gitProtocol)!, this.remote.githubServerType);
-		} catch (e) {
+		} catch (_Error) {
 			Logger.warn(`Unable to resolve remote: ${e}`);
 			if (isSamlError(e)) {
 				return false;
@@ -419,7 +419,7 @@ export class GitHubRepository implements vscode.Disposable {
 			Logger.debug(`Fetch default branch - done`, GitHubRepository.ID);
 
 			return data.default_branch;
-		} catch (e) {
+		} catch (_Error) {
 			Logger.warn(`Fetching default branch failed: ${e}`, GitHubRepository.ID);
 		}
 
@@ -441,7 +441,7 @@ export class GitHubRepository implements vscode.Disposable {
 
 			Logger.debug('Fetch pull request templates - done', GitHubRepository.ID);
 			return result.data.repository.pullRequestTemplates.map(template => template.body);
-		} catch (e) {
+		} catch (_Error) {
 			Logger.error(`Fetching pull request templates failed: ${e}`, GitHubRepository.ID);
 		}
 	}
@@ -468,7 +468,7 @@ export class GitHubRepository implements vscode.Disposable {
 				};
 			}
 			return this._repoAccessAndMergeMethods;
-		} catch (e) {
+		} catch (_Error) {
 			Logger.warn(`GitHubRepository> Fetching repo permissions and available merge methods failed: ${e}`);
 		}
 
@@ -509,7 +509,7 @@ export class GitHubRepository implements vscode.Disposable {
 				this._branchHasMergeQueue.set(branch, mergeMethod);
 			}
 			return mergeMethod;
-		} catch (e) {
+		} catch (_Error) {
 			Logger.error(`Fetching branch has merge queue failed: ${e}`, GitHubRepository.ID);
 		}
 	}
@@ -529,7 +529,7 @@ export class GitHubRepository implements vscode.Disposable {
 			const newCommitSha = (await octokit.call(octokit.api.git.createCommit, { owner: remote.owner, repo: remote.repositoryName, message, tree: newTreeSha, parents: [lastCommitSha] })).data.sha;
 			await octokit.call(octokit.api.git.updateRef, { owner: remote.owner, repo: remote.repositoryName, ref: `heads/${branch}`, sha: newCommitSha });
 			success = true;
-		} catch (e) {
+		} catch (_Error) {
 			// not sure what kinds of errors to expect here
 			Logger.error(`Committing files to branch ${branch} failed: ${e}`, GitHubRepository.ID);
 		}
@@ -580,7 +580,7 @@ export class GitHubRepository implements vscode.Disposable {
 				items: pullRequests,
 				hasMorePages,
 			};
-		} catch (e) {
+		} catch (_Error) {
 			Logger.error(`Fetching all pull requests failed: ${e}`, GitHubRepository.ID);
 			if (e.code === 404) {
 				// not found
@@ -616,7 +616,7 @@ export class GitHubRepository implements vscode.Disposable {
 				const mostRecentOrOpenPr = prs.find(pr => pr.state.toLowerCase() === 'open') ?? prs[0];
 				return this.createOrUpdatePullRequestModel(mostRecentOrOpenPr);
 			}
-		} catch (e) {
+		} catch (_Error) {
 			Logger.error(`Fetching pull requests for branch failed: ${e}`, GitHubRepository.ID);
 			if (e.code === 404) {
 				// not found
@@ -648,7 +648,7 @@ export class GitHubRepository implements vscode.Disposable {
 				});
 			}
 
-		} catch (e) {
+		} catch (_Error) {
 			Logger.error(`Unable to fetch org projects: ${e}`, GitHubRepository.ID);
 			return projects;
 		}
@@ -683,7 +683,7 @@ export class GitHubRepository implements vscode.Disposable {
 				});
 			}
 			return projects;
-		} catch (e) {
+		} catch (_Error) {
 			Logger.error(`Unable to fetch projects: ${e}`, GitHubRepository.ID);
 			return;
 		}
@@ -717,7 +717,7 @@ export class GitHubRepository implements vscode.Disposable {
 				});
 			}
 			return milestones;
-		} catch (e) {
+		} catch (_Error) {
 			Logger.error(`Unable to fetch milestones: ${e}`, GitHubRepository.ID);
 			return;
 		}
@@ -766,7 +766,7 @@ export class GitHubRepository implements vscode.Disposable {
 				items: issues,
 				hasMorePages: data.search.pageInfo.hasNextPage,
 			};
-		} catch (e) {
+		} catch (_Error) {
 			Logger.error(`Unable to fetch issues with query: ${e}`, GitHubRepository.ID);
 			return;
 		}
@@ -789,7 +789,7 @@ export class GitHubRepository implements vscode.Disposable {
 				return data.repository.issues.edges[0].node.number;
 			}
 			return;
-		} catch (e) {
+		} catch (_Error) {
 			Logger.error(`Unable to fetch issues with query: ${e}`, GitHubRepository.ID);
 			return;
 		}
@@ -808,7 +808,7 @@ export class GitHubRepository implements vscode.Disposable {
 			});
 			Logger.debug(`Fetch viewer permission - done`, GitHubRepository.ID);
 			return parseGraphQLViewerPermission(data);
-		} catch (e) {
+		} catch (_Error) {
 			Logger.error(`Unable to fetch viewer permission: ${e}`, GitHubRepository.ID);
 			return ViewerPermission.Unknown;
 		}
@@ -823,7 +823,7 @@ export class GitHubRepository implements vscode.Disposable {
 				repo: remote.repositoryName,
 			});
 			return result.data.clone_url;
-		} catch (e) {
+		} catch (_Error) {
 			Logger.error(`GitHubRepository> Forking repository failed: ${e}`, GitHubRepository.ID);
 			return undefined;
 		}
@@ -842,7 +842,7 @@ export class GitHubRepository implements vscode.Disposable {
 			});
 			Logger.debug(`Fetch repository fork details - done`, GitHubRepository.ID);
 			return data.repository;
-		} catch (e) {
+		} catch (_Error) {
 			Logger.error(`Unable to fetch repository fork details: ${e}`, GitHubRepository.ID);
 			return;
 		}
@@ -859,7 +859,7 @@ export class GitHubRepository implements vscode.Disposable {
 			const { data } = await octokit.call(octokit.api.users.listEmailsForAuthenticated, {});
 			Logger.debug(`Fetch authenticated user emails - done`, GitHubRepository.ID);
 			return data.map(email => email.email);
-		} catch (e) {
+		} catch (_Error) {
 			Logger.error(`Unable to fetch authenticated user emails: ${e}`, GitHubRepository.ID);
 			return [];
 		}
@@ -914,7 +914,7 @@ export class GitHubRepository implements vscode.Disposable {
 				items: pullRequests,
 				hasMorePages,
 			};
-		} catch (e) {
+		} catch (_Error) {
 			Logger.error(`Fetching all pull requests failed: ${e}`, GitHubRepository.ID);
 			if (e.code === 404) {
 				// not found
@@ -966,7 +966,7 @@ export class GitHubRepository implements vscode.Disposable {
 				throw new Error('Failed to create pull request.');
 			}
 			return this.createOrUpdatePullRequestModel(parseGraphQLPullRequest(data.createPullRequest.pullRequest, this));
-		} catch (e) {
+		} catch (_Error) {
 			Logger.error(`Unable to create PR: ${e}`, GitHubRepository.ID);
 			throw e;
 		}
@@ -992,7 +992,7 @@ export class GitHubRepository implements vscode.Disposable {
 
 			Logger.debug(`Fetch pull request ${id} - done`, GitHubRepository.ID);
 			return this.createOrUpdatePullRequestModel(parseGraphQLPullRequest(data.repository.pullRequest, this));
-		} catch (e) {
+		} catch (_Error) {
 			Logger.error(`Unable to fetch PR: ${e}`, GitHubRepository.ID);
 			return;
 		}
@@ -1019,7 +1019,7 @@ export class GitHubRepository implements vscode.Disposable {
 			Logger.debug(`Fetch issue ${id} - done`, GitHubRepository.ID);
 
 			return new IssueModel(this, remote, parseGraphQLIssue(data.repository.pullRequest, this));
-		} catch (e) {
+		} catch (_Error) {
 			Logger.error(`Unable to fetch PR: ${e}`, GitHubRepository.ID);
 			return;
 		}
@@ -1070,7 +1070,7 @@ export class GitHubRepository implements vscode.Disposable {
 				}
 				hasNextPage = data.repository.refs.pageInfo.hasNextPage;
 				after = data.repository.refs.pageInfo.endCursor;
-			} catch (e) {
+			} catch (_Error) {
 				Logger.debug(`List branches for ${owner}/${repositoryName} failed`, GitHubRepository.ID);
 				throw e;
 			}
@@ -1096,7 +1096,7 @@ export class GitHubRepository implements vscode.Disposable {
 				repo: pullRequestModel.head.repositoryCloneUrl.repositoryName,
 				ref: `heads/${pullRequestModel.head.ref}`,
 			});
-		} catch (e) {
+		} catch (_Error) {
 			Logger.error(`Unable to delete branch: ${e}`, GitHubRepository.ID);
 			return;
 		}
@@ -1142,7 +1142,7 @@ export class GitHubRepository implements vscode.Disposable {
 
 				hasNextPage = result.data.repository.mentionableUsers.pageInfo.hasNextPage;
 				after = result.data.repository.mentionableUsers.pageInfo.endCursor;
-			} catch (e) {
+			} catch (_Error) {
 				Logger.debug(`Unable to fetch mentionable users: ${e}`, GitHubRepository.ID);
 				return ret;
 			}
@@ -1191,7 +1191,7 @@ export class GitHubRepository implements vscode.Disposable {
 
 				hasNextPage = result.data.repository.assignableUsers.pageInfo.hasNextPage;
 				after = result.data.repository.assignableUsers.pageInfo.endCursor;
-			} catch (e) {
+			} catch (_Error) {
 				Logger.debug(`Unable to fetch assignable users: ${e}`, GitHubRepository.ID);
 				if (
 					e.graphQLErrors &&
@@ -1225,7 +1225,7 @@ export class GitHubRepository implements vscode.Disposable {
 				},
 			});
 			return result.data.organization.teams.totalCount;
-		} catch (e) {
+		} catch (_Error) {
 			Logger.debug(`Unable to fetch teams Count: ${e}`, GitHubRepository.ID);
 			if (
 				e.graphQLErrors &&
@@ -1278,7 +1278,7 @@ export class GitHubRepository implements vscode.Disposable {
 
 				hasNextPage = result.data.organization.teams.pageInfo.hasNextPage;
 				after = result.data.organization.teams.pageInfo.endCursor;
-			} catch (e) {
+			} catch (_Error) {
 				Logger.debug(`Unable to fetch teams: ${e}`, GitHubRepository.ID);
 				if (
 					e.graphQLErrors &&
@@ -1330,7 +1330,7 @@ export class GitHubRepository implements vscode.Disposable {
 					};
 				}),
 			);
-		} catch (e) {
+		} catch (_Error) {
 			Logger.debug(`Unable to fetch participants from a PullRequest: ${e}`, GitHubRepository.ID);
 			if (
 				e.graphQLErrors &&
@@ -1363,7 +1363,7 @@ export class GitHubRepository implements vscode.Disposable {
 			});
 			Logger.debug('Compare commits - done', GitHubRepository.ID);
 			return data;
-		} catch (e) {
+		} catch (_Error) {
 			Logger.error(`Unable to compare commits between ${base} and ${head}: ${e}`, GitHubRepository.ID);
 		}
 	}
@@ -1391,7 +1391,7 @@ export class GitHubRepository implements vscode.Disposable {
 					number: number,
 				},
 			}, true); // There's an issue with the GetChecks that can result in SAML errors.
-		} catch (e) {
+		} catch (_Error) {
 			if (e.message?.startsWith('GraphQL error: Resource protected by organization SAML enforcement.')) {
 				// There seems to be an issue with fetching status checks if you haven't SAML'd with every org you have
 				// The issue is specifically with the CheckSuite property. Make the query again, but without that property.

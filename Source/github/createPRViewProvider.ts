@@ -270,7 +270,7 @@ export class CreatePullRequestViewProvider extends WebviewViewBase implements vs
 					}
 				}
 			}
-		} catch (e) {
+		} catch (_Error) {
 			// Ignore and fall back to commit message
 			Logger.debug(`Error while getting total commits: ${e}`, CreatePullRequestViewProvider.ID);
 		}
@@ -337,7 +337,7 @@ export class CreatePullRequestViewProvider extends WebviewViewBase implements vs
 					};
 				}
 			}
-		} catch (e) {
+		} catch (_Error) {
 			// Not all providers will support `getBranchBase`
 			return undefined;
 		}
@@ -618,7 +618,7 @@ export class CreatePullRequestViewProvider extends WebviewViewBase implements vs
 		}
 		try {
 			await pr.addAssignees([resolved]);
-		} catch (e) {
+		} catch (_Error) {
 			Logger.error(`Unable to assign pull request to user ${resolved}.`);
 		}
 	}
@@ -717,7 +717,7 @@ export class CreatePullRequestViewProvider extends WebviewViewBase implements vs
 					params: { reviewers: this.reviewers }
 				});
 			}
-		} catch (e) {
+		} catch (_Error) {
 			Logger.error(formatError(e));
 			vscode.window.showErrorMessage(formatError(e));
 		} finally {
@@ -873,7 +873,7 @@ export class CreatePullRequestViewProvider extends WebviewViewBase implements vs
 					this.telemetry.sendTelemetryEvent('pr.generatedTitleAndDescription', { providerTitle: provider?.title });
 				}
 				return result;
-			} catch (e) {
+			} catch (_Error) {
 				Logger.error(`Error while generating title and description: ${e}`, CreatePullRequestViewProvider.ID);
 				return undefined;
 			}
@@ -1073,7 +1073,7 @@ export class CreatePullRequestViewProvider extends WebviewViewBase implements vs
 					} else {
 						await postCreate(createdPR);
 					}
-				} catch (e) {
+				} catch (_Error) {
 					if (!createdPR) {
 						let errorMessage: string = e.message;
 						if (errorMessage.startsWith('GraphQL error: ')) {
@@ -1111,7 +1111,7 @@ export class CreatePullRequestViewProvider extends WebviewViewBase implements vs
 			try {
 				compareBranch = await this._folderRepositoryManager.repository.getBranch(newBranch);
 				await this.model.setCompareBranch(newBranch);
-			} catch (e) {
+			} catch (_Error) {
 				vscode.window.showErrorMessage(vscode.l10n.t('Branch does not exist locally.'));
 			}
 		}

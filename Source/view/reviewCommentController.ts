@@ -522,7 +522,7 @@ export class ReviewCommentController extends CommentControllerBase
 			} else {
 				return await this._repository.diffWith(this._folderRepoManager.activePullRequest.head.sha, fileName);
 			}
-		} catch (e) {
+		} catch (_Error) {
 			Logger.error(`Failed to get content diff. ${formatError(e)}`);
 			if ((e.stderr as string | undefined)?.includes('bad object')) {
 				if (this._repository.state.HEAD?.upstream && retry) {
@@ -533,7 +533,7 @@ export class ReviewCommentController extends CommentControllerBase
 						try {
 							await this._repository.pull();
 							return this.getContentDiff(uri, fileName, false);
-						} catch (e) {
+						} catch (_Error) {
 							// No remote branch
 						}
 					} else if (this._repository.state.HEAD?.commit) {
@@ -650,7 +650,7 @@ export class ReviewCommentController extends CommentControllerBase
 					throw new Error('Cannot reply to temporary comment');
 				}
 			}
-		} catch (e) {
+		} catch (_Error) {
 			vscode.window.showErrorMessage(`Starting review failed. Any review comments may be lost.`, { modal: true, detail: e?.message ?? e });
 
 			thread.comments = thread.comments.map(c => {
@@ -766,7 +766,7 @@ export class ReviewCommentController extends CommentControllerBase
 			if (isSingleComment) {
 				await this._folderRepoManager.activePullRequest.submitReview();
 			}
-		} catch (e) {
+		} catch (_Error) {
 			if (e.graphQLErrors?.length && e.graphQLErrors[0].type === 'NOT_FOUND') {
 				vscode.window.showWarningMessage('The comment that you\'re replying to was deleted. Refresh to update.', 'Refresh').then(result => {
 					if (result === 'Refresh') {
@@ -802,7 +802,7 @@ export class ReviewCommentController extends CommentControllerBase
 			}
 
 			await this._folderRepoManager.activePullRequest!.resolveReviewThread(thread.gitHubThreadId);
-		} catch (e) {
+		} catch (_Error) {
 			vscode.window.showErrorMessage(`Resolving conversation failed: ${e}`);
 		}
 	}
@@ -814,7 +814,7 @@ export class ReviewCommentController extends CommentControllerBase
 			}
 
 			await this._folderRepoManager.activePullRequest!.unresolveReviewThread(thread.gitHubThreadId);
-		} catch (e) {
+		} catch (_Error) {
 			vscode.window.showErrorMessage(`Unresolving conversation failed: ${e}`);
 		}
 	}
@@ -831,7 +831,7 @@ export class ReviewCommentController extends CommentControllerBase
 					comment.rawComment,
 					comment.body instanceof vscode.MarkdownString ? comment.body.value : comment.body,
 				);
-			} catch (e) {
+			} catch (_Error) {
 				vscode.window.showErrorMessage(formatError(e));
 
 				thread.comments = thread.comments.map(c => {
@@ -869,7 +869,7 @@ export class ReviewCommentController extends CommentControllerBase
 			}
 
 			this.update();
-		} catch (e) {
+		} catch (_Error) {
 			throw new Error(formatError(e));
 		}
 	}
@@ -903,7 +903,7 @@ export class ReviewCommentController extends CommentControllerBase
 					reaction,
 				);
 			}
-		} catch (e) {
+		} catch (_Error) {
 			throw new Error(formatError(e));
 		}
 	}

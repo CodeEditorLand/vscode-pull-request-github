@@ -9,7 +9,7 @@ export namespace git {
 	export async function checkout(): Promise<void> {
 		try {
 			await vscode.commands.executeCommand('git.checkout');
-		} catch (e) {
+		} catch (_Error) {
 			await vscode.commands.executeCommand('remoteHub.switchToBranch');
 		}
 	}

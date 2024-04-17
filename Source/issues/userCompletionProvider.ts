@@ -327,7 +327,7 @@ export class UserCompletionProvider implements vscode.CompletionItemProvider {
 
 			Logger.debug('done', UserCompletionProvider.ID);
 			return this.cachedPrUsers;
-		} catch (e) {
+		} catch (_Error) {
 			return [];
 		}
 	}

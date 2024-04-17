@@ -163,7 +163,7 @@ abstract class CompareChangesTreeProvider implements vscode.TreeDataProvider<Tre
 			}
 
 			return { rawFiles, rawCommits, mergeBase };
-		} catch (e) {
+		} catch (_Error) {
 			if ('name' in e && e.name === 'HttpError' && e.status === 404) {
 				(this.view as vscode.TreeView2<TreeNode>).message = new vscode.MarkdownString(vscode.l10n.t('The upstream branch `{0}` does not exist on GitHub', this.model.baseBranch));
 			}
@@ -186,7 +186,7 @@ abstract class CompareChangesTreeProvider implements vscode.TreeDataProvider<Tre
 			} else {
 				this._children = await this.getGitChildren(element);
 			}
-		} catch (e) {
+		} catch (_Error) {
 			Logger.error(`Comparing changes failed: ${e}`);
 			return [];
 		}
@@ -372,7 +372,7 @@ export class CompareChanges implements vscode.Disposable {
 			this._disposables.push(toDisposable(() => {
 				CompareChangesTreeProvider.closeTabs();
 			}));
-		} catch (e) {
+		} catch (_Error) {
 			// already registered
 		}
 

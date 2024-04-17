@@ -450,7 +450,7 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 					reviewers: addedReviewers,
 				});
 			}
-		} catch (e) {
+		} catch (_Error) {
 			Logger.error(formatError(e));
 			vscode.window.showErrorMessage(formatError(e));
 		} finally {
@@ -477,7 +477,7 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 		try {
 			await this._item.updateMilestone('null');
 			this._replyMessage(message, {});
-		} catch (e) {
+		} catch (_Error) {
 			vscode.window.showErrorMessage(formatError(e));
 		}
 	}
@@ -531,7 +531,7 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 					assignees: newAssignees,
 				});
 			}
-		} catch (e) {
+		} catch (_Error) {
 			vscode.window.showErrorMessage(formatError(e));
 		} finally {
 			quickPick.hide();
@@ -550,7 +550,7 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 			this._replyMessage(message, {
 				assignees: this._item.assignees,
 			});
-		} catch (e) {
+		} catch (_Error) {
 			vscode.window.showErrorMessage(formatError(e));
 		}
 	}
@@ -569,7 +569,7 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 			await this._folderRepositoryManager.repository.apply(tempUri.fsPath);
 			await vscode.workspace.fs.delete(tempUri);
 			vscode.window.showInformationMessage('Patch applied!');
-		} catch (e) {
+		} catch (_Error) {
 			Logger.error(`Applying patch failed: ${e}`, PullRequestOverviewPanel.ID);
 			vscode.window.showErrorMessage(`Applying patch failed: ${formatError(e)}`);
 		}
@@ -579,7 +579,7 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 		try {
 			const comment = message.args.comment;
 			return PullRequestModel.openDiffFromComment(this._folderRepositoryManager, this._item, comment);
-		} catch (e) {
+		} catch (_Error) {
 			Logger.error(`Open diff view failed: ${formatError(e)}`, PullRequestOverviewPanel.ID);
 		}
 	}
@@ -594,7 +594,7 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 			}
 			const timelineEvents = await this._item.getTimelineEvents();
 			this._replyMessage(message, timelineEvents);
-		} catch (e) {
+		} catch (_Error) {
 			vscode.window.showErrorMessage(e);
 			this._replyMessage(message, undefined);
 		}
@@ -709,7 +709,7 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 				reviewers: this._existingReviewers
 			};
 			await this._postMessage(reviewMessage);
-		} catch (e) {
+		} catch (_Error) {
 			vscode.window.showErrorMessage(vscode.l10n.t('Submitting review failed. {0}', formatError(e)));
 			this._throwError(undefined, `${formatError(e)}`);
 		} finally {
@@ -725,7 +725,7 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 				review: review,
 				reviewers: this._existingReviewers,
 			});
-		} catch (e) {
+		} catch (_Error) {
 			vscode.window.showErrorMessage(vscode.l10n.t('Submitting review failed. {0}', formatError(e)));
 			this._throwError(message, `${formatError(e)}`);
 		}

@@ -58,7 +58,7 @@ export class TemporaryState extends vscode.Disposable {
 			dispose: () => {
 				try {
 					return vscode.workspace.fs.delete(file, { recursive: true });
-				} catch (e) {
+				} catch (_Error) {
 					// No matter the error, we do not want to throw in dispose.
 				}
 			}
@@ -85,12 +85,12 @@ export class TemporaryState extends vscode.Disposable {
 			tempState = new TemporaryState(context.globalStorageUri);
 			try {
 				await vscode.workspace.fs.delete(tempState.path, { recursive: true });
-			} catch (e) {
+			} catch (_Error) {
 				Logger.appendLine(`TemporaryState> Error in initialization: ${e.message}`);
 			}
 			try {
 				await vscode.workspace.fs.createDirectory(tempState.path);
-			} catch (e) {
+			} catch (_Error) {
 				Logger.appendLine(`TemporaryState> Error in initialization: ${e.message}`);
 			}
 			context.subscriptions.push(tempState);

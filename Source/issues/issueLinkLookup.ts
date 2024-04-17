@@ -60,7 +60,7 @@ export async function findCodeLinkLocally(
 	const path = vscode.Uri.joinPath(linkFolderManager.repository.rootUri, repoSubPath);
 	try {
 		await vscode.workspace.fs.stat(path);
-	} catch (e) {
+	} catch (_Error) {
 		return;
 	}
 	return {

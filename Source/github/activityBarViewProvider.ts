@@ -223,7 +223,7 @@ export class PullRequestViewProvider extends WebviewViewBase implements vscode.W
 
 				try {
 					this._view.title = `${pullRequest.title} #${pullRequestModel.number.toString()}`;
-				} catch (e) {
+				} catch (_Error) {
 					// If we ry to set the title of the webview too early it will throw an error.
 				}
 
@@ -352,7 +352,7 @@ export class PullRequestViewProvider extends WebviewViewBase implements vscode.W
 				reviewers: this._existingReviewers
 			};
 			await this._postMessage(reviewMessage);
-		} catch (e) {
+		} catch (_Error) {
 			vscode.window.showErrorMessage(vscode.l10n.t('Submitting review failed. {0}', formatError(e)));
 			this._throwError(undefined, `${formatError(e)}`);
 			this._postMessage({ command: 'pr.append-review' });
@@ -367,7 +367,7 @@ export class PullRequestViewProvider extends WebviewViewBase implements vscode.W
 				review: review,
 				reviewers: this._existingReviewers,
 			});
-		} catch (e) {
+		} catch (_Error) {
 			vscode.window.showErrorMessage(vscode.l10n.t('Submitting review failed. {0}', formatError(e)));
 			this._throwError(message, `${formatError(e)}`);
 		}

@@ -123,7 +123,7 @@ export class PRNode extends TreeNode implements vscode.CommentingRangeProvider2 
 			this.pullRequestModel.initializeReviewThreadCache();
 
 			return result;
-		} catch (e) {
+		} catch (_Error) {
 			Logger.error(e);
 			return [];
 		}

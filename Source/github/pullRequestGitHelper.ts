@@ -382,7 +382,7 @@ export class PullRequestGitHelper {
 			Logger.appendLine(`associate ${branchName} with Pull Request #${pullRequest.number}`, PullRequestGitHelper.ID);
 			const prConfigKey = `branch.${branchName}.${PullRequestMetadataKey}`;
 			await repository.setConfig(prConfigKey, PullRequestGitHelper.buildPullRequestMetadata(pullRequest));
-		} catch (e) {
+		} catch (_Error) {
 			Logger.error(`associate ${branchName} with Pull Request #${pullRequest.number} failed`, PullRequestGitHelper.ID);
 		}
 	}
@@ -398,7 +398,7 @@ export class PullRequestGitHelper {
 			Logger.appendLine(`associate ${branch} with base branch ${owner}/${repo}#${baseBranch}`, PullRequestGitHelper.ID);
 			const prConfigKey = `branch.${branch}.${BaseBranchMetadataKey}`;
 			await repository.setConfig(prConfigKey, PullRequestGitHelper.buildBaseBranchMetadata(owner, repo, baseBranch));
-		} catch (e) {
+		} catch (_Error) {
 			Logger.error(`associate ${branch} with base branch ${owner}/${repo}#${baseBranch} failed`, PullRequestGitHelper.ID);
 		}
 	}

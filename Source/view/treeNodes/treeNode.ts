@@ -38,7 +38,7 @@ export abstract class TreeNode {
 	): Promise<void> {
 		try {
 			await this.parent.reveal(treeNode || this, options);
-		} catch (e) {
+		} catch (_Error) {
 			Logger.error(e, 'TreeNode');
 		}
 	}

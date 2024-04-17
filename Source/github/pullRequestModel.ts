@@ -512,7 +512,7 @@ export class PullRequestModel extends IssueModel<PullRequest> implements IPullRe
 				sha: data.repository?.pullRequest.viewerLatestReview.commit.oid,
 			} : undefined;
 		}
-		catch (e) {
+		catch (_Error) {
 			return undefined;
 		}
 	}
@@ -785,7 +785,7 @@ export class PullRequestModel extends IssueModel<PullRequest> implements IPullRe
 					}
 				}
 			}
-		} catch (e) {
+		} catch (_Error) {
 			throw new Error(formatError(e));
 		}
 	}
@@ -940,7 +940,7 @@ export class PullRequestModel extends IssueModel<PullRequest> implements IPullRe
 			const newCommitSha = (await octokit.call(octokit.api.git.createCommit, { owner: model.prHeadOwner, repo: model.repositoryName, message, tree: newTreeSha, parents: [lastCommitSha, model.latestPrBaseSha] })).data.sha;
 			await octokit.call(octokit.api.git.updateRef, { owner: model.prHeadOwner, repo: model.repositoryName, ref: `heads/${model.prHeadBranchName}`, sha: newCommitSha });
 
-		} catch (e) {
+		} catch (_Error) {
 			Logger.error(`Updating branch ${model.prHeadBranchName} to ${model.prBaseBranchName} failed: ${e}`, GitHubRepository.ID);
 			return false;
 		}
@@ -1113,7 +1113,7 @@ export class PullRequestModel extends IssueModel<PullRequest> implements IPullRe
 			} while (hasNextPage && reviewThreads.length < 1000);
 
 			return reviewThreads;
-		} catch (e) {
+		} catch (_Error) {
 			Logger.error(`Failed to get pull request review comments: ${e}`, PullRequestModel.ID);
 			return [];
 		}
@@ -1139,7 +1139,7 @@ export class PullRequestModel extends IssueModel<PullRequest> implements IPullRe
 			Logger.debug(`Fetch commits of PR #${this.number} - done`, PullRequestModel.ID);
 
 			return commitData;
-		} catch (e) {
+		} catch (_Error) {
 			vscode.window.showErrorMessage(`Fetching commits failed: ${formatError(e)}`);
 			return [];
 		}
@@ -1169,7 +1169,7 @@ export class PullRequestModel extends IssueModel<PullRequest> implements IPullRe
 			);
 
 			return fullCommit.data.files ?? [];
-		} catch (e) {
+		} catch (_Error) {
 			vscode.window.showErrorMessage(`Fetching commit file changes failed: ${formatError(e)}`);
 			return [];
 		}
@@ -1231,7 +1231,7 @@ export class PullRequestModel extends IssueModel<PullRequest> implements IPullRe
 			insertNewCommitsSinceReview(events, latestReviewCommitInfo?.sha, currentUser, this.head);
 
 			return events;
-		} catch (e) {
+		} catch (_Error) {
 			console.log(e);
 			return [];
 		}
@@ -1582,7 +1582,7 @@ export class PullRequestModel extends IssueModel<PullRequest> implements IPullRe
 			this.conflicts = data.repository?.pullRequest.mergeRequirements?.conditions.find(condition => condition.__typename === 'PullRequestMergeConflictStateCondition')?.conflicts;
 			this.update(this.item);
 			return { mergeability, conflicts: this.conflicts };
-		} catch (e) {
+		} catch (_Error) {
 			Logger.error(`Unable to fetch PR Mergeability: ${e}`, PullRequestModel.ID);
 			return { mergeability: PullRequestMergeability.Unknown };
 		}
@@ -1618,7 +1618,7 @@ export class PullRequestModel extends IssueModel<PullRequest> implements IPullRe
 			this.item.mergeable = result.mergeable;
 			this.item.allowAutoMerge = result.allowAutoMerge;
 			return result;
-		} catch (e) {
+		} catch (_Error) {
 			/* __GDPR__
 				"pr.readyForReview.failure" : {}
 			*/
@@ -1741,7 +1741,7 @@ export class PullRequestModel extends IssueModel<PullRequest> implements IPullRe
 				this._onDidChangeReviewThreads.fire({ added: [], changed: [thread], removed: [] });
 			}
 			Logger.debug(`Resolve review thread - done`, PullRequestModel.ID);
-		} catch (e) {
+		} catch (_Error) {
 			Logger.error(`Resolve review thread failed: ${e}`, PullRequestModel.ID);
 			this.undoOptimisticResolveState(oldThread);
 		}
@@ -1784,7 +1784,7 @@ export class PullRequestModel extends IssueModel<PullRequest> implements IPullRe
 				this._onDidChangeReviewThreads.fire({ added: [], changed: [thread], removed: [] });
 			}
 			Logger.debug(`Unresolve review thread - done`, PullRequestModel.ID);
-		} catch (e) {
+		} catch (_Error) {
 			Logger.error(`Unresolve review thread failed: ${e}`, PullRequestModel.ID);
 			this.undoOptimisticResolveState(oldThread);
 		}
@@ -1808,7 +1808,7 @@ export class PullRequestModel extends IssueModel<PullRequest> implements IPullRe
 			}
 			this.item.autoMerge = true;
 			this.item.autoMergeMethod = mergeMethod;
-		} catch (e) {
+		} catch (_Error) {
 			if (e.message === 'GraphQL error: ["Pull request Pull request is in clean status"]') {
 				vscode.window.showWarningMessage(vscode.l10n.t('Unable to enable auto-merge. Pull request status checks are already green.'));
 			} else {
@@ -1833,7 +1833,7 @@ export class PullRequestModel extends IssueModel<PullRequest> implements IPullRe
 				throw new Error('Disable auto-merge failed.');
 			}
 			this.item.autoMerge = false;
-		} catch (e) {
+		} catch (_Error) {
 			if (e.message === 'GraphQL error: ["Pull request Pull request is in clean status"]') {
 				vscode.window.showWarningMessage(vscode.l10n.t('Unable to enable auto-merge. Pull request status checks are already green.'));
 			} else {
@@ -1861,7 +1861,7 @@ export class PullRequestModel extends IssueModel<PullRequest> implements IPullRe
 			Logger.debug(`Dequeue pull request ${this.number} - done`, GitHubRepository.ID);
 			this.mergeQueueEntry = undefined;
 			return true;
-		} catch (e) {
+		} catch (_Error) {
 			Logger.error(`Dequeueing pull request failed: ${e}`, GitHubRepository.ID);
 			return false;
 		}
@@ -1886,7 +1886,7 @@ export class PullRequestModel extends IssueModel<PullRequest> implements IPullRe
 			Logger.debug(`Enqueue pull request ${this.number} - done`, GitHubRepository.ID);
 			const temp = parseMergeQueueEntry(data?.enqueuePullRequest.mergeQueueEntry) ?? undefined;
 			return temp;
-		} catch (e) {
+		} catch (_Error) {
 			Logger.error(`Enqueuing pull request failed: ${e}`, GitHubRepository.ID);
 		}
 	}

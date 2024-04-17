@@ -89,7 +89,7 @@ export class CurrentIssue {
 				}
 				return true;
 			}
-		} catch (e) {
+		} catch (_Error) {
 			// leave repoDefaults undefined
 			vscode.window.showErrorMessage(vscode.l10n.t('There is no remote. Can\'t start working on an issue.'));
 		}
@@ -107,7 +107,7 @@ export class CurrentIssue {
 		if (this._repoDefaults && checkoutDefaultBranch) {
 			try {
 				await this.manager.repository.checkout(this._repoDefaults.base);
-			} catch (e) {
+			} catch (_Error) {
 				if (e.gitErrorCode === GitErrorCodes.DirtyWorkTree) {
 					vscode.window.showErrorMessage(
 						vscode.l10n.t('Your local changes would be overwritten by checkout, please commit your changes or stash them before you switch branches'),
@@ -127,7 +127,7 @@ export class CurrentIssue {
 	private async getBranch(branch: string): Promise<Branch | undefined> {
 		try {
 			return await this.manager.repository.getBranch(branch);
-		} catch (e) {
+		} catch (_Error) {
 			// branch doesn't exist
 		}
 		return undefined;
@@ -141,7 +141,7 @@ export class CurrentIssue {
 				await this.manager.repository.createBranch(branch, true);
 			}
 			return true;
-		} catch (e) {
+		} catch (_Error) {
 			if (e.message !== 'User aborted') {
 				vscode.window.showErrorMessage(
 					`Unable to checkout branch ${branch}. There may be file conflicts that prevent this branch change. Git error: ${e.error}`,

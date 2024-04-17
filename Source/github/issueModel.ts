@@ -176,7 +176,7 @@ export class IssueModel<TItem extends Issue = Issue> {
 				this.invalidate();
 			}
 			return data!.updatePullRequest.pullRequest;
-		} catch (e) {
+		} catch (_Error) {
 			throw new Error(formatError(e));
 		}
 	}
@@ -231,7 +231,7 @@ export class IssueModel<TItem extends Issue = Issue> {
 			});
 
 			return parseGraphQlIssueComment(data!.updateIssueComment.issueComment, this.githubRepository);
-		} catch (e) {
+		} catch (_Error) {
 			throw new Error(formatError(e));
 		}
 	}
@@ -245,7 +245,7 @@ export class IssueModel<TItem extends Issue = Issue> {
 				repo: remote.repositoryName,
 				comment_id: Number(commentId),
 			});
-		} catch (e) {
+		} catch (_Error) {
 			throw new Error(formatError(e));
 		}
 	}
@@ -259,7 +259,7 @@ export class IssueModel<TItem extends Issue = Issue> {
 				issue_number: this.number,
 				labels,
 			});
-		} catch (e) {
+		} catch (_Error) {
 			// We don't get a nice error message from the API when setting labels fails.
 			// Since adding labels isn't a critical part of the PR creation path it's safe to catch all errors that come from setting labels.
 			Logger.error(`Failed to add labels to PR #${this.number}`, IssueModel.ID);
@@ -351,7 +351,7 @@ export class IssueModel<TItem extends Issue = Issue> {
 			const events = parseGraphQLTimelineEvents(ret, githubRepository);
 
 			return events;
-		} catch (e) {
+		} catch (_Error) {
 			console.log(e);
 			return [];
 		}

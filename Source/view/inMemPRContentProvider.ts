@@ -176,7 +176,7 @@ export async function provideDocumentContentForChangeModel(folderRepoManager: Fo
 			} else {
 				return pullRequestModel.getFile(fileChange.fileName, params.headCommit);
 			}
-		} catch (e) {
+		} catch (_Error) {
 			Logger.error(`Fetching file content failed: ${e}`, 'PR');
 			vscode.window
 				.showWarningMessage(

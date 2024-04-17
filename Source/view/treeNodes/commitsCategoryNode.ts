@@ -52,7 +52,7 @@ export class CommitsNode extends TreeNode implements vscode.TreeItem {
 			);
 			Logger.appendLine(`Got all children for Commits node`, PR_TREE);
 			return this.children;
-		} catch (e) {
+		} catch (_Error) {
 			return [];
 		}
 	}

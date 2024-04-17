@@ -57,7 +57,7 @@ export class RateLogger {
 		try {
 			const resolvedResult = await result;
 			rateLimitInfo = resolvedResult?.data?.rateLimit;
-		} catch (e) {
+		} catch (_Error) {
 			// Ignore errors here since we're just trying to log the rate limit.
 			return;
 		}
@@ -88,7 +88,7 @@ export class RateLogger {
 		let result;
 		try {
 			result = await restResponse;
-		} catch (e) {
+		} catch (_Error) {
 			// Ignore errors here since we're just trying to log the rate limit.
 			return;
 		}

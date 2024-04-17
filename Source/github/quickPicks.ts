@@ -259,7 +259,7 @@ export async function getProjectFromQuickPick(folderRepoManager: FolderRepositor
 				await callback(projectsToAdd);
 			}
 		});
-	} catch (e) {
+	} catch (_Error) {
 		vscode.window.showErrorMessage(`Failed to add project: ${formatError(e)}`);
 	}
 }
@@ -344,7 +344,7 @@ export async function getMilestoneFromQuickPick(folderRepositoryManager: FolderR
 					if (milestone !== undefined) {
 						await callback(milestone);
 					}
-				} catch (e) {
+				} catch (_Error) {
 					if (e.errors && Array.isArray(e.errors) && e.errors.find(error => error.code === 'already_exists') !== undefined) {
 						vscode.window.showErrorMessage(vscode.l10n.t('Failed to create milestone: The milestone already exists and might be closed'));
 					}
@@ -369,7 +369,7 @@ export async function getMilestoneFromQuickPick(folderRepositoryManager: FolderR
 				await callback(undefined);
 			}
 		});
-	} catch (e) {
+	} catch (_Error) {
 		vscode.window.showErrorMessage(`Failed to add milestone: ${formatError(e)}`);
 	}
 }

@@ -360,7 +360,7 @@ async function getUpstream(repositoriesManager: RepositoriesManager, repository:
 	let defaultBranch: PullRequestDefaults | undefined;
 	try {
 		defaultBranch = await repositoriesManager.getManagerForFile(repository.rootUri)?.getPullRequestDefaults();
-	} catch (e) {
+	} catch (_Error) {
 		if (!(e instanceof NoGitHubReposError)) {
 			throw e;
 		}
@@ -385,7 +385,7 @@ async function getUpstream(repositoriesManager: RepositoriesManager, repository:
 					bestRef = remotes[0];
 					bestRemote = remoteNames[remoteIndex].remote;
 				}
-			} catch (e) {
+			} catch (_Error) {
 				// continue
 			}
 		}
@@ -528,7 +528,7 @@ export async function createGithubPermalink(
 				} else {
 					commitHash = log[0].hash;
 				}
-			} catch (e) {
+			} catch (_Error) {
 				commitHash = repository.state.HEAD?.commit;
 			}
 		}

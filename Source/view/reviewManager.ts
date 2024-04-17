@@ -363,7 +363,7 @@ export class ReviewManager {
 					branchName = upstreamBranch.substring('refs/heads/'.length);
 				}
 				return { url, branchName, remoteName: undefined };
-			} catch (e) {
+			} catch (_Error) {
 				Logger.appendLine(`Failed to get upstream for branch ${branch.name} from git config.`, this.id);
 				return { url: undefined, branchName: undefined, remoteName: undefined };
 			}
@@ -399,7 +399,7 @@ export class ReviewManager {
 				return;
 			}
 			return pr;
-		} catch (e) {
+		} catch (_Error) {
 			Logger.appendLine(`Pull request cannot be resolved: ${e.message}`, this.id);
 		}
 	}
@@ -831,7 +831,7 @@ export class ReviewManager {
 			this._reviewModel.obsoleteFileChanges = obsoleteFileChanges;
 
 			return Promise.resolve(void 0);
-		} catch (e) {
+		} catch (_Error) {
 			Logger.error(`Failed to initialize PR data ${e}`, this.id);
 		}
 	}
@@ -878,7 +878,7 @@ export class ReviewManager {
 					return provideDocumentContentForChangeModel(this._folderRepoManager, pr, params, fileChange);
 				},
 			);
-		} catch (e) {
+		} catch (_Error) {
 			Logger.error(`Failed to register in mem content provider: ${e}`, this.id);
 		}
 	}
@@ -932,7 +932,7 @@ export class ReviewManager {
 				await this._folderRepoManager.tryMergeBaseIntoHead(pr, updateBaseSetting === 'pullAndUpdateBase');
 			}
 
-		} catch (e) {
+		} catch (_Error) {
 			Logger.error(`Checkout failed #${JSON.stringify(e)}`, this.id);
 			this.switchingToReviewMode = false;
 
@@ -1039,7 +1039,7 @@ export class ReviewManager {
 					} else {
 						inputBox.validationMessage = undefined;
 					}
-				} catch (e) {
+				} catch (_Error) {
 					inputBox.validationMessage = undefined;
 				}
 

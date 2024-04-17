@@ -69,7 +69,7 @@ export class IssueOverviewPanel<TItem extends IssueModel = IssueModel> extends W
 	protected setPanelTitle(title: string): void {
 		try {
 			this._panel.title = title;
-		} catch (e) {
+		} catch (_Error) {
 			// The webview can be disposed at the time that we try to set the title if the user has closed
 			// it while it's still loading.
 		}
@@ -259,7 +259,7 @@ export class IssueOverviewPanel<TItem extends IssueModel = IssueModel> extends W
 					added: addedLabels,
 				});
 			}
-		} catch (e) {
+		} catch (_Error) {
 			vscode.window.showErrorMessage(formatError(e));
 		} finally {
 			quickPick.hide();
@@ -275,7 +275,7 @@ export class IssueOverviewPanel<TItem extends IssueModel = IssueModel> extends W
 			this._item.item.labels.splice(index, 1);
 
 			this._replyMessage(message, {});
-		} catch (e) {
+		} catch (_Error) {
 			vscode.window.showErrorMessage(formatError(e));
 		}
 	}

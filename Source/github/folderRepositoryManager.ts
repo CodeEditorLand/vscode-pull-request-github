@@ -566,7 +566,7 @@ export class FolderRepositoryManager implements vscode.Disposable {
 					}
 				}
 			}
-		} catch (e) {
+		} catch (_Error) {
 			Logger.appendLine(`Missing upstream check failed: ${e}`);
 			// ignore
 		}
@@ -593,7 +593,7 @@ export class FolderRepositoryManager implements vscode.Disposable {
 		let usersCacheExists;
 		try {
 			usersCacheExists = await vscode.workspace.fs.stat(usersCacheLocation);
-		} catch (e) {
+		} catch (_Error) {
 			// file doesn't exit
 		}
 		if (!usersCacheExists) {
@@ -610,7 +610,7 @@ export class FolderRepositoryManager implements vscode.Disposable {
 			try {
 				repoSpecificCache = await vscode.workspace.fs.readFile(repoSpecificFile);
 				cacheAsJson = JSON.parse(repoSpecificCache.toString());
-			} catch (e) {
+			} catch (_Error) {
 				if (e instanceof Error && e.message.includes('Unexpected non-whitespace character after JSON')) {
 					Logger.error(`Error parsing ${userKind} cache for ${repo.remote.remoteName}.`);
 				}
@@ -741,7 +741,7 @@ export class FolderRepositoryManager implements vscode.Disposable {
 						try {
 							const data = await githubRepository.getOrgTeams(refreshKind);
 							orgTeams.set(githubRepository.remote.owner, data);
-						} catch (e) {
+						} catch (_Error) {
 							break;
 						}
 					}
@@ -770,7 +770,7 @@ export class FolderRepositoryManager implements vscode.Disposable {
 					try {
 						const data = await githubRepository.getOrgProjects();
 						orgProjects.set(githubRepository.remote.owner, data);
-					} catch (e) {
+					} catch (_Error) {
 						break;
 					}
 				}
@@ -945,7 +945,7 @@ export class FolderRepositoryManager implements vscode.Disposable {
 		let remoteName: string | undefined = undefined;
 		try {
 			remoteName = await this.repository.getConfig(`branch.${pullRequest.localBranchName}.remote`);
-		} catch (e) { }
+		} catch (_Error) { }
 
 		if (!remoteName) {
 			return;
@@ -1134,7 +1134,7 @@ export class FolderRepositoryManager implements vscode.Disposable {
 				number: data.number
 			};
 		}
-		catch (e) {
+		catch (_Error) {
 			vscode.window.showErrorMessage(vscode.l10n.t('Failed to create a milestone\n{0}', formatError(e)));
 			return undefined;
 		}
@@ -1168,7 +1168,7 @@ export class FolderRepositoryManager implements vscode.Disposable {
 				mappedData.items.push(new IssueModel(githubRepository, githubRepository.remote, issue));
 			}
 			return mappedData;
-		} catch (e) {
+		} catch (_Error) {
 			Logger.error(`Error fetching issues with query ${query}: ${e instanceof Error ? e.message : e}`, this.id);
 			return { hasMorePages: false, hasUnsearchedRepositories: false, items: [] };
 		}
@@ -1205,7 +1205,7 @@ export class FolderRepositoryManager implements vscode.Disposable {
 				try {
 					const templateContent = await vscode.workspace.fs.readFile(templateUri);
 					return new TextDecoder('utf-8').decode(templateContent);
-				} catch (e) {
+				} catch (_Error) {
 					Logger.warn(`Reading pull request template failed: ${e}`);
 				}
 			}
@@ -1428,7 +1428,7 @@ export class FolderRepositoryManager implements vscode.Disposable {
 			*/
 			this.telemetry.sendTelemetryEvent('pr.create.success', { isDraft: (params.draft || '').toString() });
 			return pullRequestModel;
-		} catch (e) {
+		} catch (_Error) {
 			if (e.message.indexOf('No commits between ') > -1) {
 				// There are unpushed commits
 				if (this._repository.state.HEAD?.ahead) {
@@ -1508,7 +1508,7 @@ export class FolderRepositoryManager implements vscode.Disposable {
 			*/
 			this.telemetry.sendTelemetryEvent('issue.create.success');
 			return issueModel;
-		} catch (e) {
+		} catch (_Error) {
 			Logger.error(` Creating issue failed: ${e}`, this.id);
 
 			/* __GDPR__
@@ -1547,7 +1547,7 @@ export class FolderRepositoryManager implements vscode.Disposable {
 				}
 			*/
 			this.telemetry.sendTelemetryEvent('issue.assign.success');
-		} catch (e) {
+		} catch (_Error) {
 			Logger.error(`Assigning issue failed: ${e}`, this.id);
 
 			/* __GDPR__
@@ -1774,7 +1774,7 @@ export class FolderRepositoryManager implements vscode.Disposable {
 		try {
 			Logger.debug(`Cleaning up branch ${branchName}`, this.id);
 			await this.repository.deleteBranch(branchName);
-		} catch (e) {
+		} catch (_Error) {
 			// The branch probably had unpushed changes and cannot be deleted.
 			return;
 		}
@@ -1895,7 +1895,7 @@ export class FolderRepositoryManager implements vscode.Disposable {
 								picks.map(async pick => {
 									try {
 										await this.repository.deleteBranch(pick.label, true);
-									} catch (e) {
+									} catch (_Error) {
 										if ((typeof e.stderr === 'string') && (e.stderr as string).includes('not found')) {
 											// TODO: The git extension API doesn't support removing configs
 											// If that support is added we should remove the config as it is no longer useful.
@@ -1905,7 +1905,7 @@ export class FolderRepositoryManager implements vscode.Disposable {
 										}
 									}
 								}));
-						} catch (e) {
+						} catch (_Error) {
 							quickPick.hide();
 							vscode.window.showErrorMessage(vscode.l10n.t('Deleting branches failed: {0} {1}', e.message, e.stderr));
 						}
@@ -1987,7 +1987,7 @@ export class FolderRepositoryManager implements vscode.Disposable {
 
 				pullRequest.mergeBase = data.merge_base_commit.sha;
 			}
-		} catch (e) {
+		} catch (_Error) {
 			vscode.window.showErrorMessage(vscode.l10n.t('Fetching Pull Request merge base failed: {0}', formatError(e)));
 		}
 		Logger.debug(`Fulfill pull request missing info - done`, this.id);
@@ -2056,7 +2056,7 @@ export class FolderRepositoryManager implements vscode.Disposable {
 				},
 			});
 			return parseGraphQLUser(data, githubRepository);
-		} catch (e) {
+		} catch (_Error) {
 			// Ignore cases where the user doesn't exist
 			if (!(e.message as (string | undefined))?.startsWith('GraphQL error: Could not resolve to a User with the login of')) {
 				Logger.warn(e.message);
@@ -2085,7 +2085,7 @@ export class FolderRepositoryManager implements vscode.Disposable {
 				return this.getMatchingPullRequestMetadataFromGitHubWithRemoteName(remoteName, upstreamBranchName);
 			}
 			return this.getMatchingPullRequestMetadataFromGitHubWithUrl(branch, remoteUrl, upstreamBranchName);
-		} catch (e) {
+		} catch (_Error) {
 			Logger.error(`Unable to get matching pull request metadata from GitHub: ${e}`, this.id);
 			return null;
 		}
@@ -2218,7 +2218,7 @@ export class FolderRepositoryManager implements vscode.Disposable {
 			progress.report({ message: vscode.l10n.t('Merging branch {0} into {1}', qualifiedUpstream, this.repository.state.HEAD!.name!) });
 			try {
 				await this.repository.merge(qualifiedUpstream);
-			} catch (e) {
+			} catch (_Error) {
 				if (e.gitErrorCode !== GitErrorCodes.Conflict) {
 					throw e;
 				}
@@ -2302,7 +2302,7 @@ export class FolderRepositoryManager implements vscode.Disposable {
 				}
 			}
 			await Promise.all(fileClose);
-		} catch (e) {
+		} catch (_Error) {
 			if (e.gitErrorCode) {
 				// for known git errors, we should provide actions for users to continue.
 				if (e.gitErrorCode === GitErrorCodes.DirtyWorkTree) {
@@ -2374,7 +2374,7 @@ export class FolderRepositoryManager implements vscode.Disposable {
 					if (shouldFetch && vscode.workspace.getConfiguration(PR_SETTINGS_NAMESPACE).get<boolean>(ALLOW_FETCH, true)) {
 						await this._repository.fetch(remote, remoteBranch);
 					}
-				} catch (e) {
+				} catch (_Error) {
 					if (e.stderr) {
 						if ((e.stderr as string).startsWith('fatal: couldn\'t find remote ref')) {
 							// We've managed to check out the PR, but the remote has been deleted. This is fine, but we can't fetch now.
@@ -2536,7 +2536,7 @@ export class FolderRepositoryManager implements vscode.Disposable {
 			async progress => {
 				try {
 					return this.forkWithProgress(progress, githubRepository, repoString, matchingRepo);
-				} catch (e) {
+				} catch (_Error) {
 					vscode.window.showErrorMessage(`Creating fork failed: ${e}`);
 				}
 				return undefined;

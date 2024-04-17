@@ -128,7 +128,7 @@ export class CredentialStore implements vscode.Disposable {
 			usedScopes = result.scopes;
 			session = result.session;
 			isNew = result.isNew;
-		} catch (e) {
+		} catch (_Error) {
 			this._scopes = oldScopes;
 			this._scopesEnterprise = oldEnterpriseScopes;
 			const userCanceld = (e.message === 'User did not consent to login.');
@@ -152,7 +152,7 @@ export class CredentialStore implements vscode.Disposable {
 			let github: GitHub | undefined;
 			try {
 				github = await this.createHub(session.accessToken, authProviderId);
-			} catch (e) {
+			} catch (_Error) {
 				if ((e.message === 'Bad credentials') && !getAuthSessionOptions.forceNewSession) {
 					getAuthSessionOptions.forceNewSession = true;
 					getAuthSessionOptions.silent = false;
@@ -303,7 +303,7 @@ export class CredentialStore implements vscode.Disposable {
 		while (retry) {
 			try {
 				await this.initialize(authProviderId, sessionOptions);
-			} catch (e) {
+			} catch (_Error) {
 				Logger.error(`${errorPrefix}: ${e}`);
 				if (e instanceof Error && e.stack) {
 					Logger.error(e.stack);

@@ -68,7 +68,7 @@ export class UserHoverProvider implements vscode.HoverProvider {
 			} else {
 				return;
 			}
-		} catch (e) {
+		} catch (_Error) {
 			// No need to notify about a hover that doesn't work
 			return;
 		}

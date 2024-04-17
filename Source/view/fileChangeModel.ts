@@ -58,7 +58,7 @@ export abstract class FileChangeModel {
 				const commit = this.sha ?? this.pullRequest.head!.sha;
 				const patch = await this.folderRepoManager.repository.diffBetween(this.pullRequest.base.sha, commit, this.fileName);
 				diffHunks = parsePatch(patch);
-			} catch (e) {
+			} catch (_Error) {
 				Logger.error(`Failed to parse patch for outdated comments: ${e}`);
 			}
 		}
@@ -87,7 +87,7 @@ export class GitFileChangeModel extends FileChangeModel {
 		if (preload) {
 			try {
 				this.showBase();
-			} catch (e) {
+			} catch (_Error) {
 				Logger.warn(`Unable to preload file content for ${filePath.fsPath} at commit ${sha}`);
 			}
 		}

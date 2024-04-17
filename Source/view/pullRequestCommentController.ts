@@ -328,7 +328,7 @@ export class PullRequestCommentController extends CommentControllerBase implemen
 			if (isSingleComment) {
 				await this.pullRequestModel.submitReview();
 			}
-		} catch (e) {
+		} catch (_Error) {
 			if (e.graphQLErrors?.length && e.graphQLErrors[0].type === 'NOT_FOUND') {
 				vscode.window.showWarningMessage('The comment that you\'re replying to was deleted. Refresh to update.', 'Refresh').then(result => {
 					if (result === 'Refresh') {
@@ -386,7 +386,7 @@ export class PullRequestCommentController extends CommentControllerBase implemen
 					comment.rawComment,
 					comment.body instanceof vscode.MarkdownString ? comment.body.value : comment.body,
 				);
-			} catch (e) {
+			} catch (_Error) {
 				vscode.window.showErrorMessage(`Editing comment failed ${e}`);
 
 				thread.comments = thread.comments.map(c => {
@@ -439,7 +439,7 @@ export class PullRequestCommentController extends CommentControllerBase implemen
 			}
 
 			this.setContextKey(true);
-		} catch (e) {
+		} catch (_Error) {
 			vscode.window.showErrorMessage(`Starting review failed. Any review comments may be lost.`, { modal: true, detail: e?.message ?? e });
 
 			thread.comments = thread.comments.map(c => {
@@ -487,7 +487,7 @@ export class PullRequestCommentController extends CommentControllerBase implemen
 			}
 
 			await this.pullRequestModel.resolveReviewThread(thread.gitHubThreadId);
-		} catch (e) {
+		} catch (_Error) {
 			vscode.window.showErrorMessage(`Resolving conversation failed: ${e}`);
 		}
 	}
@@ -499,7 +499,7 @@ export class PullRequestCommentController extends CommentControllerBase implemen
 			}
 
 			await this.pullRequestModel.unresolveReviewThread(thread.gitHubThreadId);
-		} catch (e) {
+		} catch (_Error) {
 			vscode.window.showErrorMessage(`Unresolving conversation failed: ${e}`);
 		}
 	}

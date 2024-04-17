@@ -220,7 +220,7 @@ export class CreatePRContextNew {
 				command: 'pr.create',
 				args,
 			});
-		} catch (e) {
+		} catch (_Error) {
 			this.updateState({ createError: (typeof e === 'string') ? e : (e.message ? e.message : 'An unknown error occurred.') });
 		}
 	};

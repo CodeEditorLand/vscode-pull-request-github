@@ -342,7 +342,7 @@ export class StateManager {
 		let defaults: PullRequestDefaults | undefined;
 		try {
 			defaults = await singleRepoState.folderManager.getPullRequestDefaults();
-		} catch (e) {
+		} catch (_Error) {
 			// No remote, don't try to set the current issue
 			return;
 		}
@@ -419,7 +419,7 @@ export class StateManager {
 				this.updateStatusBar();
 			}
 			this._onDidChangeCurrentIssue.fire();
-		} catch (e) {
+		} catch (_Error) {
 			// Error has already been surfaced
 		} finally {
 			this.isSettingIssue = false;

@@ -43,7 +43,7 @@ export class Protocol {
 				this.repositoryName = this.getRepositoryName(this.url.path) || '';
 				this.owner = this.getOwnerName(this.url.path) || '';
 			}
-		} catch (e) {
+		} catch (_Error) {
 			Logger.error(`Failed to parse '${uriString}'`);
 			vscode.window.showWarningMessage(
 				vscode.l10n.t('Unable to parse remote \'{0}\'. Please check that it is correctly formatted.', uriString)
@@ -139,7 +139,7 @@ export class Protocol {
 			return vscode.Uri.parse(
 				`${scheme}://${this.host.toLocaleLowerCase()}/${this.nameWithOwner.toLocaleLowerCase()}`,
 			);
-		} catch (e) {
+		} catch (_Error) {
 			return;
 		}
 	}

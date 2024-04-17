@@ -43,7 +43,7 @@ export interface PRUriParams {
 export function fromPRUri(uri: vscode.Uri): PRUriParams | undefined {
 	try {
 		return JSON.parse(uri.query) as PRUriParams;
-	} catch (e) { }
+	} catch (_Error) { }
 }
 
 export interface PRNodeUriParams {
@@ -53,7 +53,7 @@ export interface PRNodeUriParams {
 export function fromPRNodeUri(uri: vscode.Uri): PRNodeUriParams | undefined {
 	try {
 		return JSON.parse(uri.query) as PRNodeUriParams;
-	} catch (e) { }
+	} catch (_Error) { }
 }
 
 export interface GitHubUriParams {
@@ -65,7 +65,7 @@ export interface GitHubUriParams {
 export function fromGitHubURI(uri: vscode.Uri): GitHubUriParams | undefined {
 	try {
 		return JSON.parse(uri.query) as GitHubUriParams;
-	} catch (e) { }
+	} catch (_Error) { }
 }
 
 export function toGitHubUri(fileUri: vscode.Uri, scheme: Schemes.GithubPr | Schemes.GitPr, params: GitHubUriParams): vscode.Uri {
@@ -194,7 +194,7 @@ export namespace DataUri {
 		try {
 			const file = fileCacheUri(context, user);
 			return vscode.workspace.fs.readFile(file);
-		} catch (e) {
+		} catch (_Error) {
 			return;
 		}
 	}
@@ -211,7 +211,7 @@ export namespace DataUri {
 		try {
 			const log = await vscode.workspace.fs.readFile(cacheLog);
 			cacheLogOrder = JSON.parse(log.toString());
-		} catch (e) {
+		} catch (_Error) {
 			cacheLogOrder = [];
 		}
 		const startingCacheSize = cacheLogOrder.length;
@@ -230,7 +230,7 @@ export namespace DataUri {
 					throw new Error('Temporary state not initialized');
 				}
 				innerImageContents = Buffer.from(fileContents);
-			} catch (e) {
+			} catch (_Error) {
 				if (localOnly) {
 					return;
 				}
@@ -243,7 +243,7 @@ export namespace DataUri {
 				};
 				try {
 					await doFetch();
-				} catch (e) {
+				} catch (_Error) {
 					// We retry once.
 					await doFetch();
 				}
@@ -271,7 +271,7 @@ export namespace DataUri {
 			await Promise.all(toDelete.map(async (id) => {
 				try {
 					await vscode.workspace.fs.delete(vscode.Uri.joinPath(cacheLocation(context), id));
-				} catch (e) {
+				} catch (_Error) {
 					Logger.error(`Failed to delete avatar from cache: ${e}`);
 				}
 			}));
@@ -338,7 +338,7 @@ export function toResourceUri(uri: vscode.Uri, prNumber: number, fileName: strin
 export function fromFileChangeNodeUri(uri: vscode.Uri): FileChangeNodeUriParams | undefined {
 	try {
 		return uri.query ? JSON.parse(uri.query) as FileChangeNodeUriParams : undefined;
-	} catch (e) { }
+	} catch (_Error) { }
 }
 
 export function toPRUri(

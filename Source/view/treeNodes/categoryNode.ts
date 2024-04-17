@@ -319,7 +319,7 @@ export class CategoryTreeNode extends TreeNode implements vscode.TreeItem {
 		if (this.type === PRType.LocalPullRequest) {
 			try {
 				this.prs = (await this._prsTreeModel.getLocalPullRequests(this._folderRepoManager)).items;
-			} catch (e) {
+			} catch (_Error) {
 				vscode.window.showErrorMessage(vscode.l10n.t('Fetching local pull requests failed: {0}', formatError(e)));
 				needLogin = e instanceof AuthenticationError;
 			}
@@ -341,7 +341,7 @@ export class CategoryTreeNode extends TreeNode implements vscode.TreeItem {
 				}
 				hasMorePages = response.hasMorePages;
 				hasUnsearchedRepositories = response.hasUnsearchedRepositories;
-			} catch (e) {
+			} catch (_Error) {
 				const error = formatError(e);
 				const actions: string[] = [];
 				if (error.includes('Bad credentials')) {
