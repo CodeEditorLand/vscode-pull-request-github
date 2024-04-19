@@ -4,6 +4,9 @@
 	"version": "0.0.1",
 	"private": false,
 	"description": "%description%",
+	"keywords": [
+		"land"
+	],
 	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/LandPullRequestGithub#readme",
 	"bugs": {
 		"url": "HTTPS://GitHub.Com/CodeEditorLand/LandPullRequestGithub/issues"
@@ -2855,7 +2858,7 @@
 		"events": "3.3.0",
 		"fast-deep-equal": "3.1.3",
 		"lru-cache": "10.2.0",
-		"marked": "12.0.1",
+		"marked": "12.0.2",
 		"ssh-config": "4.4.3",
 		"tunnel": "0.0.6",
 		"url-search-params-polyfill": "8.2.5",
