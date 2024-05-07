@@ -8,7 +8,7 @@
 /* eslint-disable import/no-dynamic-require */
 
 //@ts-check
-/** @typedef {import('webpack').Configuration} WebpackConfig **/
+
 
 const execFile = require('child_process').execFile;
 const path = require('path');
