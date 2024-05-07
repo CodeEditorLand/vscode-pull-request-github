@@ -56,6 +56,7 @@ export class PullRequestCommentController extends CommentControllerBase implemen
 				this.registerListeners();
 			});
 		}
+
 		this._githubRepositories = this.githubReposForPullRequest(pullRequestModel);
 	}
 

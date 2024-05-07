@@ -665,6 +665,7 @@ export class UriIterator implements IKeyIterator<Uri> {
 		if (this._value.fragment) {
 			this._states.push(UriIteratorState.Fragment);
 		}
+
 		this._stateIdx = 0;
 		return this;
 	}

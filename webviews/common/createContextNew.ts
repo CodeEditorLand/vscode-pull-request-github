@@ -157,6 +157,7 @@ export class CreatePRContextNew {
 		if (updateValues.pendingDescription && this.createParams.pendingDescription && this.createParams.pendingDescription !== updateValues.pendingDescription) {
 			this._descriptionStack.push(this.createParams.pendingDescription);
 		}
+
 		this.updateState(updateValues);
 	};
 

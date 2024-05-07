@@ -40,6 +40,7 @@ export class VSLSGuest implements IGit, vscode.Disposable {
 		if (this._sharedServiceProxy.isServiceAvailable) {
 			await this._refreshWorkspaces(true);
 		}
+
 		this._disposables.push(
 			this._sharedServiceProxy.onDidChangeIsServiceAvailable(async e => {
 				await this._refreshWorkspaces(e);

@@ -148,6 +148,7 @@ export class PullRequestViewProvider extends WebviewViewBase implements vscode.W
 				}
 			}
 		}
+
 		this._item.requestReview(userReviewers, teamReviewers).then(() => {
 			if (targetReviewer) {
 				targetReviewer.state = 'REQUESTED';
@@ -173,6 +174,7 @@ export class PullRequestViewProvider extends WebviewViewBase implements vscode.W
 		if (this._prDisposables !== undefined) {
 			dispose(this._prDisposables);
 		}
+
 		this._prDisposables = [];
 		this._prDisposables.push(pullRequestModel.onDidInvalidate(() => this.updatePullRequest(pullRequestModel)));
 		this._prDisposables.push(pullRequestModel.onDidChangePendingReviewState(() => this.updatePullRequest(pullRequestModel)));
@@ -191,6 +193,7 @@ export class PullRequestViewProvider extends WebviewViewBase implements vscode.W
 		if ((this._prDisposables === undefined) || (pullRequestModel.number !== this._item.number)) {
 			this.registerPrSpecificListeners(pullRequestModel);
 		}
+
 		this._item = pullRequestModel;
 		return Promise.all([
 			this._folderRepositoryManager.resolvePullRequest(

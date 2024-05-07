@@ -205,6 +205,7 @@ export class StateManager {
 		if (this._queries.length === 0) {
 			this._queries = DEFAULT_QUERY_CONFIGURATION_VALUE;
 		}
+
 		this.context.subscriptions.push(
 			vscode.workspace.onDidChangeConfiguration(change => {
 				if (change.affectsConfiguration(`${ISSUES_SETTINGS_NAMESPACE}.${QUERIES}`)) {
@@ -395,6 +396,7 @@ export class StateManager {
 		if (this.isSettingIssue && issue === undefined) {
 			return;
 		}
+
 		this.isSettingIssue = true;
 		if (repoState instanceof FolderRepositoryManager) {
 			const state = this._singleRepoStates.get(repoState.repository.rootUri.path);

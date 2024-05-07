@@ -173,14 +173,17 @@ export class ReviewCommentController extends CommentControllerBase
 		for (const key in this._workspaceFileChangeCommentThreads) {
 			dispose(this._workspaceFileChangeCommentThreads[key]);
 		}
+
 		this._workspaceFileChangeCommentThreads = {};
 		for (const key in this._reviewSchemeFileChangeCommentThreads) {
 			dispose(this._reviewSchemeFileChangeCommentThreads[key]);
 		}
+
 		this._reviewSchemeFileChangeCommentThreads = {};
 		for (const key in this._obsoleteFileChangeCommentThreads) {
 			dispose(this._obsoleteFileChangeCommentThreads[key]);
 		}
+
 		this._obsoleteFileChangeCommentThreads = {};
 
 		const threadsByPath = groupBy(reviewThreads, thread => thread.path);

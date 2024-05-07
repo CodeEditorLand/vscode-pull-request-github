@@ -123,6 +123,7 @@ export class IssueModel<TItem extends Issue = Issue> {
 		if (!this.bodyHTML || (issue.body !== this.body)) {
 			this.bodyHTML = issue.bodyHTML;
 		}
+
 		this.html_url = issue.url;
 		this.author = issue.user;
 		this.milestone = issue.milestone;

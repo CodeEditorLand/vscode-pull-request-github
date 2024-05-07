@@ -303,6 +303,7 @@ export class NotificationProvider implements vscode.Disposable {
 		if (this._lastModified === headers['last-modified']) {
 			return;
 		}
+
 		this._lastModified = headers['last-modified'] ?? '';
 
 		const prNodesToUpdate = this.uriFromNotifications();
@@ -394,6 +395,7 @@ export class NotificationProvider implements vscode.Disposable {
 		if (this._pollingHandler) {
 			clearInterval(this._pollingHandler);
 		}
+
 		this.disposables.forEach(displosable => displosable.dispose());
 	}
 }

@@ -170,6 +170,7 @@ export class PrsTreeModel implements vscode.Disposable {
 				this._queriedPullRequests.set(identifier, newState);
 			}
 		}
+
 		this._onDidChangePrStatus.fire(changedStatuses);
 	}
 

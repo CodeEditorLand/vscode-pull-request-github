@@ -24,6 +24,7 @@ export class GitLensIntegration implements Disposable {
 		if (!api) {
 			return;
 		}
+
 		this._subscriptions.push(
 			api.registerActionRunner('createPullRequest', {
 				partnerId: 'ghpr',

@@ -88,6 +88,7 @@ export class ReviewsManager {
 				return;
 			}
 		}
+
 		this._reviewManagers.push(reviewManager);
 	}
 

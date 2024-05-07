@@ -423,6 +423,7 @@ export class FolderRepositoryManager implements vscode.Disposable {
 		if (this._updatingRepositories) {
 			await this._updatingRepositories;
 		}
+
 		this._updatingRepositories = this.doUpdateRepositories(silent);
 		return this._updatingRepositories;
 	}

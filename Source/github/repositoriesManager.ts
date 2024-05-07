@@ -98,6 +98,7 @@ export class RepositoriesManager implements vscode.Disposable {
 				return;
 			}
 		}
+
 		this._folderManagers.push(folderManager);
 		this.updateActiveReviewCount();
 		this._onDidChangeFolderRepositories.fire({ added: folderManager });

@@ -822,6 +822,7 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 			await this._item.enableAutoMerge(message.args.autoMergeMethod);
 			replyMessage = { autoMerge: this._item.autoMerge, autoMergeMethod: this._item.autoMergeMethod };
 		}
+
 		this._replyMessage(message, replyMessage);
 	}
 
