@@ -116,7 +116,6 @@ export class CurrentIssue {
 				throw e;
 			}
 		}
-
 		this._onDidChangeCurrentIssueState.fire();
 		this.dispose();
 	}

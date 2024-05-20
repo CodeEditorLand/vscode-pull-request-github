@@ -113,7 +113,6 @@ export class CommitNode extends TreeNode implements vscode.TreeItem {
 			// flat view
 			result = fileChangeNodes;
 		}
-
 		this.children = result;
 		return result;
 	}

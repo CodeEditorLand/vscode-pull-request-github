@@ -860,7 +860,6 @@ export class CreatePullRequestViewProviderNew extends WebviewViewBase implements
 		if (this.generatingCancellationToken) {
 			this.generatingCancellationToken.cancel();
 		}
-
 		this.generatingCancellationToken = new vscode.CancellationTokenSource();
 
 

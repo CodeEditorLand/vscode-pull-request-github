@@ -84,7 +84,6 @@ export class RepositoryChangesNode extends DescriptionNode implements vscode.Tre
 				this._pullRequest,
 			);
 		}
-
 		this.children = [this._filesCategoryNode, this._commitsCategoryNode];
 		return this.children;
 	}
@@ -107,7 +106,6 @@ export class RepositoryChangesNode extends DescriptionNode implements vscode.Tre
 				this.label = `${this.label.substring(0, 35)}...`;
 			}
 		}
-
 		this.updateContextValue();
 		return this;
 	}

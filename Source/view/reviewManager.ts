@@ -118,7 +118,6 @@ export class ReviewManager {
 		if (_gitApi.state === 'initialized') {
 			this.updateState(true);
 		}
-
 		this.pollForStatusChange();
 	}
 
@@ -482,7 +481,6 @@ export class ReviewManager {
 		if (previousPrNumber === pr.number && !hasPushedChanges && (this._isShowingLastReviewChanges === pr.showChangesSinceReview)) {
 			return;
 		}
-
 		this._isShowingLastReviewChanges = pr.showChangesSinceReview;
 		if (previousPrNumber !== pr.number) {
 			this.clear(false);
@@ -637,7 +635,6 @@ export class ReviewManager {
 		if (shouldShowCommentsView !== 'never') {
 			commands.executeCommand('workbench.action.focusCommentsPanel');
 		}
-
 		this._activePrViewCoordinator.show(pr);
 		if (updateLayout) {
 			const focusedMode = vscode.workspace.getConfiguration(PR_SETTINGS_NAMESPACE).get<'firstDiff' | 'overview' | 'multiDiff' | false>(FOCUSED_MODE);

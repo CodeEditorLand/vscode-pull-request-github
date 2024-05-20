@@ -590,7 +590,6 @@ export class IssueFeatureRegistrar implements vscode.Disposable {
 				);
 			}
 		}
-
 		this.context.subscriptions.push(
 			vscode.workspace.onDidChangeConfiguration(change => {
 				for (const element of providers) {
@@ -770,7 +769,6 @@ export class IssueFeatureRegistrar implements vscode.Disposable {
 		if (!(issueModel instanceof IssueModel)) {
 			return;
 		}
-
 		this.doStartWorking(this.manager.getManagerForIssueModel(issueModel), issueModel, true);
 	}
 

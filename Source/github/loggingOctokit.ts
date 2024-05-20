@@ -111,7 +111,6 @@ export class LoggingApolloClient {
 		if (result === undefined) {
 			throw new Error('API call count has exceeded a rate limit.');
 		}
-
 		this._rateLogger.logRateLimit(logInfo, result as any);
 		return result;
 	}
@@ -122,7 +121,6 @@ export class LoggingApolloClient {
 		if (result === undefined) {
 			throw new Error('API call count has exceeded a rate limit.');
 		}
-
 		this._rateLogger.logRateLimit(logInfo, result as any);
 		return result;
 	}
@@ -137,7 +135,6 @@ export class LoggingOctokit {
 		if (result === undefined) {
 			throw new Error('API call count has exceeded a rate limit.');
 		}
-
 		this._rateLogger.logRestRateLimit(logInfo, result as Promise<unknown> as Promise<RestResponse>);
 		return result;
 	}

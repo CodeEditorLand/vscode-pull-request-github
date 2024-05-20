@@ -71,7 +71,6 @@ export class IssueFileSystemProvider implements vscode.FileSystemProvider {
 			this.modifiedTime = new Date().getTime();
 			this._onDidChangeFile.fire([{ uri: uri, type: vscode.FileChangeType.Changed }]);
 		}
-
 		this.cache.cache(content);
 	}
 	delete(uri: vscode.Uri, _options: { recursive: boolean }): void | Thenable<void> {

@@ -7,6 +7,7 @@
 import * as vscode from 'vscode';
 import { onDidUpdatePR, openPullRequestOnGitHub } from '../commands';
 import { IComment } from '../common/comment';
+import { commands, contexts } from '../common/executeCommands';
 import Logger from '../common/logger';
 import { DEFAULT_MERGE_METHOD, PR_SETTINGS_NAMESPACE } from '../common/settingKeys';
 import { ReviewEvent as CommonReviewEvent } from '../common/timelineEvent';
@@ -119,6 +120,8 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 			this._disposables,
 		);
 
+		this.setVisibilityContext();
+		this._disposables.push(this._panel.onDidChangeViewState(() => this.setVisibilityContext()));
 		this._disposables.push(
 			folderRepositoryManager.onDidMergePullRequest(_ => {
 				this._postMessage({
@@ -164,6 +167,10 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 		}
 	}
 
+	private setVisibilityContext() {
+		return commands.setContext(contexts.PULL_REQUEST_DESCRIPTION_VISIBLE, this._panel.visible);
+	}
+
 	/**
 	 * Find currently configured user's review status for the current PR
 	 * @param reviewers All the reviewers who have been requested to review the current PR
@@ -197,7 +204,8 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 			this._folderRepositoryManager.getOrgTeamsCount(pullRequestModel.githubRepository),
 			this._folderRepositoryManager.mergeQueueMethodForBranch(pullRequestModel.base.ref, pullRequestModel.remote.owner, pullRequestModel.remote.repositoryName),
 			this._folderRepositoryManager.isHeadUpToDateWithBase(pullRequestModel),
-			pullRequestModel.getMergeability()])
+			pullRequestModel.getMergeability(),
+			this._folderRepositoryManager.credentialStore.getIsEmu(pullRequestModel.remote.authProviderId)])
 			.then(result => {
 				const [
 					pullRequest,
@@ -212,7 +220,8 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 					orgTeamsCount,
 					mergeQueueMethod,
 					isBranchUpToDateWithBase,
-					mergeability
+					mergeability,
+					isEmu
 				] = result;
 				if (!pullRequest) {
 					throw new Error(
@@ -290,7 +299,7 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 					milestone: pullRequest.milestone,
 					assignees: pullRequest.assignees,
 					continueOnGitHub,
-					emailForCommit: currentUser.email,
+					emailForCommit: isEmu ? undefined : currentUser.email,
 					isAuthor: currentUser.login === pullRequest.author.login,
 					currentUserReviewState: reviewState,
 					isDarkTheme: vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.Dark,
@@ -822,7 +831,6 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 			await this._item.enableAutoMerge(message.args.autoMergeMethod);
 			replyMessage = { autoMerge: this._item.autoMerge, autoMergeMethod: this._item.autoMergeMethod };
 		}
-
 		this._replyMessage(message, replyMessage);
 	}
 

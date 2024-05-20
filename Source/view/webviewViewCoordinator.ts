@@ -43,7 +43,6 @@ export class WebviewViewCoordinator implements vscode.Disposable {
 		if (replace) {
 			this._pullRequestModel.delete(replace);
 		}
-
 		this._pullRequestModel.set(pullRequestModel, { folderRepositoryManager, reviewManager });
 		this.updatePullRequest();
 	}

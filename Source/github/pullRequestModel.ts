@@ -564,7 +564,6 @@ export class PullRequestModel extends IssueModel<PullRequest> implements IPullRe
 		if (!data) {
 			throw new Error('Failed to start review');
 		}
-
 		this.hasPendingReview = true;
 		this._onDidChangeComments.fire();
 		return data.addPullRequestReview.pullRequestReview.id;
@@ -1999,7 +1998,6 @@ export class PullRequestModel extends IssueModel<PullRequest> implements IPullRe
 				this._unviewedFiles.delete(filePath);
 			}
 		}
-
 		this._fileChangeViewedState[fileSubpath] = viewedState;
 		if (event) {
 			this._onDidChangeFileViewedState.fire({ changed: [{ fileName: fileSubpath, viewed: viewedState }] });

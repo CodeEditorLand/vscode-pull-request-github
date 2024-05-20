@@ -67,7 +67,6 @@ export class ConflictModel implements vscode.Disposable {
 		if (result && this.push) {
 			this._repository.push();
 		}
-
 		this._finishedCommit.fire(result);
 	}
 

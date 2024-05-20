@@ -82,7 +82,6 @@ class MergeOutputProvider implements vscode.FileSystemProvider {
 			fileEvents.push({ uri: vscode.Uri.from({ scheme: this._conflictResolutionModel.mergeScheme, path: file }), type: vscode.FileChangeType.Changed });
 			this.updateFile(file, buffer.Buffer.from(ORIGINAL_FILE));
 		}
-
 		this._onDidChangeFile.fire(fileEvents);
 	}
 
