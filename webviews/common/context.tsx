@@ -96,7 +96,6 @@ export class PRContext {
 			console.error('No comments to delete for review:', pullRequestReviewId, review);
 			return;
 		}
-
 		this.pr.events.splice(index, 1, {
 			...review,
 			comments: review.comments.filter(c => c.id !== id),
@@ -200,7 +199,6 @@ export class PRContext {
 		if (isDequeued) {
 			state.mergeQueueEntry = undefined;
 		}
-
 		this.updatePR(state);
 	}
 
@@ -210,7 +208,6 @@ export class PRContext {
 		if (result.mergeQueueEntry) {
 			state.mergeQueueEntry = result.mergeQueueEntry;
 		}
-
 		this.updatePR(state);
 	}
 
@@ -276,9 +273,10 @@ export class PRContext {
 				window.scrollTo(message.scrollPosition.x, message.scrollPosition.y);
 				return;
 			case 'pr.scrollToPendingReview':
-				const pendingReview = document.getElementById('pending-review');
+				const pendingReview = document.getElementById('pending-review') ?? document.getElementById('comment-textarea');
 				if (pendingReview) {
 					pendingReview.scrollIntoView();
+					pendingReview.focus();
 				}
 				return;
 			case 'pr.submitting-review':
