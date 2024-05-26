@@ -2868,7 +2868,7 @@
 		"css-loader": "7.1.2",
 		"esbuild-loader": "4.1.0",
 		"event-stream": "4.0.1",
-		"glob": "10.3.16",
+		"glob": "10.4.1",
 		"graphql": "16.8.1",
 		"graphql-tag": "2.12.6",
 		"jsdom": "24.0.0",
