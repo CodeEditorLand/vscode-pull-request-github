@@ -261,6 +261,7 @@ FakesAssemblies/
 
 # Node.js Tools for Visual Studio
 .ntvs_analysis.dat
+node_modules/
 
 # Visual Studio 6 build log
 *.plg
@@ -330,12 +331,15 @@ ASALocalRun/
 
 
 out
+node_modules
 dist
 ./test/
 media
 .vscode-test
 .vscode-test-web
+.DS_Store
 *.vsix
+package-lock.json
 src/@types/vscode.d.ts
 src/@types/vscode.proposed.d.ts
 

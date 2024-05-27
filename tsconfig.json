@@ -4,5 +4,9 @@
 		"tsBuildInfoFile": "tsconfig.tsbuildinfo",
 		"strictNullChecks": true
 	},
-	"exclude": ["node_modules", "src/test", "webviews"]
+	"exclude": [
+		"node_modules",
+		"src/test",
+		"webviews"
+	]
 }
