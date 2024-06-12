@@ -2831,7 +2831,7 @@
 		"events": "3.3.0",
 		"fast-deep-equal": "3.1.3",
 		"lru-cache": "10.2.2",
-		"marked": "12.0.2",
+		"marked": "13.0.0",
 		"ssh-config": "4.4.4",
 		"tunnel": "0.0.6",
 		"url-search-params-polyfill": "8.2.5",
