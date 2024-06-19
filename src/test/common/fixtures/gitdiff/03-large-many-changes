@@ -11,31 +11,12 @@
 		"url": "https://github.com/Microsoft/vscode-pull-request-github/issues"
 	},
 	"enabledApiProposals": [
-		"activeComment",
-		"codiconDecoration",
-		"codeActionRanges",
-		"commentingRangeHint",
-		"commentReactor",
-		"commentReveal",
-		"commentThreadApplicability",
-		"contribAccessibilityHelpContent",
-		"contribCommentEditorActionsMenu",
-		"contribCommentPeekContext",
-		"contribCommentThreadAdditionalMenu",
-		"contribCommentsViewThreadMenus",
-		"contribEditorContentMenu",
-		"contribShareMenu",
-		"diffCommand",
-		"fileComments",
-		"quickDiffProvider",
-		"shareProvider",
-		"tokenInformation",
-		"treeViewMarkdownMessage"
+
 	],
-	"version": "0.90.0",
+	"version": "0.86.0",
 	"publisher": "GitHub",
 	"engines": {
-		"vscode": "^1.90.0"
+		"vscode": "^1.88.0"
 	},
 	"categories": [
 		"Other"
@@ -234,7 +215,7 @@
 					"default": true,
 					"description": "%githubPullRequests.defaultDeletionMethod.selectLocalBranch.description%"
 				},
-				"githubPullRequests.defaultDeletionMethod.selectRemote": {
+				"githubPullRequests.defaulteletionMethod.selectRemote": {
 					"type": "boolean",
 					"default": true,
 					"description": "%githubPullRequests.defaultDeletionMethod.selectRemote.description%"
@@ -441,13 +422,12 @@
 				},
 				"githubPullRequests.createDefaultBaseBranch": {
 					"type": "string",
-					"enum": ["repositoryDefault", "createdFromBranch", "auto"],
+					"enum": ["repositoryDefault", "createdFromBranch"],
 					"markdownEnumDescriptions": [
 						"%githubPullRequests.createDefaultBaseBranch.repositoryDefault%",
-						"%githubPullRequests.createDefaultBaseBranch.createdFromBranch%",
-						"%githubPullRequests.createDefaultBaseBranch.auto%"
+						"%githubPullRequests.createDefaultBaseBranch.createdFromBranch%"
 					],
-					"default": "auto",
+					"default": "createdFromBranch",
 					"markdownDescription": "%githubPullRequests.createDefaultBaseBranch.description%"
 				},
 				"githubIssues.ignoreMilestones": {
@@ -627,7 +607,7 @@
 						"multiDiff",
 						false
 					],
-					"default": "multiDiff",
+					"default": "firstDiff",
 					"description": "%githubPullRequests.focusedMode.description%"
 				},
 				"githubPullRequests.showPullRequestNumberInTree": {
@@ -662,22 +642,14 @@
 				{
 					"id": "pr:github",
 					"name": "%view.pr.github.name%",
-					"when": "ReposManagerStateContext != NeedsAuthentication && !github:resolvingConflicts",
-					"icon": "$(git-pull-request)",
-					"accessibilityHelpContent": "%view.pr.github.accessibilityHelpContent%"
+					"when": "ReposManagerStateContext != NeedsAuthentication",
+					"icon": "$(git-pull-request)"
 				},
 				{
 					"id": "issues:github",
 					"name": "%view.issues.github.name%",
-					"when": "ReposManagerStateContext != NeedsAuthentication && !github:resolvingConflicts",
-					"icon": "$(issues)",
-					"accessibilityHelpContent": "%view.pr.github.accessibilityHelpContent%"
-				},
-				{
-					"id": "github:conflictResolution",
-					"name": "%view.github.conflictResolution.name%",
-					"when": "github:resolvingConflicts",
-					"icon": "$(git-merge)"
+					"when": "ReposManagerStateContext != NeedsAuthentication",
+					"icon": "$(issues)"
 				}
 			],
 			"github-pull-request": [
@@ -852,11 +824,6 @@
 				"category": "%command.pull.request.category%"
 			},
 			{
-				"command": "pr.focusDescriptionInput",
-				"title": "%command.pr.focusDescriptionInput.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
 				"command": "pr.showDiffSinceLastReview",
 				"title": "%command.pr.showDiffSinceLastReview.title%",
 				"icon": "$(git-pull-request-new-changes)"
@@ -999,13 +966,8 @@
 			{
 				"command": "pr.unresolveReviewThread",
 				"title": "%command.pr.unresolveReviewThread.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "pr.unresolveReviewThreadFromView",
-				"title": "%command.pr.unresolveReviewThread.title%",
 				"category": "%command.pull.request.category%",
-				"icon": "$(sync)"
+				"icon": "$(discard)"
 			},
 			{
 				"command": "pr.diffOutdatedCommentWithHead",
@@ -1134,16 +1096,6 @@
 				"category": "%command.pull.request.category%"
 			},
 			{
-				"command": "pr.resolveConflict",
-				"title": "%command.pr.resolveConflict.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "pr.acceptMerge",
-				"title": "%command.pr.acceptMerge.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
 				"command": "review.diffWithPrHead",
 				"title": "%command.review.diffWithPrHead.title%",
 				"category": "%command.pull.request.category%"
@@ -1181,6 +1133,11 @@
 			{
 				"command": "review.approveDescription",
 				"title": "%command.review.approve.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "review.commentDescription",
+				"title": "%command.review.comment.title%",
 				"category": "%command.pull.request.category%"
 			},
 			{
@@ -1655,10 +1612,6 @@
 					"when": "gitHubOpenRepositoryCount != 0 && github:inReviewMode"
 				},
 				{
-					"command": "pr.focusDescriptionInput",
-					"when": "github:pullRequestDescriptionVisible"
-				},
-				{
 					"command": "pr.showDiffSinceLastReview",
 					"when": "false"
 				},
@@ -1887,14 +1840,6 @@
 					"when": "gitHubOpenRepositoryCount != 0"
 				},
 				{
-					"command": "pr.resolveConflict",
-					"when": "false"
-				},
-				{
-					"command": "pr.acceptMerge",
-					"when": "isMergeResultEditor && mergeEditorBaseUri =~ /^(githubpr|gitpr):/"
-				},
-				{
 					"command": "issue.copyGithubPermalink",
 					"when": "github:hasGitHubRemotes"
 				},
@@ -2016,10 +1961,6 @@
 				},
 				{
 					"command": "pr.refreshActivePullRequest",
-					"when": "false"
-				},
-				{
-					"command": "pr.applySuggestion",
 					"when": "false"
 				},
 				{
@@ -2345,7 +2286,7 @@
 					"when": "commentController =~ /^github-(browse|review)/ && commentThread =~ /canResolve/"
 				},
 				{
-					"command": "pr.unresolveReviewThreadFromView",
+					"command": "pr.unresolveReviewThread",
 					"group": "inline@1",
 					"when": "commentController =~ /^github-(browse|review)/ && commentThread =~ /canUnresolve/"
 				},
@@ -2360,7 +2301,7 @@
 					"when": "commentController =~ /^github-(browse|review)/ && commentThread =~ /canResolve/"
 				},
 				{
-					"command": "pr.unresolveReviewThreadFromView",
+					"command": "pr.unresolveReviewThread",
 					"group": "context@1",
 					"when": "commentController =~ /^github-(browse|review)/ && commentThread =~ /canUnresolve/"
 				}
@@ -2405,12 +2346,6 @@
 					"command": "pr.addFileComment",
 					"group": "navigation",
 					"when": "(resourceScheme == pr) || (resourcePath in github:viewedFiles) || (resourcePath in github:unviewedFiles)"
-				}
-			],
-			"editor/content": [
-				{
-					"command": "pr.acceptMerge",
-					"when": "isMergeResultEditor && mergeEditorBaseUri =~ /^(githubpr|gitpr):/"
 				}
 			],
 			"scm/title": [
@@ -2537,6 +2472,18 @@
 				}
 			],
 			"comments/comment/context": [
+				{
+					"command": "pr.saveComment",
+					"group": "inline@1",
+					"when": "commentController =~ /^github-(browse|review)/"
+				},
+				{
+					"command": "pr.cancelEditComment",
+					"group": "inline@2",
+					"when": "commentController =~ /^github-(browse|review)/"
+				}
+			],
+			"comments/comment2/context": [
 				{
 					"command": "pr.saveComment",
 					"group": "inline@1",
@@ -2901,7 +2848,7 @@
 		"@types/react-dom": "^16.8.2",
 		"@types/sinon": "7.0.11",
 		"@types/temp": "0.8.34",
-		"@types/vscode": "1.89.0",
+		"@types/vscode": "1.79.0",
 		"@types/webpack-env": "^1.16.0",
 		"@typescript-eslint/eslint-plugin": "6.10.0",
 		"@typescript-eslint/parser": "6.10.0",
