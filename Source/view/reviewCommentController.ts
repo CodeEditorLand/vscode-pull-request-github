@@ -224,9 +224,11 @@ export class ReviewCommentController extends CommentControllerBase
 	private updateResourcesWithCommentingRanges(): void {
 		// only prefetch for small PRs
 		if (this._folderRepoManager.activePullRequest && this._folderRepoManager.activePullRequest.fileChanges.size < 30) {
-			for (const file of (this._folderRepoManager.activePullRequest?.fileChanges.keys() ?? [])) {
-				const uri = vscode.Uri.joinPath(this._folderRepoManager.repository.rootUri, file);
-				vscode.workspace.openTextDocument(uri);
+			for (const [file, change] of (this._folderRepoManager.activePullRequest?.fileChanges.entries() ?? [])) {
+				if (change.status !== GitChangeType.DELETE) {
+					const uri = vscode.Uri.joinPath(this._folderRepoManager.repository.rootUri, file);
+					vscode.workspace.openTextDocument(uri);
+				}
 			}
 		}
 	}
@@ -433,7 +435,7 @@ export class ReviewCommentController extends CommentControllerBase
 		return false;
 	}
 
-	async provideCommentingRanges(document: vscode.TextDocument, _token: vscode.CancellationToken): Promise<vscode.Range[] | { fileComments: boolean; ranges?: vscode.Range[] } | undefined> {
+	async provideCommentingRanges(document: vscode.TextDocument, _token: vscode.CancellationToken): Promise<vscode.Range[] | { enableFileComments: boolean; ranges?: vscode.Range[] } | undefined> {
 		let query: ReviewUriParams | undefined =
 			(document.uri.query && document.uri.query !== '') ? fromReviewUri(document.uri.query) : undefined;
 
@@ -442,7 +444,7 @@ export class ReviewCommentController extends CommentControllerBase
 
 			if (matchedFile) {
 				Logger.debug('Found matched file for commenting ranges.', ReviewCommentController.ID);
-				return { ranges: getCommentingRanges(await matchedFile.changeModel.diffHunks(), query.base, ReviewCommentController.ID), fileComments: true };
+				return { ranges: getCommentingRanges(await matchedFile.changeModel.diffHunks(), query.base, ReviewCommentController.ID), enableFileComments: true };
 			}
 		}
 
@@ -492,7 +494,7 @@ export class ReviewCommentController extends CommentControllerBase
 			}
 
 			Logger.debug(`Providing ${ranges.length} commenting ranges for ${nodePath.basename(document.uri.fsPath)}.`, ReviewCommentController.ID);
-			return { ranges, fileComments: ranges.length > 0 };
+			return { ranges, enableFileComments: ranges.length > 0 };
 		} else {
 			Logger.debug('No commenting ranges: File scheme differs from repository scheme.', ReviewCommentController.ID);
 		}
