@@ -187,7 +187,6 @@ export function main() {
 					setGeneratingTitle(false);
 				}
 
-
 				if (!ctx.initialized) {
 					ctx.initialize();
 				}
@@ -241,7 +240,7 @@ export function main() {
 							onChange={(e) => updateTitle(e.currentTarget.value)}
 							onKeyDown={(e) => onKeyDown(true, e)}
 							data-vscode-context='{"preventDefaultContextMenuItems": false}'
-							disabled={!ctx.initialized || isBusy || isGeneratingTitle || params.reviewing}>
+							disabled={!ctx.initialized || isBusy || isGeneratingTitle}>
 						</input>
 						{ctx.createParams.generateTitleAndDescriptionTitle ?
 							isGeneratingTitle ?
@@ -338,7 +337,7 @@ export function main() {
 							onChange={(e) => ctx.updateState({ pendingDescription: e.currentTarget.value })}
 							onKeyDown={(e) => onKeyDown(false, e)}
 							data-vscode-context='{"preventDefaultContextMenuItems": false}'
-							disabled={!ctx.initialized || isBusy || isGeneratingTitle || params.reviewing}></textarea>
+							disabled={!ctx.initialized || isBusy || isGeneratingTitle}></textarea>
 					</div>
 
 					<div className={params.validate && !!params.createError ? 'wrapper validation-error' : 'hidden'} aria-live='assertive'>
@@ -357,7 +356,7 @@ export function main() {
 							defaultOptionLabel={() => createMethodLabel(ctx.createParams.isDraft, ctx.createParams.autoMerge, ctx.createParams.autoMergeMethod, ctx.createParams.baseHasMergeQueue).label}
 							defaultOptionValue={() => createMethodLabel(ctx.createParams.isDraft, ctx.createParams.autoMerge, ctx.createParams.autoMergeMethod, ctx.createParams.baseHasMergeQueue).value}
 							optionsTitle='Create with Option'
-							disabled={isBusy || isGeneratingTitle || params.reviewing || !isCreateable || !ctx.initialized}
+							disabled={isBusy || isGeneratingTitle || !isCreateable || !ctx.initialized}
 						/>
 
 					</div>

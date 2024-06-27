@@ -102,10 +102,3 @@ export interface MergeArguments {
 	method: MergeMethod;
 	email?: string;
 }
-
-export enum PreReviewState {
-	None = 0,
-	Available,
-	ReviewedWithComments,
-	ReviewedWithoutComments
-}

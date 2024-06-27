@@ -4,7 +4,6 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { IAccount, ILabel, IMilestone, IProject, ITeam, MergeMethod, MergeMethodsAvailability } from '../src/github/interface';
-import { PreReviewState } from '../src/github/views';
 
 export interface RemoteInfo {
 	owner: string;
@@ -112,8 +111,6 @@ export interface CreateParamsNew {
 	isDarkTheme?: boolean;
 	generateTitleAndDescriptionTitle: string | undefined;
 	initializeWithGeneratedTitleAndDescription: boolean;
-	preReviewState: PreReviewState;
-	preReviewer: string | undefined;
 
 	validate?: boolean;
 	showTitleValidationError?: boolean;
@@ -128,7 +125,6 @@ export interface CreateParamsNew {
 	baseHasMergeQueue: boolean;
 
 	creating: boolean;
-	reviewing: boolean;
 }
 
 export interface ChooseRemoteAndBranchArgs {
