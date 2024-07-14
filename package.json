@@ -1,29 +1,17 @@
 {
-	"name": "vscode-pull-request-github",
-	"displayName": "%displayName%",
-	"description": "%description%",
-	"main": "./dist/extension",
+	"activationEvents": [
+		"onStartupFinished",
+		"onFileSystem:newIssue",
+		"onFileSystem:pr",
+		"onFileSystem:githubpr",
+		"onFileSystem:review"
+	],
 	"browser": "./dist/browser/extension",
-	"scripts": {
-		"browsertest": "yarn run browsertest:preprocess && node ./dist/browser/test/runTests.js",
-		"browsertest:preprocess": "tsc ./src/test/browser/runTests.ts --outDir ./dist/browser/test --rootDir ./src/test/browser --target es6 --module commonjs",
-		"bundle": "webpack --mode production --env esbuild",
-		"bundle:node": "webpack --mode production --config-name extension:node --config-name webviews",
-		"bundle:web": "webpack --mode production --config-name extension:webworker --config-name webviews",
-		"clean": "rm -r dist/",
-		"compile": "webpack --mode development --env esbuild",
-		"compile:node": "webpack --mode development --config-name extension:node --config-name webviews",
-		"compile:test": "tsc -p tsconfig.test.json",
-		"compile:web": "webpack --mode development --config-name extension:webworker --config-name webviews",
-		"hygiene": "node ./build/hygiene.js",
-		"lint:browser": "eslint --fix --cache --cache-location .eslintcache.browser --config .eslintrc.browser.json --ignore-pattern src/env/node/**/* \"{src,webviews}/**/*.{ts,tsx}\"",
-		"prepare": "husky install",
-		"test:preprocess": "yarn run compile:test && yarn run test:preprocess-gql && yarn run test:preprocess-svg && yarn run test:preprocess-fixtures",
-		"test:preprocess-fixtures": "node scripts/preprocess-fixtures --in src --out out",
-		"test:preprocess-gql": "node scripts/preprocess-gql --in src/github/queries.gql --out out/src/github/queries.gql && node scripts/preprocess-gql --in src/github/queriesExtra.gql --out out/src/github/queriesExtra.gql && node scripts/preprocess-gql --in src/github/queriesShared.gql --out out/src/github/queriesShared.gql && node scripts/preprocess-gql --in src/github/queriesLimited.gql --out out/src/github/queriesLimited.gql",
-		"test:preprocess-svg": "node scripts/preprocess-svg --in ../resources/ --out out/resources",
-		"update-dts": "cd \"src/@types\" && npx vscode-dts main && npx vscode-dts dev",
-		"watch:web": "webpack --watch --mode development --config-name extension:webworker --config-name webviews"
+	"capabilities": {
+		"untrustedWorkspaces": {
+			"supported": true
+		},
+		"virtualWorkspaces": true
 	},
 	"contributes": {
 		"colors": [
@@ -2852,13 +2840,6 @@
 			}
 		]
 	},
-	"activationEvents": [
-		"onStartupFinished",
-		"onFileSystem:newIssue",
-		"onFileSystem:pr",
-		"onFileSystem:githubpr",
-		"onFileSystem:review"
-	],
 	"dependencies": {
 		"@octokit/rest": "18.2.1",
 		"@octokit/types": "6.10.1",
@@ -2878,6 +2859,7 @@
 		"uuid": "8.3.2",
 		"vsls": "^0.3.967"
 	},
+	"description": "%description%",
 	"devDependencies": {
 		"@types/chai": "^4.1.4",
 		"@types/glob": "7.1.3",
@@ -2919,16 +2901,7 @@
 		"typescript-formatter": "^7.2.2",
 		"vinyl-fs": "^3.0.3"
 	},
-	"extensionDependencies": [
-		"vscode.github-authentication"
-	],
-	"icon": "resources/icons/github_logo.png",
-	"capabilities": {
-		"untrustedWorkspaces": {
-			"supported": true
-		},
-		"virtualWorkspaces": true
-	},
+	"displayName": "%displayName%",
 	"enabledApiProposals": [
 		"activeComment",
 		"codiconDecoration",
@@ -2951,5 +2924,32 @@
 		"tokenInformation",
 		"treeViewMarkdownMessage"
 	],
-	"l10n": "./dist/browser/extension"
+	"extensionDependencies": [
+		"vscode.github-authentication"
+	],
+	"icon": "resources/icons/github_logo.png",
+	"l10n": "./dist/browser/extension",
+	"main": "./dist/extension",
+	"name": "vscode-pull-request-github",
+	"scripts": {
+		"browsertest": "yarn run browsertest:preprocess && node ./dist/browser/test/runTests.js",
+		"browsertest:preprocess": "tsc ./src/test/browser/runTests.ts --outDir ./dist/browser/test --rootDir ./src/test/browser --target es6 --module commonjs",
+		"bundle": "webpack --mode production --env esbuild",
+		"bundle:node": "webpack --mode production --config-name extension:node --config-name webviews",
+		"bundle:web": "webpack --mode production --config-name extension:webworker --config-name webviews",
+		"clean": "rm -r dist/",
+		"compile": "webpack --mode development --env esbuild",
+		"compile:node": "webpack --mode development --config-name extension:node --config-name webviews",
+		"compile:test": "tsc -p tsconfig.test.json",
+		"compile:web": "webpack --mode development --config-name extension:webworker --config-name webviews",
+		"hygiene": "node ./build/hygiene.js",
+		"lint:browser": "eslint --fix --cache --cache-location .eslintcache.browser --config .eslintrc.browser.json --ignore-pattern src/env/node/**/* \"{src,webviews}/**/*.{ts,tsx}\"",
+		"prepare": "husky install",
+		"test:preprocess": "yarn run compile:test && yarn run test:preprocess-gql && yarn run test:preprocess-svg && yarn run test:preprocess-fixtures",
+		"test:preprocess-fixtures": "node scripts/preprocess-fixtures --in src --out out",
+		"test:preprocess-gql": "node scripts/preprocess-gql --in src/github/queries.gql --out out/src/github/queries.gql && node scripts/preprocess-gql --in src/github/queriesExtra.gql --out out/src/github/queriesExtra.gql && node scripts/preprocess-gql --in src/github/queriesShared.gql --out out/src/github/queriesShared.gql && node scripts/preprocess-gql --in src/github/queriesLimited.gql --out out/src/github/queriesLimited.gql",
+		"test:preprocess-svg": "node scripts/preprocess-svg --in ../resources/ --out out/resources",
+		"update-dts": "cd \"src/@types\" && npx vscode-dts main && npx vscode-dts dev",
+		"watch:web": "webpack --watch --mode development --config-name extension:webworker --config-name webviews"
+	}
 }
