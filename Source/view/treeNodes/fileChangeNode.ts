@@ -299,7 +299,7 @@ export class InMemFileChangeNode extends FileChangeNode implements vscode.TreeIt
 }
 
 /**
- * File change node whose content can be resolved by git commit sha.
+ * File change node whose content can be resolved by git ecommit sha.
  */
 export class GitFileChangeNode extends FileChangeNode implements vscode.TreeItem {
 	constructor(
