@@ -688,7 +688,7 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 	}
 
 	private updateReviewers(review?: CommonReviewEvent): void {
-		if (review && review.state) {
+		if (review) {
 			const existingReviewer = this._existingReviewers.find(
 				reviewer => review.user.login === (reviewer.reviewer as IAccount).login,
 			);
