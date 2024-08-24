@@ -6,9 +6,9 @@
 import * as nodePath from 'path';
 import * as vscode from 'vscode';
 import type { Branch, Repository } from '../api/api';
-import { GitApiImpl, GitErrorCodes } from '../api/api1';
+import { GitApiImpl, GitErrorCodes, Status } from '../api/api1';
 import { openDescription } from '../commands';
-import { DiffChangeType } from '../common/diffHunk';
+import { DiffChangeType, DiffHunk, parsePatch } from '../common/diffHunk';
 import { commands } from '../common/executeCommands';
 import { GitChangeType, InMemFileChange, SlimFileChange } from '../common/file';
 import Logger from '../common/logger';
@@ -43,7 +43,7 @@ import { PullRequestChangesTreeDataProvider } from './prChangesTreeDataProvider'
 import { ProgressHelper } from './progress';
 import { PullRequestsTreeDataProvider } from './prsTreeDataProvider';
 import { RemoteQuickPickItem } from './quickpick';
-import { ReviewCommentController } from './reviewCommentController';
+import { ReviewCommentController, SuggestionInformation } from './reviewCommentController';
 import { ReviewModel } from './reviewModel';
 import { GitFileChangeNode, gitFileChangeNodeFilter, RemoteFileChangeNode } from './treeNodes/fileChangeNode';
 import { WebviewViewCoordinator } from './webviewViewCoordinator';
@@ -53,7 +53,7 @@ export class ReviewManager {
 	private _localToDispose: vscode.Disposable[] = [];
 	private _disposables: vscode.Disposable[];
 
-	private _reviewModel: ReviewModel = new ReviewModel();
+	private readonly _reviewModel: ReviewModel = new ReviewModel();
 	private _lastCommitSha?: string;
 	private _updateMessageShown: boolean = false;
 	private _validateStatusInProgress?: Promise<void>;
@@ -689,6 +689,101 @@ export class ReviewManager {
 			}
 		}
 		return Promise.all(reopenPromises);
+	}
+
+	async createSuggestionFromChange(editor: vscode.TextDocument, diffLines: vscode.LineChange[]) {
+		const change = this._reviewModel.localFileChanges.find(change => change.changeModel.filePath.toString() === editor.uri.toString());
+
+		if (!change) {
+			return;
+		}
+		const suggestions: (SuggestionInformation & { diffLine: vscode.LineChange })[] = [];
+		for (const line of diffLines) {
+			const content = editor.getText(new vscode.Range(line.modifiedStartLineNumber - 1, 0, line.modifiedEndLineNumber - 1, editor.lineAt(line.modifiedEndLineNumber - 1).range.end.character));
+			const originalEndLineNumber = line.originalEndLineNumber < line.originalStartLineNumber ? line.originalStartLineNumber : line.originalEndLineNumber;
+			suggestions.push({
+				suggestionContent: content,
+				originalLineLength: originalEndLineNumber - line.originalStartLineNumber + 1,
+				originalStartLine: line.originalStartLineNumber,
+				diffLine: line
+			});
+		}
+		await Promise.all(suggestions.map(async (suggestion) => {
+			try {
+				await this._reviewCommentController?.createSuggestionsFromChanges(editor.uri, suggestion);
+				await vscode.commands.executeCommand('git.revertSelectedRanges', suggestion.diffLine);
+			} catch (e) {
+				vscode.window.showErrorMessage(vscode.l10n.t('The change is outside the commenting range.'), { modal: true });
+			}
+		}));
+	}
+
+	private trimContextFromHunk(hunk: DiffHunk) {
+		let oldLineNumber = hunk.oldLineNumber;
+		let oldLength = hunk.oldLength;
+
+		// start at 1 to skip the control line
+		let i = 1;
+		for (; i < hunk.diffLines.length; i++) {
+			const line = hunk.diffLines[i];
+			if (line.type === DiffChangeType.Context) {
+				oldLineNumber++;
+				oldLength--;
+			} else {
+				break;
+			}
+		}
+		let j = hunk.diffLines.length - 1;
+		for (; j >= 0; j--) {
+			if (hunk.diffLines[j].type === DiffChangeType.Context) {
+				oldLength--;
+			} else {
+				break;
+			}
+		}
+		hunk.diffLines = hunk.diffLines.slice(i, j + 1);
+		hunk.oldLength = oldLength;
+		hunk.oldLineNumber = oldLineNumber;
+	}
+
+	private convertDiffHunkToSuggestion(hunk: DiffHunk): SuggestionInformation {
+		this.trimContextFromHunk(hunk);
+		return {
+			suggestionContent: hunk.diffLines.filter(line => (line.type === DiffChangeType.Add) || (line.type == DiffChangeType.Context)).map(line => line.text).join('\n'),
+			originalLineLength: hunk.oldLength,
+			originalStartLine: hunk.oldLineNumber,
+		};
+	}
+
+	async createSuggestionsFromChanges() {
+		let hasError: boolean = false;
+		const convertedFiles: vscode.Uri[] = [];
+		await vscode.window.withProgress({ location: vscode.ProgressLocation.Window, title: 'Converting changes to suggestions' }, async () => {
+			await Promise.all(this._folderRepoManager.repository.state.workingTreeChanges.map(async changeFile => {
+				if (changeFile.status !== Status.MODIFIED) {
+					return;
+				}
+				const diff = parsePatch(await this._folderRepoManager.repository.diffWithHEAD(changeFile.uri.fsPath));
+				try {
+					await Promise.all(diff.map(async hunk => {
+						await this._reviewCommentController?.createSuggestionsFromChanges(changeFile.uri, this.convertDiffHunkToSuggestion(hunk));
+						convertedFiles.push(changeFile.uri);
+					}));
+				} catch (e) {
+					hasError = true;
+				}
+			}));
+		});
+		if (!hasError) {
+			const checkoutAllFilesResponse = vscode.l10n.t('Checkout all files');
+			vscode.window.showInformationMessage(vscode.l10n.t('All changes have been converted to suggestions.'), { modal: true, detail: vscode.l10n.t('Do you want to checkout all files and reset your working state to match the pull request state?') }, checkoutAllFilesResponse).then((response) => {
+				if (response === checkoutAllFilesResponse) {
+					return Promise.all(convertedFiles.map(changeFile => this._folderRepoManager.repository.checkout(changeFile.fsPath)));
+				}
+			});
+		} else {
+			vscode.window.showWarningMessage(vscode.l10n.t('Not all changes could be converted to suggestions.'), { detail: vscode.l10n.t('Some of the changes may be outside of commenting ranges.'), modal: true });
+		}
 	}
 
 	public async updateComments(): Promise<void> {

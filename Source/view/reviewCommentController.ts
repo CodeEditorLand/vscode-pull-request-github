@@ -38,6 +38,12 @@ import { ReviewManager } from './reviewManager';
 import { ReviewModel } from './reviewModel';
 import { GitFileChangeNode, gitFileChangeNodeFilter, RemoteFileChangeNode } from './treeNodes/fileChangeNode';
 
+export interface SuggestionInformation {
+	originalStartLine: number;
+	originalLineLength: number;
+	suggestionContent: string;
+}
+
 export class ReviewCommentController extends CommentControllerBase
 	implements vscode.Disposable, CommentHandler, vscode.CommentingRangeProvider2, CommentReactionHandler {
 	private static readonly ID = 'ReviewCommentController';
@@ -794,6 +800,26 @@ export class ReviewCommentController extends CommentControllerBase
 				return c;
 			});
 		}
+	}
+
+	async createSuggestionsFromChanges(file: vscode.Uri, suggestionInformation: SuggestionInformation): Promise<void> {
+		const activePr = this._folderRepoManager.activePullRequest;
+		if (!activePr) {
+			return;
+		}
+
+		const path = this.gitRelativeRootPath(file.path);
+		const body = `\`\`\`suggestion
+${suggestionInformation.suggestionContent}
+\`\`\``;
+		await activePr.createReviewThread(
+			body,
+			path,
+			suggestionInformation.originalStartLine,
+			suggestionInformation.originalStartLine + suggestionInformation.originalLineLength - 1,
+			DiffSide.RIGHT,
+			false,
+		);
 	}
 
 	private async createCommentOnResolve(thread: GHPRCommentThread, input: string): Promise<void> {

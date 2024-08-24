@@ -1402,6 +1402,904 @@
 			"title": "GitHub Pull Requests",
 			"type": "object"
 		},
+		"viewsContainers": {
+			"activitybar": [
+				{
+					"id": "github-pull-requests",
+					"title": "%view.github.pull.requests.name%",
+					"icon": "$(github)"
+				},
+				{
+					"id": "github-pull-request",
+					"title": "%view.github.pull.request.name%",
+					"icon": "$(git-pull-request)"
+				}
+			]
+		},
+		"views": {
+			"github-pull-requests": [
+				{
+					"id": "github:login",
+					"name": "%view.github.login.name%",
+					"when": "ReposManagerStateContext == NeedsAuthentication",
+					"icon": "$(git-pull-request)"
+				},
+				{
+					"id": "pr:github",
+					"name": "%view.pr.github.name%",
+					"when": "ReposManagerStateContext != NeedsAuthentication && !github:resolvingConflicts",
+					"icon": "$(git-pull-request)",
+					"accessibilityHelpContent": "%view.pr.github.accessibilityHelpContent%"
+				},
+				{
+					"id": "issues:github",
+					"name": "%view.issues.github.name%",
+					"when": "ReposManagerStateContext != NeedsAuthentication && !github:resolvingConflicts",
+					"icon": "$(issues)",
+					"accessibilityHelpContent": "%view.pr.github.accessibilityHelpContent%"
+				},
+				{
+					"id": "github:conflictResolution",
+					"name": "%view.github.conflictResolution.name%",
+					"when": "github:resolvingConflicts",
+					"icon": "$(git-merge)"
+				}
+			],
+			"github-pull-request": [
+				{
+					"id": "github:createPullRequestWebview",
+					"type": "webview",
+					"name": "%view.github.create.pull.request.name%",
+					"when": "github:createPullRequest || github:revertPullRequest",
+					"visibility": "visible",
+					"initialSize": 2
+				},
+				{
+					"id": "github:compareChangesFiles",
+					"name": "%view.github.compare.changes.name%",
+					"when": "github:createPullRequest",
+					"visibility": "visible",
+					"initialSize": 1
+				},
+				{
+					"id": "github:compareChangesCommits",
+					"name": "%view.github.compare.changesCommits.name%",
+					"when": "github:createPullRequest",
+					"visibility": "visible",
+					"initialSize": 1
+				},
+				{
+					"id": "prStatus:github",
+					"name": "%view.pr.status.github.name%",
+					"when": "github:inReviewMode && !github:createPullRequest && !github:revertPullRequest",
+					"icon": "$(git-pull-request)",
+					"visibility": "visible",
+					"initialSize": 3
+				},
+				{
+					"id": "github:activePullRequest",
+					"type": "webview",
+					"name": "%view.github.active.pull.request.name%",
+					"when": "github:inReviewMode && github:focusedReview && !github:createPullRequest && !github:revertPullRequest && github:activePRCount <= 1",
+					"initialSize": 2
+				},
+				{
+					"id": "github:activePullRequest:welcome",
+					"name": "%view.github.active.pull.request.welcome.name%",
+					"when": "!github:stateValidated && github:focusedReview"
+				}
+			]
+		},
+		"commands": [
+			{
+				"command": "github.api.preloadPullRequest",
+				"title": "Preload Pull Request",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "pr.create",
+				"title": "%command.pr.create.title%",
+				"icon": "$(git-pull-request-create)",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "pr.pushAndCreate",
+				"title": "%command.pr.create.title%",
+				"icon": "$(git-pull-request-create)",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "pr.pick",
+				"title": "%command.pr.pick.title%",
+				"category": "%command.pull.request.category%",
+				"enablement": "viewItem =~ /hasHeadRef/",
+				"icon": "$(arrow-right)"
+			},
+			{
+				"command": "pr.openChanges",
+				"title": "%command.pr.openChanges.title%",
+				"category": "%command.pull.request.category%",
+				"icon": "$(diff-multiple)"
+			},
+			{
+				"command": "pr.pickOnVscodeDev",
+				"title": "%command.pr.pickOnVscodeDev.title%",
+				"category": "%command.pull.request.category%",
+				"icon": "$(globe)"
+			},
+			{
+				"command": "pr.exit",
+				"title": "%command.pr.exit.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "pr.dismissNotification",
+				"title": "%command.pr.dismissNotification.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "pr.merge",
+				"title": "%command.pr.merge.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "pr.readyForReview",
+				"title": "%command.pr.readyForReview.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "pr.close",
+				"title": "%command.pr.close.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "pr.openPullRequestOnGitHub",
+				"title": "%command.pr.openPullRequestOnGitHub.title%",
+				"category": "%command.pull.request.category%",
+				"icon": "$(globe)"
+			},
+			{
+				"command": "pr.openAllDiffs",
+				"title": "%command.pr.openAllDiffs.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "pr.refreshPullRequest",
+				"title": "%command.pr.refreshPullRequest.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "pr.openFileOnGitHub",
+				"title": "%command.pr.openFileOnGitHub.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "pr.copyCommitHash",
+				"title": "%command.pr.copyCommitHash.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "pr.openOriginalFile",
+				"title": "%command.pr.openOriginalFile.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "pr.openModifiedFile",
+				"title": "%command.pr.openModifiedFile.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "pr.openDiffView",
+				"title": "%command.pr.openDiffView.title%",
+				"category": "%command.pull.request.category%",
+				"icon": "$(compare-changes)"
+			},
+			{
+				"command": "pr.openDiffViewFromEditor",
+				"title": "%command.pr.openDiffViewFromEditor.title%",
+				"category": "%command.pull.request.category%",
+				"icon": "$(git-pull-request)"
+			},
+			{
+				"command": "pr.openDescription",
+				"title": "%command.pr.openDescription.title%",
+				"category": "%command.pull.request.category%",
+				"when": "github:inReviewMode",
+				"icon": "$(note)"
+			},
+			{
+				"command": "pr.openDescriptionToTheSide",
+				"title": "%command.pr.openDescriptionToTheSide.title%",
+				"icon": "$(split-horizontal)"
+			},
+			{
+				"command": "pr.refreshDescription",
+				"title": "%command.pr.refreshDescription.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "pr.focusDescriptionInput",
+				"title": "%command.pr.focusDescriptionInput.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "pr.showDiffSinceLastReview",
+				"title": "%command.pr.showDiffSinceLastReview.title%",
+				"icon": "$(git-pull-request-new-changes)"
+			},
+			{
+				"command": "pr.showDiffAll",
+				"title": "%command.pr.showDiffAll.title%",
+				"icon": "$(git-pull-request-go-to-changes)"
+			},
+			{
+				"command": "pr.checkoutByNumber",
+				"title": "%command.pr.checkoutByNumber.title%",
+				"category": "%command.pull.request.category%",
+				"icon": "$(symbol-numeric)"
+			},
+			{
+				"command": "review.openFile",
+				"title": "%command.review.openFile.title%",
+				"icon": "$(go-to-file)"
+			},
+			{
+				"command": "review.openLocalFile",
+				"title": "%command.review.openLocalFile.title%",
+				"icon": "$(go-to-file)"
+			},
+			{
+				"command": "review.suggestDiff",
+				"title": "%command.review.suggestDiff.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "pr.refreshList",
+				"title": "%command.pr.refreshList.title%",
+				"icon": "$(refresh)",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "pr.setFileListLayoutAsTree",
+				"title": "%command.pr.setFileListLayoutAsTree.title%",
+				"icon": "$(list-tree)",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "pr.setFileListLayoutAsFlat",
+				"title": "%command.pr.setFileListLayoutAsFlat.title%",
+				"icon": "$(list-flat)",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "pr.refreshChanges",
+				"title": "%command.pr.refreshChanges.title%",
+				"icon": "$(refresh)",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "pr.configurePRViewlet",
+				"title": "%command.pr.configurePRViewlet.title%",
+				"category": "%command.pull.request.category%",
+				"icon": "$(gear)"
+			},
+			{
+				"command": "pr.deleteLocalBranch",
+				"title": "%command.pr.deleteLocalBranch.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "pr.signin",
+				"title": "%command.pr.signin.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "pr.signinNoEnterprise",
+				"title": "%command.pr.signin.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "pr.signinenterprise",
+				"title": "%command.pr.signinenterprise.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "pr.deleteLocalBranchesNRemotes",
+				"title": "%command.pr.deleteLocalBranchesNRemotes.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "pr.createComment",
+				"title": "%command.pr.createComment.title%",
+				"category": "%command.pull.request.category%",
+				"enablement": "!commentIsEmpty"
+			},
+			{
+				"command": "pr.createSingleComment",
+				"title": "%command.pr.createSingleComment.title%",
+				"category": "%command.pull.request.category%",
+				"enablement": "!commentIsEmpty"
+			},
+			{
+				"command": "pr.makeSuggestion",
+				"title": "%command.pr.makeSuggestion.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "pr.startReview",
+				"title": "%command.pr.startReview.title%",
+				"category": "%command.pull.request.category%",
+				"enablement": "!commentIsEmpty"
+			},
+			{
+				"command": "pr.editComment",
+				"title": "%command.pr.editComment.title%",
+				"category": "%command.pull.request.category%",
+				"icon": "$(edit)",
+				"enablement": "!(comment =~ /temporary/)"
+			},
+			{
+				"command": "pr.cancelEditComment",
+				"title": "%command.pr.cancelEditComment.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "pr.saveComment",
+				"title": "%command.pr.saveComment.title%",
+				"category": "%command.pull.request.category%",
+				"enablement": "!commentIsEmpty"
+			},
+			{
+				"command": "pr.deleteComment",
+				"title": "%command.pr.deleteComment.title%",
+				"category": "%command.pull.request.category%",
+				"icon": "$(trash)",
+				"enablement": "!(comment =~ /temporary/)"
+			},
+			{
+				"command": "pr.resolveReviewThread",
+				"title": "%command.pr.resolveReviewThread.title%",
+				"category": "%command.pull.request.category%",
+				"icon": "$(check)"
+			},
+			{
+				"command": "pr.unresolveReviewThread",
+				"title": "%command.pr.unresolveReviewThread.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "pr.unresolveReviewThreadFromView",
+				"title": "%command.pr.unresolveReviewThread.title%",
+				"category": "%command.pull.request.category%",
+				"icon": "$(sync)"
+			},
+			{
+				"command": "pr.diffOutdatedCommentWithHead",
+				"title": "%command.pr.diffOutdatedCommentWithHead.title%",
+				"category": "%command.pull.request.category%",
+				"icon": "$(git-compare)"
+			},
+			{
+				"command": "pr.signinAndRefreshList",
+				"title": "%command.pr.signinAndRefreshList.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "pr.configureRemotes",
+				"title": "%command.pr.configureRemotes.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "pr.refreshActivePullRequest",
+				"title": "%command.pr.refreshActivePullRequest.title%",
+				"category": "%command.pull.request.category%",
+				"icon": "$(refresh)"
+			},
+			{
+				"command": "pr.markFileAsViewed",
+				"title": "%command.pr.markFileAsViewed.title%",
+				"category": "%command.pull.request.category%",
+				"icon": "$(pass)"
+			},
+			{
+				"command": "pr.unmarkFileAsViewed",
+				"title": "%command.pr.unmarkFileAsViewed.title%",
+				"category": "%command.pull.request.category%",
+				"icon": "$(pass-filled)"
+			},
+			{
+				"command": "pr.openReview",
+				"title": "%command.pr.openReview.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "pr.collapseAllComments",
+				"title": "%command.pr.collapseAllComments.title%",
+				"category": "%command.comments.category%",
+				"icon": "$(collapse-all)"
+			},
+			{
+				"command": "pr.editQuery",
+				"title": "%command.pr.editQuery.title%",
+				"category": "%command.pull.request.category%",
+				"icon": "$(edit)"
+			},
+			{
+				"command": "pr.openPullsWebsite",
+				"title": "%command.pr.openPullsWebsite.title%",
+				"category": "%command.pull.request.category%",
+				"icon": "$(globe)"
+			},
+			{
+				"command": "pr.resetViewedFiles",
+				"title": "%command.pr.resetViewedFiles.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "pr.goToNextDiffInPr",
+				"title": "%command.pr.goToNextDiffInPr.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "pr.goToPreviousDiffInPr",
+				"title": "%command.pr.goToPreviousDiffInPr.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "pr.copyCommentLink",
+				"title": "%command.pr.copyCommentLink.title%",
+				"category": "%command.pull.request.category%",
+				"icon": "$(copy)",
+				"enablement": "!(comment =~ /temporary/)"
+			},
+			{
+				"command": "pr.applySuggestion",
+				"title": "%command.pr.applySuggestion.title%",
+				"category": "%command.pull.request.category%",
+				"icon": "$(gift)"
+			},
+			{
+				"command": "pr.addAssigneesToNewPr",
+				"title": "%command.pr.addAssigneesToNewPr.title%",
+				"category": "%command.pull.request.category%",
+				"icon": "$(account)"
+			},
+			{
+				"command": "pr.addReviewersToNewPr",
+				"title": "%command.pr.addReviewersToNewPr.title%",
+				"category": "%command.pull.request.category%",
+				"icon": "$(feedback)"
+			},
+			{
+				"command": "pr.addLabelsToNewPr",
+				"title": "%command.pr.addLabelsToNewPr.title%",
+				"category": "%command.pull.request.category%",
+				"icon": "$(tag)"
+			},
+			{
+				"command": "pr.addMilestoneToNewPr",
+				"title": "%command.pr.addMilestoneToNewPr.title%",
+				"category": "%command.pull.request.category%",
+				"icon": "$(milestone)"
+			},
+			{
+				"command": "pr.addProjectsToNewPr",
+				"title": "%command.pr.addProjectsToNewPr.title%",
+				"category": "%command.pull.request.category%",
+				"icon": "$(github-project)"
+			},
+			{
+				"command": "pr.preReview",
+				"title": "%command.pr.preReview.title%",
+				"category": "%command.pull.request.category%",
+				"enablement": "!pr:preReviewing && !pr:creating",
+				"icon": "$(comment)"
+			},
+			{
+				"command": "pr.addFileComment",
+				"title": "%command.pr.addFileComment.title%",
+				"category": "%command.pull.request.category%",
+				"icon": "$(comment)"
+			},
+			{
+				"command": "pr.checkoutFromReadonlyFile",
+				"title": "%command.pr.pick.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "pr.resolveConflict",
+				"title": "%command.pr.resolveConflict.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "pr.acceptMerge",
+				"title": "%command.pr.acceptMerge.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "review.diffWithPrHead",
+				"title": "%command.review.diffWithPrHead.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "review.diffLocalWithPrHead",
+				"title": "%command.review.diffLocalWithPrHead.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "review.approve",
+				"title": "%command.review.approve.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "review.comment",
+				"title": "%command.review.comment.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "review.requestChanges",
+				"title": "%command.review.requestChanges.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "review.approveOnDotCom",
+				"title": "%command.review.approveOnDotCom.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "review.requestChangesOnDotCom",
+				"title": "%command.review.requestChangesOnDotCom.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "review.approveDescription",
+				"title": "%command.review.approve.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "review.commentDescription",
+				"title": "%command.review.comment.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "review.requestChangesDescription",
+				"title": "%command.review.requestChanges.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "review.approveOnDotComDescription",
+				"title": "%command.review.approveOnDotCom.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "review.requestChangesOnDotComDescription",
+				"title": "%command.review.requestChangesOnDotCom.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "review.createSuggestionsFromChanges",
+				"title": "%command.review.createSuggestionsFromChanges.title%",
+				"icon": "$(gift)",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "review.createSuggestionFromChange",
+				"title": "%command.review.createSuggestionFromChange.title%",
+				"icon": "$(gift)",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "pr.createPrMenuCreate",
+				"title": "%command.pr.createPrMenuCreate.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "pr.createPrMenuDraft",
+				"title": "%command.pr.createPrMenuDraft.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "pr.createPrMenuMergeWhenReady",
+				"title": "%command.pr.createPrMenuMergeWhenReady.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "pr.createPrMenuMerge",
+				"title": "%command.pr.createPrMenuMerge.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "pr.createPrMenuSquash",
+				"title": "%command.pr.createPrMenuSquash.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "pr.createPrMenuRebase",
+				"title": "%command.pr.createPrMenuRebase.title%",
+				"category": "%command.pull.request.category%"
+			},
+			{
+				"command": "issue.createIssueFromSelection",
+				"title": "%command.issue.createIssueFromSelection.title%",
+				"category": "%command.issues.category%"
+			},
+			{
+				"command": "issue.createIssueFromClipboard",
+				"title": "%command.issue.createIssueFromClipboard.title%",
+				"category": "%command.issues.category%"
+			},
+			{
+				"command": "pr.copyVscodeDevPrLink",
+				"title": "%command.pr.copyVscodeDevPrLink.title%",
+				"category": "%command.issues.category%"
+			},
+			{
+				"command": "pr.refreshComments",
+				"title": "%command.pr.refreshComments.title%",
+				"category": "%command.pull.request.category%",
+				"icon": "$(refresh)"
+			},
+			{
+				"command": "issue.copyGithubDevLinkWithoutRange",
+				"title": "%command.issue.copyGithubDevLink.title%",
+				"category": "%command.issues.category%",
+				"enablement": "!isInEmbeddedEditor"
+			},
+			{
+				"command": "issue.copyGithubDevLinkFile",
+				"title": "%command.issue.copyGithubDevLink.title%",
+				"category": "%command.issues.category%",
+				"enablement": "!isInEmbeddedEditor"
+			},
+			{
+				"command": "issue.copyGithubDevLink",
+				"title": "%command.issue.copyGithubDevLink.title%",
+				"category": "%command.issues.category%",
+				"enablement": "!isInEmbeddedEditor"
+			},
+			{
+				"command": "issue.copyGithubPermalink",
+				"title": "%command.issue.copyGithubPermalink.title%",
+				"category": "%command.issues.category%",
+				"enablement": "!isInEmbeddedEditor"
+			},
+			{
+				"command": "issue.copyGithubHeadLink",
+				"title": "%command.issue.copyGithubHeadLink.title%",
+				"category": "%command.issues.category%",
+				"enablement": "!isInEmbeddedEditor"
+			},
+			{
+				"command": "issue.copyGithubPermalinkWithoutRange",
+				"title": "%command.issue.copyGithubPermalink.title%",
+				"category": "%command.issues.category%",
+				"enablement": "!isInEmbeddedEditor"
+			},
+			{
+				"command": "issue.copyGithubHeadLinkWithoutRange",
+				"title": "%command.issue.copyGithubHeadLink.title%",
+				"category": "%command.issues.category%",
+				"enablement": "!isInEmbeddedEditor"
+			},
+			{
+				"command": "issue.copyMarkdownGithubPermalink",
+				"title": "%command.issue.copyMarkdownGithubPermalink.title%",
+				"category": "%command.issues.category%",
+				"enablement": "!isInEmbeddedEditor"
+			},
+			{
+				"command": "issue.copyMarkdownGithubPermalinkWithoutRange",
+				"title": "%command.issue.copyMarkdownGithubPermalink.title%",
+				"category": "%command.issues.category%",
+				"enablement": "!isInEmbeddedEditor"
+			},
+			{
+				"command": "issue.openGithubPermalink",
+				"title": "%command.issue.openGithubPermalink.title%",
+				"category": "%command.issues.category%"
+			},
+			{
+				"command": "issue.openIssue",
+				"title": "%command.issue.openIssue.title%",
+				"category": "%command.issues.category%",
+				"icon": "$(globe)"
+			},
+			{
+				"command": "issue.copyIssueNumber",
+				"title": "%command.issue.copyIssueNumber.title%",
+				"category": "%command.issues.category%"
+			},
+			{
+				"command": "issue.copyIssueUrl",
+				"title": "%command.issue.copyIssueUrl.title%",
+				"category": "%command.issues.category%"
+			},
+			{
+				"command": "issue.refresh",
+				"title": "%command.issue.refresh.title%",
+				"category": "%command.issues.category%",
+				"icon": "$(refresh)"
+			},
+			{
+				"command": "issue.suggestRefresh",
+				"title": "%command.issue.suggestRefresh.title%",
+				"category": "%command.issues.category%"
+			},
+			{
+				"command": "issue.startWorking",
+				"title": "%command.issue.startWorking.title%",
+				"category": "%command.issues.category%",
+				"icon": "$(arrow-right)"
+			},
+			{
+				"command": "issue.startWorkingBranchDescriptiveTitle",
+				"title": "%command.issue.startWorkingBranchDescriptiveTitle.title%",
+				"category": "%command.issues.category%",
+				"icon": "$(arrow-right)"
+			},
+			{
+				"command": "issue.continueWorking",
+				"title": "%command.issue.continueWorking.title%",
+				"category": "%command.issues.category%",
+				"icon": "$(arrow-right)"
+			},
+			{
+				"command": "issue.startWorkingBranchPrompt",
+				"title": "%command.issue.startWorkingBranchPrompt.title%",
+				"category": "%command.issues.category%"
+			},
+			{
+				"command": "issue.stopWorking",
+				"title": "%command.issue.stopWorking.title%",
+				"category": "%command.issues.category%",
+				"icon": "$(primitive-square)"
+			},
+			{
+				"command": "issue.stopWorkingBranchDescriptiveTitle",
+				"title": "%command.issue.stopWorkingBranchDescriptiveTitle.title%",
+				"category": "%command.issues.category%",
+				"icon": "$(primitive-square)"
+			},
+			{
+				"command": "issue.statusBar",
+				"title": "%command.issue.statusBar.title%",
+				"category": "%command.issues.category%"
+			},
+			{
+				"command": "issue.getCurrent",
+				"title": "%command.issue.getCurrent.title%",
+				"category": "%command.issues.category%"
+			},
+			{
+				"command": "issue.editQuery",
+				"title": "%command.issue.editQuery.title%",
+				"category": "%command.issues.category%",
+				"icon": "$(edit)"
+			},
+			{
+				"command": "issue.createIssue",
+				"title": "%command.issue.createIssue.title%",
+				"category": "%command.issues.category%",
+				"icon": "$(plus)"
+			},
+			{
+				"command": "issue.createIssueFromFile",
+				"title": "%command.issue.createIssueFromFile.title%",
+				"icon": "$(check)",
+				"enablement": "!issues.creatingFromFile"
+			},
+			{
+				"command": "issue.issueCompletion",
+				"title": "%command.issue.issueCompletion.title%"
+			},
+			{
+				"command": "issue.userCompletion",
+				"title": "%command.issue.userCompletion.title%"
+			},
+			{
+				"command": "issue.signinAndRefreshList",
+				"title": "%command.issue.signinAndRefreshList.title%",
+				"category": "%command.issues.category%"
+			},
+			{
+				"command": "issue.goToLinkedCode",
+				"title": "%command.issue.goToLinkedCode.title%",
+				"category": "%command.issues.category%"
+			},
+			{
+				"command": "issues.openIssuesWebsite",
+				"title": "%command.issues.openIssuesWebsite.title%",
+				"category": "%command.issues.category%",
+				"icon": "$(globe)"
+			}
+		],
+		"viewsWelcome": [
+			{
+				"view": "github:login",
+				"when": "ReposManagerStateContext == NeedsAuthentication && github:hasGitHubRemotes",
+				"contents": "%welcome.github.login.contents%"
+			},
+			{
+				"view": "pr:github",
+				"when": "gitNotInstalled",
+				"contents": "%welcome.github.noGit.contents%"
+			},
+			{
+				"view": "github:login",
+				"when": "ReposManagerStateContext == NeedsAuthentication && !github:hasGitHubRemotes && gitOpenRepositoryCount",
+				"contents": "%welcome.github.loginNoEnterprise.contents%"
+			},
+			{
+				"view": "github:login",
+				"when": "ReposManagerStateContext == NeedsAuthentication && !github:hasGitHubRemotes && gitOpenRepositoryCount",
+				"contents": "%welcome.github.loginWithEnterprise.contents%"
+			},
+			{
+				"view": "pr:github",
+				"when": "git.state != initialized && !github:initialized && workspaceFolderCount > 0",
+				"contents": "%welcome.pr.github.uninitialized.contents%"
+			},
+			{
+				"view": "pr:github",
+				"when": "workspaceFolderCount > 0 && github:loadingPrsTree",
+				"contents": "%welcome.pr.github.uninitialized.contents%"
+			},
+			{
+				"view": "pr:github",
+				"when": "workspaceFolderCount == 0",
+				"contents": "%welcome.pr.github.noFolder.contents%"
+			},
+			{
+				"view": "pr:github",
+				"when": "git.state == initialized && gitOpenRepositoryCount == 0 && workspaceFolderCount > 0 && git.parentRepositoryCount == 0",
+				"contents": "%welcome.pr.github.noRepo.contents%"
+			},
+			{
+				"view": "pr:github",
+				"when": "git.state == initialized && gitOpenRepositoryCount == 0 && workspaceFolderCount > 0 && git.parentRepositoryCount == 1",
+				"contents": "%welcome.pr.github.parentRepo.contents%"
+			},
+			{
+				"view": "pr:github",
+				"when": "git.state == initialized && gitOpenRepositoryCount == 0 && workspaceFolderCount > 0 && git.parentRepositoryCount > 1",
+				"contents": "%welcome.pr.github.parentRepo.contents%"
+			},
+			{
+				"view": "issues:github",
+				"when": "git.state != initialized && !github:initialized && workspaceFolderCount > 0",
+				"contents": "%welcome.issues.github.uninitialized.contents%"
+			},
+			{
+				"view": "issues:github",
+				"when": "workspaceFolderCount > 0 && github:loadingPrsTree",
+				"contents": "%welcome.issues.github.uninitialized.contents%"
+			},
+			{
+				"view": "issues:github",
+				"when": "workspaceFolderCount == 0",
+				"contents": "%welcome.issues.github.noFolder.contents%"
+			},
+			{
+				"view": "issues:github",
+				"when": "git.state == initialized && gitOpenRepositoryCount == 0 && workspaceFolderCount > 0 && git.parentRepositoryCount == 0",
+				"contents": "%welcome.issues.github.noRepo.contents%"
+			},
+			{
+				"view": "issues:github",
+				"when": "git.state == initialized && gitOpenRepositoryCount == 0 && workspaceFolderCount > 0 && git.parentRepositoryCount == 1",
+				"contents": "%welcome.pr.github.parentRepo.contents%"
+			},
+			{
+				"view": "issues:github",
+				"when": "git.state == initialized && gitOpenRepositoryCount == 0 && workspaceFolderCount > 0 && git.parentRepositoryCount > 1",
+				"contents": "%welcome.pr.github.parentRepo.contents%"
+			},
+			{
+				"view": "github:activePullRequest:welcome",
+				"when": "!github:stateValidated",
+				"contents": "%welcome.github.activePullRequest.contents%"
+			}
+		],
 		"keybindings": [
 			{
 				"command": "issue.suggestRefresh",
@@ -1596,6 +2494,14 @@
 				{
 					"command": "review.requestChangesOnDotComDescription",
 					"when": "false"
+				},
+				{
+					"command": "review.createSuggestionsFromChanges",
+					"when": "false"
+				},
+				{
+					"command": "review.createSuggestionFromChange",
+					"when": "activeEditor == workbench.editors.textDiffEditor && (resourcePath in github:unviewedFiles || resourcePath in github:viewedFiles)"
 				},
 				{
 					"command": "pr.refreshList",
@@ -2184,6 +3090,249 @@
 					"command": "pr.addFileComment",
 					"group": "navigation",
 					"when": "(resourceScheme == pr) || (resourcePath in github:viewedFiles) || (resourcePath in github:unviewedFiles)"
+				}
+			],
+			"editor/content": [
+				{
+					"command": "pr.acceptMerge",
+					"when": "isMergeResultEditor && mergeEditorBaseUri =~ /^(githubpr|gitpr):/"
+				}
+			],
+			"scm/title": [
+				{
+					"command": "review.suggestDiff",
+					"when": "scmProvider =~ /^git|^remoteHub:github/ && scmProviderRootUri in github:reposInReviewMode",
+					"group": "inline"
+				},
+				{
+					"command": "pr.create",
+					"when": "scmProvider =~ /^git|^remoteHub:github/ && scmProviderRootUri in github:reposNotInReviewMode",
+					"group": "navigation"
+				}
+			],
+			"scm/resourceGroup/context": [
+				{
+					"command": "review.createSuggestionsFromChanges",
+					"when": "scmProviderRootUri in github:reposInReviewMode && scmProvider =~ /^git|^remoteHub:github/ && scmResourceGroup == workingTree",
+					"group": "inline@-2"
+				}
+			],
+			"comments/commentThread/context": [
+				{
+					"command": "pr.createComment",
+					"group": "inline@1",
+					"when": "(commentController =~ /^github-browse/ && prInDraft) || (commentController =~ /^github-review/ && reviewInDraftMode)"
+				},
+				{
+					"command": "pr.createSingleComment",
+					"group": "inline@1",
+					"when": "config.githubPullRequests.defaultCommentType != review && ((commentController =~ /^github-browse/ && !prInDraft) || (commentController =~ /^github-review/ && !reviewInDraftMode))"
+				},
+				{
+					"command": "pr.startReview",
+					"group": "inline@1",
+					"when": "config.githubPullRequests.defaultCommentType == review && ((commentController =~ /^github-browse/ && !prInDraft) || (commentController =~ /^github-review/ && !reviewInDraftMode))"
+				},
+				{
+					"command": "pr.startReview",
+					"group": "inline@2",
+					"when": "config.githubPullRequests.defaultCommentType != review && ((commentController =~ /^github-browse/ && !prInDraft) || (commentController =~ /^github-review/ && !reviewInDraftMode))"
+				},
+				{
+					"command": "pr.createSingleComment",
+					"group": "inline@2",
+					"when": "config.githubPullRequests.defaultCommentType == review && ((commentController =~ /^github-browse/ && !prInDraft) || commentController =~ /^github-review/ && !reviewInDraftMode)"
+				}
+			],
+			"comments/comment/editorActions": [
+				{
+					"command": "pr.makeSuggestion",
+					"group": "inline@3",
+					"when": "commentController =~ /^github-(browse|review)/"
+				}
+			],
+			"comments/commentThread/additionalActions": [
+				{
+					"command": "pr.resolveReviewThread",
+					"group": "inline@1",
+					"when": "commentController =~ /^github-(browse|review)/ && commentThread =~ /canResolve/"
+				},
+				{
+					"command": "pr.unresolveReviewThread",
+					"group": "inline@1",
+					"when": "commentController =~ /^github-(browse|review)/ && commentThread =~ /canUnresolve/"
+				},
+				{
+					"command": "pr.openReview",
+					"group": "inline@2",
+					"when": "(commentController =~ /^github-browse/ && prInDraft) || (commentController =~ /^github-review/ && reviewInDraftMode)"
+				}
+			],
+			"comments/commentThread/title/context": [
+				{
+					"command": "pr.resolveReviewThread",
+					"group": "inline@3",
+					"when": "commentController =~ /^github-(browse|review)/ && commentThread =~ /canResolve/"
+				},
+				{
+					"command": "pr.unresolveReviewThread",
+					"group": "inline@3",
+					"when": "commentController =~ /^github-(browse|review)/ && commentThread =~ /canUnresolve/"
+				}
+			],
+			"comments/commentThread/comment/context": [
+				{
+					"command": "pr.resolveReviewThread",
+					"when": "commentController =~ /^github-(browse|review)/ && commentThread =~ /canResolve/"
+				},
+				{
+					"command": "pr.unresolveReviewThread",
+					"when": "commentController =~ /^github-(browse|review)/ && commentThread =~ /canUnresolve/"
+				},
+				{
+					"command": "pr.applySuggestion",
+					"when": "commentController =~ /^github-review/ && comment =~ /hasSuggestion/"
+				}
+			],
+			"comments/comment/title": [
+				{
+					"command": "pr.copyCommentLink",
+					"group": "inline@1",
+					"when": "commentController =~ /^github-(browse|review)/ && comment =~ /canEdit/"
+				},
+				{
+					"command": "pr.applySuggestion",
+					"group": "inline@0",
+					"when": "commentController =~ /^github-review/ && comment =~ /hasSuggestion/"
+				},
+				{
+					"command": "pr.editComment",
+					"group": "inline@2",
+					"when": "commentController =~ /^github-(browse|review)/ && comment =~ /canEdit/"
+				},
+				{
+					"command": "pr.deleteComment",
+					"group": "inline@3",
+					"when": "commentController =~ /^github-(browse|review)/ && comment =~ /canDelete/"
+				}
+			],
+			"comments/commentThread/title": [
+				{
+					"command": "pr.refreshComments",
+					"group": "0_refresh@0",
+					"when": "commentController =~ /^github-(browse|review)/"
+				},
+				{
+					"command": "pr.collapseAllComments",
+					"group": "1_collapse@0",
+					"when": "commentController =~ /^github-(browse|review)/"
+				}
+			],
+			"comments/comment/context": [
+				{
+					"command": "pr.saveComment",
+					"group": "inline@1",
+					"when": "commentController =~ /^github-(browse|review)/"
+				},
+				{
+					"command": "pr.cancelEditComment",
+					"group": "inline@2",
+					"when": "commentController =~ /^github-(browse|review)/"
+				}
+			],
+			"editor/context/copy": [
+				{
+					"command": "issue.copyGithubPermalink",
+					"when": "github:hasGitHubRemotes",
+					"group": "3_githubPullRequests@0"
+				},
+				{
+					"command": "issue.copyMarkdownGithubPermalink",
+					"when": "github:hasGitHubRemotes",
+					"group": "3_githubPullRequests@1"
+				},
+				{
+					"command": "issue.copyGithubHeadLink",
+					"when": "github:hasGitHubRemotes",
+					"group": "3_githubPullRequests@2"
+				}
+			],
+			"editor/context/share": [
+				{
+					"command": "issue.copyGithubPermalink",
+					"when": "github:hasGitHubRemotes",
+					"group": "1_githubPullRequests@0"
+				},
+				{
+					"command": "issue.copyMarkdownGithubPermalink",
+					"when": "github:hasGitHubRemotes",
+					"group": "1_githubPullRequests@1"
+				},
+				{
+					"command": "issue.copyGithubHeadLink",
+					"when": "github:hasGitHubRemotes",
+					"group": "1_githubPullRequests@2"
+				},
+				{
+					"command": "issue.copyGithubDevLink",
+					"when": "github:hasGitHubRemotes && remoteName == codespaces && isWeb || github:hasGitHubRemotes && embedderIdentifier == github.dev",
+					"group": "0_vscode@0"
+				}
+			],
+			"editor/context": [
+				{
+					"command": "review.createSuggestionFromChange",
+					"when": "activeEditor == workbench.editors.textDiffEditor && (resourcePath in github:unviewedFiles || resourcePath in github:viewedFiles)",
+					"group": "2_git@6"
+				}
+			],
+			"file/share": [
+				{
+					"command": "issue.copyGithubPermalink",
+					"when": "github:hasGitHubRemotes",
+					"group": "1_githubPullRequests@0"
+				},
+				{
+					"command": "pr.copyVscodeDevPrLink",
+					"when": "github:hasGitHubRemotes && github:inReviewMode && remoteName != codespaces && embedderIdentifier != github.dev",
+					"group": "1_githubPullRequests@1"
+				},
+				{
+					"command": "issue.copyMarkdownGithubPermalink",
+					"when": "github:hasGitHubRemotes",
+					"group": "1_githubPullRequests@2"
+				},
+				{
+					"command": "issue.copyGithubHeadLink",
+					"when": "github:hasGitHubRemotes",
+					"group": "1_githubPullRequests@3"
+				},
+				{
+					"command": "issue.copyGithubDevLinkFile",
+					"when": "github:hasGitHubRemotes && remoteName == codespaces && isWeb || github:hasGitHubRemotes && embedderIdentifier == github.dev",
+					"group": "0_vscode@0"
+				}
+			],
+			"editor/lineNumber/context": [
+				{
+					"command": "issue.copyGithubPermalink",
+					"when": "github:hasGitHubRemotes && activeEditor == workbench.editors.files.textFileEditor && config.editor.lineNumbers == on",
+					"group": "1_cutcopypaste@3"
+				},
+				{
+					"command": "issue.copyMarkdownGithubPermalink",
+					"when": "github:hasGitHubRemotes && activeEditor == workbench.editors.files.textFileEditor && config.editor.lineNumbers == on",
+					"group": "1_cutcopypaste@4"
+				},
+				{
+					"command": "issue.copyGithubHeadLink",
+					"when": "github:hasGitHubRemotes && activeEditor == workbench.editors.files.textFileEditor && config.editor.lineNumbers == on",
+					"group": "1_cutcopypaste@5"
+				},
+				{
+					"command": "issue.copyGithubDevLink",
+					"when": "github:hasGitHubRemotes && remoteName == codespaces && isWeb || github:hasGitHubRemotes && embedderIdentifier == github.dev",
+					"group": "1_cutcopypaste@0"
 				}
 			],
 			"editor/title/context/share": [
