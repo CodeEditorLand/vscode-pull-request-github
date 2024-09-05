@@ -1,4 +1,48 @@
 {
+	"name": "vscode-pull-request-github",
+	"displayName": "%displayName%",
+	"description": "%description%",
+	"icon": "resources/icons/github_logo.png",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/Microsoft/vscode-pull-request-github"
+	},
+	"bugs": {
+		"url": "https://github.com/Microsoft/vscode-pull-request-github/issues"
+	},
+	"enabledApiProposals": [
+		"activeComment",
+		"codiconDecoration",
+		"codeActionRanges",
+		"commentingRangeHint",
+		"commentReactor",
+		"commentReveal",
+		"commentThreadApplicability",
+		"contribAccessibilityHelpContent",
+		"contribCommentEditorActionsMenu",
+		"contribCommentPeekContext",
+		"contribCommentThreadAdditionalMenu",
+		"contribCommentsViewThreadMenus",
+		"contribEditorContentMenu",
+		"contribShareMenu",
+		"diffCommand",
+		"fileComments",
+		"quickDiffProvider",
+		"shareProvider",
+		"tokenInformation",
+		"treeViewMarkdownMessage"
+	],
+	"version": "0.96.0",
+	"publisher": "GitHub",
+	"engines": {
+		"vscode": "^1.92.0"
+	},
+	"categories": [
+		"Other"
+	],
+	"extensionDependencies": [
+		"vscode.github-authentication"
+	],
 	"activationEvents": [
 		"onStartupFinished",
 		"onFileSystem:newIssue",
