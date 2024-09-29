@@ -2884,7 +2884,7 @@
 	},
 	"dependencies": {
 		"@octokit/rest": "21.0.2",
-		"@octokit/types": "13.5.1",
+		"@octokit/types": "13.6.0",
 		"apollo-boost": "0.4.9",
 		"apollo-link-context": "1.0.20",
 		"cockatiel": "3.2.1",
@@ -2907,7 +2907,7 @@
 		"@types/glob": "8.1.0",
 		"@types/lru-cache": "7.10.10",
 		"@types/marked": "6.0.0",
-		"@types/node": "22.7.3",
+		"@types/node": "22.7.4",
 		"@types/sinon": "17.0.3",
 		"@types/temp": "0.9.4",
 		"assert": "2.1.0",
