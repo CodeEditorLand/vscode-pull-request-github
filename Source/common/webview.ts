@@ -3,10 +3,11 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as vscode from 'vscode';
-import { commands } from './executeCommands';
+import * as vscode from "vscode";
 
-export const PULL_REQUEST_OVERVIEW_VIEW_TYPE = 'PullRequestOverview';
+import { commands } from "./executeCommands";
+
+export const PULL_REQUEST_OVERVIEW_VIEW_TYPE = "PullRequestOverview";
 
 export interface IRequestMessage<T> {
 	req: string;
@@ -21,8 +22,9 @@ export interface IReplyMessage {
 }
 
 export function getNonce() {
-	let text = '';
-	const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+	let text = "";
+	const possible =
+		"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 	for (let i = 0; i < 32; i++) {
 		text += possible.charAt(Math.floor(Math.random() * possible.length));
 	}
@@ -36,10 +38,10 @@ export class WebviewBase {
 	private _waitForReady: Promise<void>;
 	private _onIsReady: vscode.EventEmitter<void> = new vscode.EventEmitter();
 
-	protected readonly MESSAGE_UNHANDLED: string = 'message not handled';
+	protected readonly MESSAGE_UNHANDLED: string = "message not handled";
 
 	constructor() {
-		this._waitForReady = new Promise(resolve => {
+		this._waitForReady = new Promise((resolve) => {
 			const disposable = this._onIsReady.event(() => {
 				disposable.dispose();
 				resolve();
@@ -49,8 +51,10 @@ export class WebviewBase {
 
 	public initialize(): void {
 		const disposable = this._webview?.onDidReceiveMessage(
-			async message => {
-				await this._onDidReceiveMessage(message as IRequestMessage<any>);
+			async (message) => {
+				await this._onDidReceiveMessage(
+					message as IRequestMessage<any>,
+				);
 			},
 			null,
 			this._disposables,
@@ -60,9 +64,11 @@ export class WebviewBase {
 		}
 	}
 
-	protected async _onDidReceiveMessage(message: IRequestMessage<any>): Promise<any> {
+	protected async _onDidReceiveMessage(
+		message: IRequestMessage<any>,
+	): Promise<any> {
 		switch (message.command) {
-			case 'ready':
+			case "ready":
 				this._onIsReady.fire();
 				return;
 			default:
@@ -79,7 +85,10 @@ export class WebviewBase {
 		});
 	}
 
-	protected async _replyMessage(originalMessage: IRequestMessage<any>, message: any) {
+	protected async _replyMessage(
+		originalMessage: IRequestMessage<any>,
+		message: any,
+	) {
 		const reply: IReplyMessage = {
 			seq: originalMessage.req,
 			res: message,
@@ -87,7 +96,10 @@ export class WebviewBase {
 		this._webview?.postMessage(reply);
 	}
 
-	protected async _throwError(originalMessage: IRequestMessage<any> | undefined, error: any) {
+	protected async _throwError(
+		originalMessage: IRequestMessage<any> | undefined,
+		error: any,
+	) {
 		const reply: IReplyMessage = {
 			seq: originalMessage?.req,
 			err: error,
@@ -96,7 +108,7 @@ export class WebviewBase {
 	}
 
 	public dispose() {
-		this._disposables.forEach(d => d.dispose());
+		this._disposables.forEach((d) => d.dispose());
 	}
 }
 
@@ -104,15 +116,15 @@ export class WebviewViewBase extends WebviewBase {
 	public readonly viewType: string;
 	protected _view?: vscode.WebviewView;
 
-	constructor(
-		protected readonly _extensionUri: vscode.Uri) {
+	constructor(protected readonly _extensionUri: vscode.Uri) {
 		super();
 	}
 
 	protected resolveWebviewView(
 		webviewView: vscode.WebviewView,
 		_context: vscode.WebviewViewResolveContext,
-		_token: vscode.CancellationToken) {
+		_token: vscode.CancellationToken,
+	) {
 		this._view = webviewView;
 		this._webview = webviewView.webview;
 		super.initialize();
@@ -122,10 +134,12 @@ export class WebviewViewBase extends WebviewBase {
 
 			localResourceRoots: [this._extensionUri],
 		};
-		this._disposables.push(this._view.onDidDispose(() => {
-			this._webview = undefined;
-			this._view = undefined;
-		}));
+		this._disposables.push(
+			this._view.onDidDispose(() => {
+				this._webview = undefined;
+				this._view = undefined;
+			}),
+		);
 	}
 
 	public show() {

@@ -3,11 +3,12 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as vscode from 'vscode';
-import { Repository } from '../../api/api';
-import { FolderRepositoryManager } from '../../github/folderRepositoryManager';
-import { PullRequestModel } from '../../github/pullRequestModel';
-import { TreeNode, TreeNodeParent } from './treeNode';
+import * as vscode from "vscode";
+
+import { Repository } from "../../api/api";
+import { FolderRepositoryManager } from "../../github/folderRepositoryManager";
+import { PullRequestModel } from "../../github/pullRequestModel";
+import { TreeNode, TreeNodeParent } from "./treeNode";
 
 export class DescriptionNode extends TreeNode implements vscode.TreeItem {
 	public command?: vscode.Command;
@@ -20,18 +21,27 @@ export class DescriptionNode extends TreeNode implements vscode.TreeItem {
 		public label: string,
 		public readonly pullRequestModel: PullRequestModel,
 		public readonly repository: Repository,
-		private readonly folderRepositoryManager: FolderRepositoryManager
+		private readonly folderRepositoryManager: FolderRepositoryManager,
 	) {
 		super();
 
 		this.command = {
-			title: vscode.l10n.t('View Pull Request Description'),
-			command: 'pr.openDescription',
+			title: vscode.l10n.t("View Pull Request Description"),
+			command: "pr.openDescription",
 			arguments: [this],
 		};
-		this.iconPath = new vscode.ThemeIcon('git-pull-request');
-		this.tooltip = vscode.l10n.t('Description of pull request #{0}', pullRequestModel.number);
-		this.accessibilityInformation = { label: vscode.l10n.t('Pull request page of pull request number {0}', pullRequestModel.number), role: 'button' };
+		this.iconPath = new vscode.ThemeIcon("git-pull-request");
+		this.tooltip = vscode.l10n.t(
+			"Description of pull request #{0}",
+			pullRequestModel.number,
+		);
+		this.accessibilityInformation = {
+			label: vscode.l10n.t(
+				"Pull request page of pull request number {0}",
+				pullRequestModel.number,
+			),
+			role: "button",
+		};
 	}
 
 	async getTreeItem(): Promise<vscode.TreeItem> {
@@ -40,11 +50,20 @@ export class DescriptionNode extends TreeNode implements vscode.TreeItem {
 	}
 
 	protected updateContextValue(): void {
-		const currentBranchIsForThisPR = this.pullRequestModel.equals(this.folderRepositoryManager.activePullRequest);
-		this.contextValue = 'description' +
-			(currentBranchIsForThisPR ? ':active' : ':nonactive') +
-			(this.pullRequestModel.hasChangesSinceLastReview ? ':hasChangesSinceReview' : '') +
-			(this.pullRequestModel.showChangesSinceReview ? ':showingChangesSinceReview' : ':showingAllChanges') +
-			(this.pullRequestModel.item.isRemoteHeadDeleted ? '' : ':hasHeadRef');
+		const currentBranchIsForThisPR = this.pullRequestModel.equals(
+			this.folderRepositoryManager.activePullRequest,
+		);
+		this.contextValue =
+			"description" +
+			(currentBranchIsForThisPR ? ":active" : ":nonactive") +
+			(this.pullRequestModel.hasChangesSinceLastReview
+				? ":hasChangesSinceReview"
+				: "") +
+			(this.pullRequestModel.showChangesSinceReview
+				? ":showingChangesSinceReview"
+				: ":showingAllChanges") +
+			(this.pullRequestModel.item.isRemoteHeadDeleted
+				? ""
+				: ":hasHeadRef");
 	}
 }

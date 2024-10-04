@@ -3,14 +3,15 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { CancellationToken, Disposable, Event, Uri } from 'vscode';
-import { APIState, PublishEvent } from '../@types/git';
+import { CancellationToken, Disposable, Event, Uri } from "vscode";
+
+import { APIState, PublishEvent } from "../@types/git";
 
 export interface InputBox {
 	value: string;
 }
 
-export { RefType } from './api1';
+export { RefType } from "./api1";
 
 export interface Ref {
 	readonly type: RefType;
@@ -53,7 +54,7 @@ export interface Remote {
 	readonly isReadOnly: boolean;
 }
 
-export { Status } from './api1';
+export { Status } from "./api1";
 
 export interface Change {
 	/**
@@ -86,7 +87,7 @@ export interface RepositoryUIState {
 }
 
 export interface CommitOptions {
-	all?: boolean | 'tracked';
+	all?: boolean | "tracked";
 	amend?: boolean;
 	signoff?: boolean;
 	signCommit?: boolean;
@@ -105,7 +106,7 @@ export interface RefQuery {
 	readonly contains?: string;
 	readonly count?: number;
 	readonly pattern?: string;
-	readonly sort?: 'alphabetically' | 'committerdate';
+	readonly sort?: "alphabetically" | "committerdate";
 }
 
 export interface BranchQuery extends RefQuery {
@@ -155,8 +156,13 @@ export interface Repository {
 	setConfig(key: string, value: string): Promise<string>;
 	getGlobalConfig(key: string): Promise<string>;
 
-	getObjectDetails(treeish: string, path: string): Promise<{ mode: string; object: string; size: number }>;
-	detectObjectType(object: string): Promise<{ mimetype: string; encoding?: string }>;
+	getObjectDetails(
+		treeish: string,
+		path: string,
+	): Promise<{ mode: string; object: string; size: number }>;
+	detectObjectType(
+		object: string,
+	): Promise<{ mimetype: string; encoding?: string }>;
 	buffer(ref: string, path: string): Promise<Buffer>;
 	show(ref: string, path: string): Promise<string>;
 	getCommit(ref: string): Promise<Commit>;
@@ -185,7 +191,10 @@ export interface Repository {
 	getBranches(query: BranchQuery): Promise<Ref[]>;
 	getBranchBase(name: string): Promise<Branch | undefined>;
 	setBranchUpstream(name: string, upstream: string): Promise<void>;
-	getRefs(query: RefQuery, cancellationToken?: CancellationToken): Promise<Ref[]>;
+	getRefs(
+		query: RefQuery,
+		cancellationToken?: CancellationToken,
+	): Promise<Ref[]>;
 
 	getMergeBase(ref1: string, ref2: string): Promise<string>;
 
@@ -199,7 +208,11 @@ export interface Repository {
 	fetch(options?: FetchOptions): Promise<void>;
 	fetch(remote?: string, ref?: string, depth?: number): Promise<void>;
 	pull(unshallow?: boolean): Promise<void>;
-	push(remoteName?: string, branchName?: string, setUpstream?: boolean): Promise<void>;
+	push(
+		remoteName?: string,
+		branchName?: string,
+		setUpstream?: boolean,
+	): Promise<void>;
 
 	blame(path: string): Promise<string>;
 	log(options?: LogOptions): Promise<Commit[]>;
@@ -225,7 +238,7 @@ export interface PostCommitCommandsProvider {
 	getCommands(repository: Repository): Command[];
 }
 
-export { GitErrorCodes } from './api1';
+export { GitErrorCodes } from "./api1";
 
 export interface IGit {
 	readonly repositories: Repository[];
@@ -237,11 +250,26 @@ export interface IGit {
 	readonly onDidChangeState?: Event<APIState>;
 	readonly onDidPublish?: Event<PublishEvent>;
 
-	registerPostCommitCommandsProvider?(provider: PostCommitCommandsProvider): Disposable;
+	registerPostCommitCommandsProvider?(
+		provider: PostCommitCommandsProvider,
+	): Disposable;
 }
 
 export interface TitleAndDescriptionProvider {
-	provideTitleAndDescription(context: { commitMessages: string[], patches: string[] | { patch: string, fileUri: string, previousFileUri?: string }[], issues?: { reference: string, content: string }[] }, token: CancellationToken): Promise<{ title: string, description?: string } | undefined>;
+	provideTitleAndDescription(
+		context: {
+			commitMessages: string[];
+			patches:
+				| string[]
+				| {
+						patch: string;
+						fileUri: string;
+						previousFileUri?: string;
+				  }[];
+			issues?: { reference: string; content: string }[];
+		},
+		token: CancellationToken,
+	): Promise<{ title: string; description?: string } | undefined>;
 }
 
 export interface ReviewerComments {
@@ -253,7 +281,18 @@ export interface ReviewerComments {
 }
 
 export interface ReviewerCommentsProvider {
-	provideReviewerComments(context: { repositoryRoot: string, commitMessages: string[], patches: { patch: string, fileUri: string, previousFileUri?: string }[] }, token: CancellationToken): Promise<ReviewerComments>;
+	provideReviewerComments(
+		context: {
+			repositoryRoot: string;
+			commitMessages: string[];
+			patches: {
+				patch: string;
+				fileUri: string;
+				previousFileUri?: string;
+			}[];
+		},
+		token: CancellationToken,
+	): Promise<ReviewerComments>;
 }
 
 export interface API {
@@ -273,10 +312,16 @@ export interface API {
 	/**
 	 * Register a PR title and description provider.
 	 */
-	registerTitleAndDescriptionProvider(title: string, provider: TitleAndDescriptionProvider): Disposable;
+	registerTitleAndDescriptionProvider(
+		title: string,
+		provider: TitleAndDescriptionProvider,
+	): Disposable;
 
 	/**
 	 * Register a PR reviewer comments provider.
 	 */
-	registerReviewerCommentsProvider(title: string, provider: ReviewerCommentsProvider): Disposable;
+	registerReviewerCommentsProvider(
+		title: string,
+		provider: ReviewerCommentsProvider,
+	): Disposable;
 }

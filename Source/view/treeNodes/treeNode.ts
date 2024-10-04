@@ -3,12 +3,20 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as vscode from 'vscode';
-import Logger from '../../common/logger';
-import { dispose } from '../../common/utils';
+import * as vscode from "vscode";
+
+import Logger from "../../common/logger";
+import { dispose } from "../../common/utils";
 
 export interface BaseTreeNode {
-	reveal(element: TreeNode, options?: { select?: boolean; focus?: boolean; expand?: boolean | number }): Thenable<void>;
+	reveal(
+		element: TreeNode,
+		options?: {
+			select?: boolean;
+			focus?: boolean;
+			expand?: boolean | number;
+		},
+	): Thenable<void>;
 	refresh(treeNode?: TreeNode): void;
 	children: TreeNode[] | undefined;
 	view: vscode.TreeView<TreeNode>;
@@ -24,7 +32,7 @@ export abstract class TreeNode {
 	accessibilityInformation?: vscode.AccessibilityInformation;
 	id?: string;
 
-	constructor() { }
+	constructor() {}
 	abstract getTreeItem(): vscode.TreeItem | Promise<vscode.TreeItem>;
 	getParent(): TreeNode | undefined {
 		if (this.parent instanceof TreeNode) {
@@ -34,12 +42,16 @@ export abstract class TreeNode {
 
 	async reveal(
 		treeNode: TreeNode,
-		options?: { select?: boolean; focus?: boolean; expand?: boolean | number },
+		options?: {
+			select?: boolean;
+			focus?: boolean;
+			expand?: boolean | number;
+		},
 	): Promise<void> {
 		try {
 			await this.parent.reveal(treeNode || this, options);
 		} catch (e) {
-			Logger.error(e, 'TreeNode');
+			Logger.error(e, "TreeNode");
 		}
 	}
 
@@ -62,7 +74,7 @@ export abstract class TreeNode {
 		return [];
 	}
 
-	updateFromCheckboxChanged(_newState: vscode.TreeItemCheckboxState): void { }
+	updateFromCheckboxChanged(_newState: vscode.TreeItemCheckboxState): void {}
 
 	dispose(): void {
 		if (this.childrenDisposables) {
@@ -73,7 +85,7 @@ export abstract class TreeNode {
 }
 
 export class LabelOnlyNode extends TreeNode {
-	public readonly label: string = '';
+	public readonly label: string = "";
 	constructor(label: string) {
 		super();
 		this.label = label;
@@ -81,5 +93,4 @@ export class LabelOnlyNode extends TreeNode {
 	getTreeItem(): vscode.TreeItem {
 		return new vscode.TreeItem(this.label);
 	}
-
 }

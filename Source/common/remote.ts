@@ -3,10 +3,10 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { Repository } from '../api/api';
-import { getEnterpriseUri, isEnterprise } from '../github/utils';
-import { AuthProvider, GitHubServerType } from './authentication';
-import { Protocol } from './protocol';
+import { Repository } from "../api/api";
+import { getEnterpriseUri, isEnterprise } from "../github/utils";
+import { AuthProvider, GitHubServerType } from "./authentication";
+import { Protocol } from "./protocol";
 
 export class Remote {
 	public get host(): string {
@@ -25,7 +25,9 @@ export class Remote {
 	}
 
 	public get authProviderId(): AuthProvider {
-		return this.host === getEnterpriseUri()?.authority ? AuthProvider.githubEnterprise : AuthProvider.github;
+		return this.host === getEnterpriseUri()?.authority
+			? AuthProvider.githubEnterprise
+			: AuthProvider.github;
 	}
 
 	public get isEnterprise(): boolean {
@@ -36,19 +38,27 @@ export class Remote {
 		public readonly remoteName: string,
 		public readonly url: string,
 		public readonly gitProtocol: Protocol,
-	) { }
+	) {}
 
 	equals(remote: Remote): boolean {
 		if (this.remoteName !== remote.remoteName) {
 			return false;
 		}
-		if (!this.host.includes(remote.host) && !remote.host.includes(this.host)) {
+		if (
+			!this.host.includes(remote.host) &&
+			!remote.host.includes(this.host)
+		) {
 			return false;
 		}
-		if (this.owner.toLocaleLowerCase() !== remote.owner.toLocaleLowerCase()) {
+		if (
+			this.owner.toLocaleLowerCase() !== remote.owner.toLocaleLowerCase()
+		) {
 			return false;
 		}
-		if (this.repositoryName.toLocaleLowerCase() !== remote.repositoryName.toLocaleLowerCase()) {
+		if (
+			this.repositoryName.toLocaleLowerCase() !==
+			remote.repositoryName.toLocaleLowerCase()
+		) {
 			return false;
 		}
 
@@ -56,7 +66,11 @@ export class Remote {
 	}
 }
 
-export function parseRemote(remoteName: string, url: string, originalProtocol?: Protocol): Remote | null {
+export function parseRemote(
+	remoteName: string,
+	url: string,
+	originalProtocol?: Protocol,
+): Remote | null {
 	if (!url) {
 		return null;
 	}
@@ -84,7 +98,7 @@ export function parseRepositoryRemotes(repository: Repository): Remote[] {
 		if (r.pushUrl && r.pushUrl !== r.fetchUrl) {
 			urls.push(r.pushUrl);
 		}
-		urls.forEach(url => {
+		urls.forEach((url) => {
 			const remote = parseRemote(r.name, url);
 			if (remote) {
 				remotes.push(remote);
@@ -95,15 +109,23 @@ export function parseRepositoryRemotes(repository: Repository): Remote[] {
 }
 
 export class GitHubRemote extends Remote {
-	static remoteAsGitHub(remote: Remote, githubServerType: GitHubServerType): GitHubRemote {
-		return new GitHubRemote(remote.remoteName, remote.url, remote.gitProtocol, githubServerType);
+	static remoteAsGitHub(
+		remote: Remote,
+		githubServerType: GitHubServerType,
+	): GitHubRemote {
+		return new GitHubRemote(
+			remote.remoteName,
+			remote.url,
+			remote.gitProtocol,
+			githubServerType,
+		);
 	}
 
 	constructor(
 		remoteName: string,
 		url: string,
 		gitProtocol: Protocol,
-		public readonly githubServerType: GitHubServerType
+		public readonly githubServerType: GitHubServerType,
 	) {
 		super(remoteName, url, gitProtocol);
 	}

@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as vscode from 'vscode';
+import * as vscode from "vscode";
 
 export class ProgressHelper {
 	private _progress: Promise<void> = Promise.resolve();
@@ -14,7 +14,7 @@ export class ProgressHelper {
 	}
 	startProgress() {
 		this.endProgress();
-		this._progress = new Promise(resolve => {
+		this._progress = new Promise((resolve) => {
 			const disposable = this._endProgress.event(() => {
 				disposable.dispose();
 				resolve();

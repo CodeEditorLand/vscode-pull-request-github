@@ -3,28 +3,38 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as vscode from 'vscode';
-import { LiveShare, SharedService } from 'vsls/vscode.js';
-import { API } from '../api/api';
+import * as vscode from "vscode";
+import { LiveShare, SharedService } from "vsls/vscode.js";
+
+import { API } from "../api/api";
 import {
 	VSLS_GIT_PR_SESSION_NAME,
 	VSLS_REPOSITORY_INITIALIZATION_NAME,
 	VSLS_REQUEST_NAME,
 	VSLS_STATE_CHANGE_NOTIFY_NAME,
-} from '../constants';
+} from "../constants";
 
 export class VSLSHost implements vscode.Disposable {
 	private _sharedService?: SharedService;
 	private _disposables: vscode.Disposable[];
-	constructor(private _liveShareAPI: LiveShare, private _api: API) {
+	constructor(
+		private _liveShareAPI: LiveShare,
+		private _api: API,
+	) {
 		this._disposables = [];
 	}
 
 	public async initialize() {
-		this._sharedService = (await this._liveShareAPI!.shareService(VSLS_GIT_PR_SESSION_NAME)) || undefined;
+		this._sharedService =
+			(await this._liveShareAPI!.shareService(
+				VSLS_GIT_PR_SESSION_NAME,
+			)) || undefined;
 
 		if (this._sharedService) {
-			this._sharedService.onRequest(VSLS_REQUEST_NAME, this._gitHandler.bind(this));
+			this._sharedService.onRequest(
+				VSLS_REQUEST_NAME,
+				this._gitHandler.bind(this),
+			);
 		}
 	}
 
@@ -32,7 +42,8 @@ export class VSLSHost implements vscode.Disposable {
 		const type = args[0];
 		const workspaceFolderPath = args[1];
 		const workspaceFolderUri = vscode.Uri.parse(workspaceFolderPath);
-		const localWorkSpaceFolderUri = this._liveShareAPI.convertSharedUriToLocal(workspaceFolderUri);
+		const localWorkSpaceFolderUri =
+			this._liveShareAPI.convertSharedUriToLocal(workspaceFolderUri);
 		const gitProvider = this._api.getGitProvider(localWorkSpaceFolderUri);
 
 		if (!gitProvider) {
@@ -40,18 +51,23 @@ export class VSLSHost implements vscode.Disposable {
 		}
 
 		const localRepository: any = gitProvider.repositories.filter(
-			repository => repository.rootUri.toString() === localWorkSpaceFolderUri.toString(),
+			(repository) =>
+				repository.rootUri.toString() ===
+				localWorkSpaceFolderUri.toString(),
 		)[0];
 		if (localRepository) {
 			const commandArgs = args.slice(2);
 			if (type === VSLS_REPOSITORY_INITIALIZATION_NAME) {
 				this._disposables.push(
-					localRepository.state.onDidChange(_ => {
-						this._sharedService!.notify(VSLS_STATE_CHANGE_NOTIFY_NAME, {
-							HEAD: localRepository.state.HEAD,
-							remotes: localRepository.state.remotes,
-							refs: localRepository.state.refs,
-						});
+					localRepository.state.onDidChange((_) => {
+						this._sharedService!.notify(
+							VSLS_STATE_CHANGE_NOTIFY_NAME,
+							{
+								HEAD: localRepository.state.HEAD,
+								remotes: localRepository.state.remotes,
+								refs: localRepository.state.refs,
+							},
+						);
 					}),
 				);
 				return {
@@ -62,10 +78,11 @@ export class VSLSHost implements vscode.Disposable {
 				};
 			}
 
-			if (type === 'show') {
+			if (type === "show") {
 				const path = commandArgs[1];
 				const vslsFileUri = workspaceFolderUri.with({ path: path });
-				const localFileUri = this._liveShareAPI.convertSharedUriToLocal(vslsFileUri);
+				const localFileUri =
+					this._liveShareAPI.convertSharedUriToLocal(vslsFileUri);
 				commandArgs[1] = localFileUri.fsPath;
 
 				return localRepository[type](...commandArgs);
@@ -79,7 +96,7 @@ export class VSLSHost implements vscode.Disposable {
 		}
 	}
 	public dispose() {
-		this._disposables.forEach(d => d.dispose());
+		this._disposables.forEach((d) => d.dispose());
 		this._sharedService = undefined;
 		this._disposables = [];
 	}

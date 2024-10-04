@@ -3,17 +3,18 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as path from 'path';
-import * as vscode from 'vscode';
-import { PR_SETTINGS_NAMESPACE, QUERIES } from '../../common/settingKeys';
-import { ITelemetry } from '../../common/telemetry';
-import { FolderRepositoryManager } from '../../github/folderRepositoryManager';
-import { PRType } from '../../github/interface';
-import { NotificationProvider } from '../../github/notifications';
-import { PullRequestModel } from '../../github/pullRequestModel';
-import { PrsTreeModel } from '../prsTreeModel';
-import { CategoryTreeNode } from './categoryNode';
-import { TreeNode, TreeNodeParent } from './treeNode';
+import * as path from "path";
+import * as vscode from "vscode";
+
+import { PR_SETTINGS_NAMESPACE, QUERIES } from "../../common/settingKeys";
+import { ITelemetry } from "../../common/telemetry";
+import { FolderRepositoryManager } from "../../github/folderRepositoryManager";
+import { PRType } from "../../github/interface";
+import { NotificationProvider } from "../../github/notifications";
+import { PullRequestModel } from "../../github/pullRequestModel";
+import { PrsTreeModel } from "../prsTreeModel";
+import { CategoryTreeNode } from "./categoryNode";
+import { TreeNode, TreeNodeParent } from "./treeNode";
 
 export interface IQueryInfo {
 	label: string;
@@ -41,7 +42,9 @@ export class WorkspaceFolderNode extends TreeNode implements vscode.TreeItem {
 		this.id = folderManager.repository.rootUri.toString();
 	}
 
-	public async expandPullRequest(pullRequest: PullRequestModel): Promise<boolean> {
+	public async expandPullRequest(
+		pullRequest: PullRequestModel,
+	): Promise<boolean> {
 		if (this.children) {
 			for (const child of this.children) {
 				if (child.type === PRType.All) {
@@ -52,10 +55,15 @@ export class WorkspaceFolderNode extends TreeNode implements vscode.TreeItem {
 		return false;
 	}
 
-	private static getQueries(folderManager: FolderRepositoryManager): IQueryInfo[] {
+	private static getQueries(
+		folderManager: FolderRepositoryManager,
+	): IQueryInfo[] {
 		return (
 			vscode.workspace
-				.getConfiguration(PR_SETTINGS_NAMESPACE, folderManager.repository.rootUri)
+				.getConfiguration(
+					PR_SETTINGS_NAMESPACE,
+					folderManager.repository.rootUri,
+				)
 				.get<IQueryInfo[]>(QUERIES) || []
 		);
 	}
@@ -66,7 +74,14 @@ export class WorkspaceFolderNode extends TreeNode implements vscode.TreeItem {
 
 	async getChildren(): Promise<TreeNode[]> {
 		super.getChildren();
-		this.children = WorkspaceFolderNode.getCategoryTreeNodes(this.folderManager, this.telemetry, this, this.notificationProvider, this.context, this._prsTreeModel);
+		this.children = WorkspaceFolderNode.getCategoryTreeNodes(
+			this.folderManager,
+			this.telemetry,
+			this,
+			this.notificationProvider,
+			this.context,
+			this._prsTreeModel,
+		);
 		return this.children;
 	}
 
@@ -78,14 +93,39 @@ export class WorkspaceFolderNode extends TreeNode implements vscode.TreeItem {
 		context: vscode.ExtensionContext,
 		prsTreeModel: PrsTreeModel,
 	) {
-		const queryCategories = WorkspaceFolderNode.getQueries(folderManager).map(
-			queryInfo =>
-				new CategoryTreeNode(parent, folderManager, telemetry, PRType.Query, notificationProvider, prsTreeModel, queryInfo.label, queryInfo.query),
+		const queryCategories = WorkspaceFolderNode.getQueries(
+			folderManager,
+		).map(
+			(queryInfo) =>
+				new CategoryTreeNode(
+					parent,
+					folderManager,
+					telemetry,
+					PRType.Query,
+					notificationProvider,
+					prsTreeModel,
+					queryInfo.label,
+					queryInfo.query,
+				),
 		);
 		return [
-			new CategoryTreeNode(parent, folderManager, telemetry, PRType.LocalPullRequest, notificationProvider, prsTreeModel),
+			new CategoryTreeNode(
+				parent,
+				folderManager,
+				telemetry,
+				PRType.LocalPullRequest,
+				notificationProvider,
+				prsTreeModel,
+			),
 			...queryCategories,
-			new CategoryTreeNode(parent, folderManager, telemetry, PRType.All, notificationProvider, prsTreeModel),
+			new CategoryTreeNode(
+				parent,
+				folderManager,
+				telemetry,
+				PRType.All,
+				notificationProvider,
+				prsTreeModel,
+			),
 		];
 	}
 }

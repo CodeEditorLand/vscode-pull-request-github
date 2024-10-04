@@ -3,22 +3,26 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { OctokitResponse } from '@octokit/types';
-import * as vscode from 'vscode';
-import { AuthProvider } from '../common/authentication';
-import Logger from '../common/logger';
-import { NOTIFICATION_SETTING, PR_SETTINGS_NAMESPACE } from '../common/settingKeys';
-import { createPRNodeUri } from '../common/uri';
-import { PullRequestsTreeDataProvider } from '../view/prsTreeDataProvider';
-import { CategoryTreeNode } from '../view/treeNodes/categoryNode';
-import { PRNode } from '../view/treeNodes/pullRequestNode';
-import { TreeNode } from '../view/treeNodes/treeNode';
-import { CredentialStore, GitHub } from './credentials';
-import { GitHubRepository } from './githubRepository';
-import { PullRequestState } from './graphql';
-import { PullRequestModel } from './pullRequestModel';
-import { RepositoriesManager } from './repositoriesManager';
-import { hasEnterpriseUri } from './utils';
+import { OctokitResponse } from "@octokit/types";
+import * as vscode from "vscode";
+
+import { AuthProvider } from "../common/authentication";
+import Logger from "../common/logger";
+import {
+	NOTIFICATION_SETTING,
+	PR_SETTINGS_NAMESPACE,
+} from "../common/settingKeys";
+import { createPRNodeUri } from "../common/uri";
+import { PullRequestsTreeDataProvider } from "../view/prsTreeDataProvider";
+import { CategoryTreeNode } from "../view/treeNodes/categoryNode";
+import { PRNode } from "../view/treeNodes/pullRequestNode";
+import { TreeNode } from "../view/treeNodes/treeNode";
+import { CredentialStore, GitHub } from "./credentials";
+import { GitHubRepository } from "./githubRepository";
+import { PullRequestState } from "./graphql";
+import { PullRequestModel } from "./pullRequestModel";
+import { RepositoriesManager } from "./repositoriesManager";
+import { hasEnterpriseUri } from "./utils";
 
 const DEFAULT_POLLING_DURATION = 60;
 
@@ -29,9 +33,13 @@ export class Notification {
 	public readonly pullRequestNumber: number;
 	public pullRequestModel?: PullRequestModel;
 
-	constructor(identifier: string, threadId: number, repositoryName: string,
-		pullRequestNumber: number, pullRequestModel?: PullRequestModel) {
-
+	constructor(
+		identifier: string,
+		threadId: number,
+		repositoryName: string,
+		pullRequestNumber: number,
+		pullRequestModel?: PullRequestModel,
+	) {
 		this.identifier = identifier;
 		this.threadId = threadId;
 		this.repositoryName = repositoryName;
@@ -41,7 +49,7 @@ export class Notification {
 }
 
 export class NotificationProvider implements vscode.Disposable {
-	private static ID = 'NotificationProvider';
+	private static ID = "NotificationProvider";
 	private readonly _gitHubPrsTree: PullRequestsTreeDataProvider;
 	private readonly _credentialStore: CredentialStore;
 	private _authProvider: AuthProvider | undefined;
@@ -55,20 +63,21 @@ export class NotificationProvider implements vscode.Disposable {
 
 	private disposables: vscode.Disposable[] = [];
 
-	private _onDidChangeNotifications: vscode.EventEmitter<vscode.Uri[]> = new vscode.EventEmitter();
+	private _onDidChangeNotifications: vscode.EventEmitter<vscode.Uri[]> =
+		new vscode.EventEmitter();
 	public onDidChangeNotifications = this._onDidChangeNotifications.event;
 
 	constructor(
 		gitHubPrsTree: PullRequestsTreeDataProvider,
 		credentialStore: CredentialStore,
-		reposManager: RepositoriesManager
+		reposManager: RepositoriesManager,
 	) {
 		this._gitHubPrsTree = gitHubPrsTree;
 		this._credentialStore = credentialStore;
 		this._reposManager = reposManager;
 		this._notifications = new Map<string, Notification[]>();
 
-		this._lastModified = '';
+		this._lastModified = "";
 		this._pollingDuration = DEFAULT_POLLING_DURATION;
 		this._pollingHandler = null;
 
@@ -78,7 +87,7 @@ export class NotificationProvider implements vscode.Disposable {
 			this.disposables.push(
 				manager.onDidChangeGithubRepositories(() => {
 					this.refreshOrLaunchPolling();
-				})
+				}),
 			);
 		}
 
@@ -87,57 +96,72 @@ export class NotificationProvider implements vscode.Disposable {
 				if (NotificationProvider.isPRNotificationsOn()) {
 					this.adaptPRNotifications(node);
 				}
-			})
+			}),
 		);
 		this.disposables.push(
 			gitHubPrsTree.onDidChange(() => {
 				if (NotificationProvider.isPRNotificationsOn()) {
 					this.adaptPRNotifications();
 				}
-			})
+			}),
 		);
 
 		this.disposables.push(
 			vscode.workspace.onDidChangeConfiguration((e) => {
-				if (e.affectsConfiguration(`${PR_SETTINGS_NAMESPACE}.${NOTIFICATION_SETTING}`)) {
+				if (
+					e.affectsConfiguration(
+						`${PR_SETTINGS_NAMESPACE}.${NOTIFICATION_SETTING}`,
+					)
+				) {
 					this.checkNotificationSetting();
 				}
-			})
+			}),
 		);
 	}
 
 	private static isPRNotificationsOn() {
 		return (
-			vscode.workspace.getConfiguration(PR_SETTINGS_NAMESPACE).get<string>(NOTIFICATION_SETTING) ===
-			'pullRequests'
+			vscode.workspace
+				.getConfiguration(PR_SETTINGS_NAMESPACE)
+				.get<string>(NOTIFICATION_SETTING) === "pullRequests"
 		);
 	}
 
 	private registerAuthProvider(credentialStore: CredentialStore) {
-		if (credentialStore.isAuthenticated(AuthProvider.githubEnterprise) && hasEnterpriseUri()) {
+		if (
+			credentialStore.isAuthenticated(AuthProvider.githubEnterprise) &&
+			hasEnterpriseUri()
+		) {
 			this._authProvider = AuthProvider.githubEnterprise;
 		} else if (credentialStore.isAuthenticated(AuthProvider.github)) {
 			this._authProvider = AuthProvider.github;
 		}
 
 		this.disposables.push(
-			vscode.authentication.onDidChangeSessions(_ => {
-				if (credentialStore.isAuthenticated(AuthProvider.githubEnterprise) && hasEnterpriseUri()) {
+			vscode.authentication.onDidChangeSessions((_) => {
+				if (
+					credentialStore.isAuthenticated(
+						AuthProvider.githubEnterprise,
+					) &&
+					hasEnterpriseUri()
+				) {
 					this._authProvider = AuthProvider.githubEnterprise;
 				}
 
 				if (credentialStore.isAuthenticated(AuthProvider.github)) {
 					this._authProvider = AuthProvider.github;
 				}
-			})
+			}),
 		);
 	}
 
-	private getPrIdentifier(pullRequest: PullRequestModel | OctokitResponse<any>['data']): string {
+	private getPrIdentifier(
+		pullRequest: PullRequestModel | OctokitResponse<any>["data"],
+	): string {
 		if (pullRequest instanceof PullRequestModel) {
 			return `${pullRequest.remote.url}:${pullRequest.number}`;
 		}
-		const splitPrUrl = pullRequest.subject.url.split('/');
+		const splitPrUrl = pullRequest.subject.url.split("/");
 		const prNumber = splitPrUrl[splitPrUrl.length - 1];
 		return `${pullRequest.repository.html_url}.git:${prNumber}`;
 	}
@@ -145,21 +169,31 @@ export class NotificationProvider implements vscode.Disposable {
 	/* Takes a PullRequestModel or a PRIdentifier and
 	returns true if there is a Notification for the corresponding PR */
 	public hasNotification(pullRequest: PullRequestModel | string): boolean {
-		const identifier = pullRequest instanceof PullRequestModel ?
-			this.getPrIdentifier(pullRequest) :
-			pullRequest;
+		const identifier =
+			pullRequest instanceof PullRequestModel
+				? this.getPrIdentifier(pullRequest)
+				: pullRequest;
 		const prNotifications = this._notifications.get(identifier);
 		return prNotifications !== undefined && prNotifications.length > 0;
 	}
 
 	private updateViewBadge() {
 		const treeView = this._gitHubPrsTree.view;
-		const singularMessage = vscode.l10n.t('1 notification');
-		const pluralMessage = vscode.l10n.t('{0} notifications', this._notifications.size);
-		treeView.badge = this._notifications.size !== 0 ? {
-			tooltip: this._notifications.size === 1 ? singularMessage : pluralMessage,
-			value: this._notifications.size
-		} : undefined;
+		const singularMessage = vscode.l10n.t("1 notification");
+		const pluralMessage = vscode.l10n.t(
+			"{0} notifications",
+			this._notifications.size,
+		);
+		treeView.badge =
+			this._notifications.size !== 0
+				? {
+						tooltip:
+							this._notifications.size === 1
+								? singularMessage
+								: pluralMessage,
+						value: this._notifications.size,
+					}
+				: undefined;
 	}
 
 	private adaptPRNotifications(node: TreeNode | void) {
@@ -168,7 +202,9 @@ export class NotificationProvider implements vscode.Disposable {
 		}
 
 		if (node instanceof PRNode) {
-			const prNotifications = this._notifications.get(this.getPrIdentifier(node.pullRequestModel));
+			const prNotifications = this._notifications.get(
+				this.getPrIdentifier(node.pullRequestModel),
+			);
 			if (prNotifications) {
 				for (const prNotification of prNotifications) {
 					if (prNotification) {
@@ -179,49 +215,51 @@ export class NotificationProvider implements vscode.Disposable {
 			}
 		}
 
-		this._gitHubPrsTree.cachedChildren().then(async (catNodes: CategoryTreeNode[]) => {
-			let allPrs: PullRequestModel[] = [];
+		this._gitHubPrsTree
+			.cachedChildren()
+			.then(async (catNodes: CategoryTreeNode[]) => {
+				let allPrs: PullRequestModel[] = [];
 
-			for (const catNode of catNodes) {
-				if (catNode.id === 'All Open') {
-					if (catNode.prs.length === 0) {
-						for (const prNode of await catNode.cachedChildren()) {
-							if (prNode instanceof PRNode) {
-								allPrs.push(prNode.pullRequestModel);
+				for (const catNode of catNodes) {
+					if (catNode.id === "All Open") {
+						if (catNode.prs.length === 0) {
+							for (const prNode of await catNode.cachedChildren()) {
+								if (prNode instanceof PRNode) {
+									allPrs.push(prNode.pullRequestModel);
+								}
 							}
+						} else {
+							allPrs = catNode.prs;
 						}
 					}
-					else {
-						allPrs = catNode.prs;
-					}
-
 				}
-			}
 
-			allPrs.forEach((pr) => {
-				const prNotifications = this._notifications.get(this.getPrIdentifier(pr));
-				if (prNotifications) {
-					for (const prNotification of prNotifications) {
-						prNotification.pullRequestModel = pr;
+				allPrs.forEach((pr) => {
+					const prNotifications = this._notifications.get(
+						this.getPrIdentifier(pr),
+					);
+					if (prNotifications) {
+						for (const prNotification of prNotifications) {
+							prNotification.pullRequestModel = pr;
+						}
 					}
-				}
+				});
 			});
-		});
 	}
 
 	public refreshOrLaunchPolling() {
-		this._lastModified = '';
+		this._lastModified = "";
 		this.checkNotificationSetting();
 	}
 
 	private checkNotificationSetting() {
-		const notificationsTurnedOn = NotificationProvider.isPRNotificationsOn();
+		const notificationsTurnedOn =
+			NotificationProvider.isPRNotificationsOn();
 		if (notificationsTurnedOn && this._pollingHandler === null) {
 			this.startPolling();
-		}
-		else if (!notificationsTurnedOn && this._pollingHandler !== null) {
+		} else if (!notificationsTurnedOn && this._pollingHandler !== null) {
 			clearInterval(this._pollingHandler);
-			this._lastModified = '';
+			this._lastModified = "";
 			this._pollingHandler = null;
 			this._pollingDuration = DEFAULT_POLLING_DURATION;
 
@@ -233,7 +271,10 @@ export class NotificationProvider implements vscode.Disposable {
 
 	private uriFromNotifications(): vscode.Uri[] {
 		const notificationUris: vscode.Uri[] = [];
-		for (const [identifier, prNotifications] of this._notifications.entries()) {
+		for (const [
+			identifier,
+			prNotifications,
+		] of this._notifications.entries()) {
 			if (prNotifications.length) {
 				notificationUris.push(createPRNodeUri(identifier));
 			}
@@ -242,16 +283,18 @@ export class NotificationProvider implements vscode.Disposable {
 	}
 
 	private getGitHub(): GitHub | undefined {
-		return (this._authProvider !== undefined) ?
-			this._credentialStore.getHub(this._authProvider) :
-			undefined;
+		return this._authProvider !== undefined
+			? this._credentialStore.getHub(this._authProvider)
+			: undefined;
 	}
 
 	private async getNotifications() {
 		const gitHub = this.getGitHub();
-		if (gitHub === undefined)
-			return undefined;
-		const { data, headers } = await gitHub.octokit.call(gitHub.octokit.api.activity.listNotificationsForAuthenticatedUser, {});
+		if (gitHub === undefined) return undefined;
+		const { data, headers } = await gitHub.octokit.call(
+			gitHub.octokit.api.activity.listNotificationsForAuthenticatedUser,
+			{},
+		);
 		return { data: data, headers: headers };
 	}
 
@@ -260,9 +303,12 @@ export class NotificationProvider implements vscode.Disposable {
 		if (!github) {
 			return;
 		}
-		await github.octokit.call(github.octokit.api.activity.markThreadAsRead, {
-			thread_id: thredId
-		});
+		await github.octokit.call(
+			github.octokit.api.activity.markThreadAsRead,
+			{
+				thread_id: thredId,
+			},
+		);
 	}
 
 	public async markPrNotificationsAsRead(pullRequestModel: PullRequestModel) {
@@ -286,92 +332,102 @@ export class NotificationProvider implements vscode.Disposable {
 			return;
 		}
 		const { data, headers } = response;
-		const pollTimeSuggested = Number(headers['x-poll-interval']);
+		const pollTimeSuggested = Number(headers["x-poll-interval"]);
 
 		// Adapt polling interval if it has changed.
 		if (pollTimeSuggested !== this._pollingDuration) {
 			this._pollingDuration = pollTimeSuggested;
-			if (this._pollingHandler && NotificationProvider.isPRNotificationsOn()) {
-				Logger.appendLine('Notifications: Clearing interval');
+			if (
+				this._pollingHandler &&
+				NotificationProvider.isPRNotificationsOn()
+			) {
+				Logger.appendLine("Notifications: Clearing interval");
 				clearInterval(this._pollingHandler);
-				Logger.appendLine(`Notifications: Starting new polling interval with ${this._pollingDuration}`);
+				Logger.appendLine(
+					`Notifications: Starting new polling interval with ${this._pollingDuration}`,
+				);
 				this.startPolling();
 			}
 		}
 
 		// Only update if the user has new notifications
-		if (this._lastModified === headers['last-modified']) {
+		if (this._lastModified === headers["last-modified"]) {
 			return;
 		}
-		this._lastModified = headers['last-modified'] ?? '';
+		this._lastModified = headers["last-modified"] ?? "";
 
 		const prNodesToUpdate = this.uriFromNotifications();
 		this._notifications.clear();
 
 		const currentRepos = new Map<string, GitHubRepository>();
 
-		this._reposManager.folderManagers.forEach(manager => {
-			manager.gitHubRepositories.forEach(repo => {
+		this._reposManager.folderManagers.forEach((manager) => {
+			manager.gitHubRepositories.forEach((repo) => {
 				currentRepos.set(repo.remote.url, repo);
 			});
 		});
 
-		await Promise.all(data.map(async (notification) => {
+		await Promise.all(
+			data.map(async (notification) => {
+				const repoUrl = `${notification.repository.html_url}.git`;
+				const githubRepo = currentRepos.get(repoUrl);
 
-			const repoUrl = `${notification.repository.html_url}.git`;
-			const githubRepo = currentRepos.get(repoUrl);
+				if (githubRepo && notification.subject.type === "PullRequest") {
+					const splitPrUrl = notification.subject.url.split("/");
+					const prNumber = Number(splitPrUrl[splitPrUrl.length - 1]);
+					const identifier = this.getPrIdentifier(notification);
 
-			if (githubRepo && notification.subject.type === 'PullRequest') {
-				const splitPrUrl = notification.subject.url.split('/');
-				const prNumber = Number(splitPrUrl[splitPrUrl.length - 1]);
-				const identifier = this.getPrIdentifier(notification);
+					const { remote, query, schema } = await githubRepo.ensure();
 
-				const { remote, query, schema } = await githubRepo.ensure();
+					const { data } = await query<PullRequestState>({
+						query: schema.PullRequestState,
+						variables: {
+							owner: remote.owner,
+							name: remote.repositoryName,
+							number: prNumber,
+						},
+					});
 
-				const { data } = await query<PullRequestState>({
-					query: schema.PullRequestState,
-					variables: {
-						owner: remote.owner,
-						name: remote.repositoryName,
-						number: prNumber,
-					},
-				});
-
-				if (data.repository === null) {
-					Logger.error('Unexpected null repository when getting notifications', NotificationProvider.ID);
-				}
-
-				// We only consider open PullRequests as these are displayed in the AllOpen PR category.
-				// Other categories could have queries with closed PRs, but its hard to figure out if a PR
-				// belongs to a query without loading each PR of that query.
-				if (data.repository?.pullRequest.state === 'OPEN') {
-
-					const newNotification = new Notification(
-						identifier,
-						Number(notification.id),
-						notification.repository.name,
-						Number(prNumber)
-					);
-
-					const currentPrNotifications = this._notifications.get(identifier);
-					if (currentPrNotifications === undefined) {
-						this._notifications.set(
-							identifier, [newNotification]
+					if (data.repository === null) {
+						Logger.error(
+							"Unexpected null repository when getting notifications",
+							NotificationProvider.ID,
 						);
 					}
-					else {
-						currentPrNotifications.push(newNotification);
+
+					// We only consider open PullRequests as these are displayed in the AllOpen PR category.
+					// Other categories could have queries with closed PRs, but its hard to figure out if a PR
+					// belongs to a query without loading each PR of that query.
+					if (data.repository?.pullRequest.state === "OPEN") {
+						const newNotification = new Notification(
+							identifier,
+							Number(notification.id),
+							notification.repository.name,
+							Number(prNumber),
+						);
+
+						const currentPrNotifications =
+							this._notifications.get(identifier);
+						if (currentPrNotifications === undefined) {
+							this._notifications.set(identifier, [
+								newNotification,
+							]);
+						} else {
+							currentPrNotifications.push(newNotification);
+						}
 					}
 				}
-
-			}
-		}));
+			}),
+		);
 
 		this.adaptPRNotifications();
 
 		this.updateViewBadge();
 		for (const uri of this.uriFromNotifications()) {
-			if (prNodesToUpdate.find(u => u.fsPath === uri.fsPath) === undefined) {
+			if (
+				prNodesToUpdate.find((u) => u.fsPath === uri.fsPath) ===
+				undefined
+			) {
 				prNodesToUpdate.push(uri);
 			}
 		}
@@ -386,7 +442,7 @@ export class NotificationProvider implements vscode.Disposable {
 				notificationProvider.pollForNewNotifications();
 			},
 			this._pollingDuration * 1000,
-			this
+			this,
 		);
 	}
 
@@ -394,6 +450,6 @@ export class NotificationProvider implements vscode.Disposable {
 		if (this._pollingHandler) {
 			clearInterval(this._pollingHandler);
 		}
-		this.disposables.forEach(displosable => displosable.dispose());
+		this.disposables.forEach((displosable) => displosable.dispose());
 	}
 }
