@@ -3,8 +3,9 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import React, { useContext, useRef, useState } from 'react';
-import { IComment } from '../../src/common/comment';
+import React, { useContext, useRef, useState } from "react";
+
+import { IComment } from "../../src/common/comment";
 import {
 	AssignEvent,
 	CommentEvent,
@@ -14,34 +15,56 @@ import {
 	MergedEvent,
 	ReviewEvent,
 	TimelineEvent,
-} from '../../src/common/timelineEvent';
-import { groupBy, UnreachableCaseError } from '../../src/common/utils';
-import PullRequestContext from '../common/context';
-import { CommentView } from './comment';
-import Diff from './diff';
-import { commitIcon, mergeIcon, plusIcon } from './icon';
-import { nbsp } from './space';
-import { Timestamp } from './timestamp';
-import { AuthorLink, Avatar } from './user';
+} from "../../src/common/timelineEvent";
+import { groupBy, UnreachableCaseError } from "../../src/common/utils";
+import PullRequestContext from "../common/context";
+import { CommentView } from "./comment";
+import Diff from "./diff";
+import { commitIcon, mergeIcon, plusIcon } from "./icon";
+import { nbsp } from "./space";
+import { Timestamp } from "./timestamp";
+import { AuthorLink, Avatar } from "./user";
 
 export const Timeline = ({ events }: { events: TimelineEvent[] }) => (
 	<>
-		{events.map(event => {
+		{events.map((event) => {
 			switch (event.event) {
 				case EventType.Committed:
-					return <CommitEventView key={`commit${event.id}`} {...event} />;
+					return (
+						<CommitEventView key={`commit${event.id}`} {...event} />
+					);
 				case EventType.Reviewed:
-					return <ReviewEventView key={`review${event.id}`} {...event} />;
+					return (
+						<ReviewEventView key={`review${event.id}`} {...event} />
+					);
 				case EventType.Commented:
-					return <CommentEventView key={`comment${event.id}`} {...event} />;
+					return (
+						<CommentEventView
+							key={`comment${event.id}`}
+							{...event}
+						/>
+					);
 				case EventType.Merged:
-					return <MergedEventView key={`merged${event.id}`} {...event} />;
+					return (
+						<MergedEventView key={`merged${event.id}`} {...event} />
+					);
 				case EventType.Assigned:
-					return <AssignEventView key={`assign${event.id}`} {...event} />;
+					return (
+						<AssignEventView key={`assign${event.id}`} {...event} />
+					);
 				case EventType.HeadRefDeleted:
-					return <HeadDeleteEventView key={`head${event.id}`} {...event} />;
+					return (
+						<HeadDeleteEventView
+							key={`head${event.id}`}
+							{...event}
+						/>
+					);
 				case EventType.NewCommitsSinceReview:
-					return <NewCommitsSinceReviewEventView key={`newCommits${event.id}`} />;
+					return (
+						<NewCommitsSinceReviewEventView
+							key={`newCommits${event.id}`}
+						/>
+					);
 				default:
 					throw new UnreachableCaseError(event);
 			}
@@ -61,8 +84,16 @@ const CommitEventView = (event: CommitEvent) => (
 			</div>
 			<AuthorLink for={event.author} />
 			<div className="message-container">
-				<a className="message" href={event.htmlUrl} title={event.htmlUrl}>
-					{event.message.substr(0, event.message.indexOf('\n') > -1 ? event.message.indexOf('\n') : event.message.length)}
+				<a
+					className="message"
+					href={event.htmlUrl}
+					title={event.htmlUrl}>
+					{event.message.substr(
+						0,
+						event.message.indexOf("\n") > -1
+							? event.message.indexOf("\n")
+							: event.message.length,
+					)}
 				</a>
 			</div>
 		</div>
@@ -82,13 +113,14 @@ const NewCommitsSinceReviewEventView = () => {
 			<div className="commit-message">
 				{plusIcon}
 				{nbsp}
-				<span style={{ fontWeight: 'bold' }}>New changes since your last Review</span>
+				<span style={{ fontWeight: "bold" }}>
+					New changes since your last Review
+				</span>
 			</div>
 			<button
 				aria-live="polite"
 				title="View the changes since your last review"
-				onClick={() => gotoChangesSinceReview()}
-			>
+				onClick={() => gotoChangesSinceReview()}>
 				View Changes
 			</button>
 		</div>
@@ -96,21 +128,29 @@ const NewCommitsSinceReviewEventView = () => {
 };
 
 const positionKey = (comment: IComment) =>
-	comment.position !== null ? `pos:${comment.position}` : `ori:${comment.originalPosition}`;
+	comment.position !== null
+		? `pos:${comment.position}`
+		: `ori:${comment.originalPosition}`;
 
 const groupCommentsByPath = (comments: IComment[]) =>
-	groupBy(comments, comment => comment.path + ':' + positionKey(comment));
+	groupBy(comments, (comment) => comment.path + ":" + positionKey(comment));
 
 const ReviewEventView = (event: ReviewEvent) => {
 	const comments = groupCommentsByPath(event.comments);
-	const reviewIsPending = event.state === 'PENDING';
+	const reviewIsPending = event.state === "PENDING";
 	return (
 		<CommentView comment={event} allowEmpty={true}>
 			{/* Don't show the empty comment body unless a comment has been written. Shows diffs and suggested changes. */}
 			{event.comments.length ? (
 				<div className="comment-body review-comment-body">
 					{Object.entries(comments).map(([key, thread]) => {
-						return <CommentThread key={key} thread={thread} event={event} />;
+						return (
+							<CommentThread
+								key={key}
+								thread={thread}
+								event={event}
+							/>
+						);
 					})}
 				</div>
 			) : null}
@@ -120,7 +160,13 @@ const ReviewEventView = (event: ReviewEvent) => {
 	);
 };
 
-function CommentThread({ thread, event }: { thread: IComment[]; event: ReviewEvent }) {
+function CommentThread({
+	thread,
+	event,
+}: {
+	thread: IComment[];
+	event: ReviewEvent;
+}) {
 	const comment = thread[0];
 	const [revealed, setRevealed] = useState(!comment.isResolved);
 	const [resolved, setResolved] = useState(!!comment.isResolved);
@@ -135,7 +181,11 @@ function CommentThread({ thread, event }: { thread: IComment[]; event: ReviewEve
 			const newResolved = !resolved;
 			setRevealed(!newResolved);
 			setResolved(newResolved);
-			toggleResolveComment(event.reviewThread.threadId, thread, newResolved);
+			toggleResolveComment(
+				event.reviewThread.threadId,
+				thread,
+				newResolved,
+			);
 		}
 	};
 
@@ -149,26 +199,36 @@ function CommentThread({ thread, event }: { thread: IComment[]; event: ReviewEve
 							<span className="outdatedLabel">Outdated</span>
 						</span>
 					) : (
-						<a className="diffPath" onClick={() => openDiff(comment)}>
+						<a
+							className="diffPath"
+							onClick={() => openDiff(comment)}>
 							{comment.path}
 						</a>
 					)}
-					{!resolved && !revealed ? <span className="unresolvedLabel">Unresolved</span> : null}
+					{!resolved && !revealed ? (
+						<span className="unresolvedLabel">Unresolved</span>
+					) : null}
 				</div>
-				<button className="secondary" onClick={() => setRevealed(!revealed)}>
-					{revealed ? 'Hide' : 'Show'}
+				<button
+					className="secondary"
+					onClick={() => setRevealed(!revealed)}>
+					{revealed ? "Hide" : "Show"}
 				</button>
 			</div>
 			{revealed ? (
 				<div>
 					<Diff hunks={comment.diffHunks ?? []} />
-					{thread.map(c => (
+					{thread.map((c) => (
 						<CommentView key={c.id} comment={c} />
 					))}
 					{resolvePermission ? (
 						<div className="resolve-comment-row">
-							<button className="secondary comment-resolve" onClick={() => toggleResolve()}>
-								{resolved ? 'Unresolve Conversation' : 'Resolve Conversation'}
+							<button
+								className="secondary comment-resolve"
+								onClick={() => toggleResolve()}>
+								{resolved
+									? "Unresolve Conversation"
+									: "Resolve Conversation"}
 							</button>
 						</div>
 					) : null}
@@ -179,33 +239,36 @@ function CommentThread({ thread, event }: { thread: IComment[]; event: ReviewEve
 }
 
 function AddReviewSummaryComment() {
-	const { requestChanges, approve, submit, pr } = useContext(PullRequestContext);
+	const { requestChanges, approve, submit, pr } =
+		useContext(PullRequestContext);
 	const { isAuthor } = pr;
 	const comment = useRef<HTMLTextAreaElement>();
 	return (
 		<form>
-			<textarea id='pending-review' ref={comment} placeholder="Leave a review summary comment"></textarea>
+			<textarea
+				id="pending-review"
+				ref={comment}
+				placeholder="Leave a review summary comment"></textarea>
 			<div className="form-actions">
 				{isAuthor ? null : (
 					<button
 						id="request-changes"
-						className='secondary'
+						className="secondary"
 						onClick={(event) => {
 							event.preventDefault();
 							requestChanges(comment.current!.value);
-						}}
-					>
+						}}>
 						Request Changes
 					</button>
 				)}
 				{isAuthor ? null : (
 					<button
-						id="approve" className='secondary'
+						id="approve"
+						className="secondary"
 						onClick={(event) => {
 							event.preventDefault();
 							approve(comment.current!.value);
-						}}
-					>
+						}}>
 						Approve
 					</button>
 				)}
@@ -213,14 +276,17 @@ function AddReviewSummaryComment() {
 					onClick={(event) => {
 						event.preventDefault();
 						submit(comment.current!.value);
-					}}
-				>Submit Review</button>
+					}}>
+					Submit Review
+				</button>
 			</div>
 		</form>
 	);
 }
 
-const CommentEventView = (event: CommentEvent) => <CommentView headerInEditMode comment={event} />;
+const CommentEventView = (event: CommentEvent) => (
+	<CommentView headerInEditMode comment={event} />
+);
 
 const MergedEventView = (event: MergedEvent) => {
 	const { revert, pr } = useContext(PullRequestContext);
@@ -236,7 +302,10 @@ const MergedEventView = (event: MergedEvent) => {
 				<AuthorLink for={event.user} />
 				<div className="message">
 					merged commit{nbsp}
-					<a className="sha" href={event.commitUrl} title={event.commitUrl}>
+					<a
+						className="sha"
+						href={event.commitUrl}
+						title={event.commitUrl}>
 						{event.sha.substr(0, 7)}
 					</a>
 					{nbsp}
@@ -245,10 +314,16 @@ const MergedEventView = (event: MergedEvent) => {
 				</div>
 				<Timestamp href={event.url} date={event.createdAt} />
 			</div>
-			{pr.revertable ?
+			{pr.revertable ? (
 				<div className="timeline-detail">
-					<button className='secondary' disabled={pr.busy} onClick={revert}>Revert</button>
-				</div> : null}
+					<button
+						className="secondary"
+						disabled={pr.busy}
+						onClick={revert}>
+						Revert
+					</button>
+				</div>
+			) : null}
 		</div>
 	);
 };
