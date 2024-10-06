@@ -12,63 +12,64 @@
  */
 
 module.exports.all = [
-	"*",
-	"build/**/*",
-	"common/**/*",
-	"scripts/**/*",
-	"src/**/*",
-	"test/**/*",
-	"webviews/**/*",
+	'*',
+	'build/**/*',
+	'common/**/*',
+	'scripts/**/*',
+	'src/**/*',
+	'test/**/*',
+	'webviews/**/*'
 ];
 
 module.exports.unicodeFilter = [
-	"**",
+	'**',
 	// except specific files
-	"!documentation/**/*",
-	"!**/ThirdPartyNotices.txt",
-	"!**/LICENSE.{txt,rtf}",
-	"!**/LICENSE",
-	"!*.yml",
+	'!documentation/**/*',
+	'!**/ThirdPartyNotices.txt',
+	'!**/LICENSE.{txt,rtf}',
+	'!**/LICENSE',
+	'!*.yml'
 ];
 
 module.exports.indentationFilter = [
-	"**",
+	'**',
 
 	// except specific files
-	"!CHANGELOG.md",
-	"!documentation/**/*",
-	"!**/ThirdPartyNotices.txt",
-	"!**/LICENSE.{txt,rtf}",
-	"!**/LICENSE",
-	"!**/*.yml",
+	'!CHANGELOG.md',
+	'!documentation/**/*',
+	'!**/ThirdPartyNotices.txt',
+	'!**/LICENSE.{txt,rtf}',
+	'!**/LICENSE',
+	'!**/*.yml',
 
 	// except multiple specific files
-	"!**/package.json",
-	"!**/yarn.lock",
-	"!**/yarn-error.log",
-	"!**/fixtures/**/*",
+	'!**/package.json',
+	'!**/yarn.lock',
+	'!**/yarn-error.log',
+	'!**/fixtures/**/*'
 ];
 
 module.exports.copyrightFilter = [
-	"**",
-	"!documentation/**/*",
-	"!.readme/**/*",
-	"!.vscode/**/*",
-	"!.github/**/*",
-	"!.husky/**/*",
-	"!tsfmt.json",
-	"!**/queries*.gql",
-	"!**/*.yml",
-	"!**/*.md",
-	"!package.nls.json",
-	"!**/*.svg",
-	"!src/integrations/gitlens/gitlens.d.ts",
-	"!**/fixtures/**",
+	'**',
+	'!documentation/**/*',
+	'!.readme/**/*',
+	'!.vscode/**/*',
+	'!.github/**/*',
+	'!.husky/**/*',
+	'!tsfmt.json',
+	'!**/queries*.gql',
+	'!**/*.yml',
+	'!**/*.md',
+	'!package.nls.json',
+	'!**/*.svg',
+	'!src/integrations/gitlens/gitlens.d.ts',
+	'!**/fixtures/**'
 ];
 
 module.exports.tsFormattingFilter = [
-	"src/**/*.ts",
-	"common/**/*.ts",
-	"webviews/**/*.ts",
-	"**/fixtures/**/*",
+	'src/**/*.ts',
+	'common/**/*.ts',
+	'webviews/**/*.ts',
+	'**/fixtures/**/*'
 ];
+

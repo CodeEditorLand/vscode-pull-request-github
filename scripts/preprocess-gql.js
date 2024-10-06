@@ -1,6 +1,6 @@
-const fs = require("fs");
-const minimist = require("minimist");
-const gqlLoader = require("graphql-tag/loader");
+const fs = require('fs');
+const minimist = require('minimist');
+const gqlLoader = require('graphql-tag/loader');
 
 function printUsage(consoleFn, exitCode) {
 	consoleFn(`Usage: bin/preprocess-gql --in [filename] --out [filename]
@@ -18,10 +18,10 @@ Options:
 }
 
 const argv = minimist(process.argv.slice(2), {
-	string: ["in", "out"],
-	boolean: ["help"],
-	alias: { h: "help", i: "in", o: "out" },
-	unknown: (param) => {
+	string: ['in', 'out'],
+	boolean: ['help'],
+	alias: { h: 'help', i: 'in', o: 'out' },
+	unknown: param => {
 		console.error(`Unrecognized command-line argument: ${param}\n`);
 		printUsage(console.error, 1);
 	},
@@ -35,10 +35,10 @@ const inFilename = argv.in;
 const outFilename = argv.out;
 
 if (!inFilename || !outFilename) {
-	console.error("Both --in and --out parameters are required.\n");
+	console.error('Both --in and --out parameters are required.\n');
 	printUsage(console.error, 1);
 }
 
-const querySource = fs.readFileSync(inFilename, { encoding: "utf8" });
+const querySource = fs.readFileSync(inFilename, { encoding: 'utf8' });
 const jsSource = gqlLoader.call({ cacheable() {} }, querySource);
-fs.writeFileSync(outFilename, jsSource, { encoding: "utf8" });
+fs.writeFileSync(outFilename, jsSource, { encoding: 'utf8' });
