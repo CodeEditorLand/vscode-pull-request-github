@@ -3,18 +3,11 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { readFileSync } from "fs";
-import { homedir } from "os";
-import { join } from "path";
-
-import Logger from "../../common/logger";
-import {
-	baseResolver,
-	chainResolvers,
-	ConfigResolver,
-	resolverFromConfig,
-	sshParse,
-} from "../browser/ssh";
+import { readFileSync } from 'fs';
+import { homedir } from 'os';
+import { join } from 'path';
+import Logger from '../../common/logger';
+import { baseResolver, chainResolvers, ConfigResolver, resolverFromConfig, sshParse } from '../browser/ssh';
 
 export class Resolvers {
 	static default = chainResolvers(baseResolver, resolverFromConfigFile());
@@ -57,9 +50,7 @@ export const resolve = (url: string, resolveConfig = Resolvers.current) => {
 	return config && resolveConfig(config);
 };
 
-function resolverFromConfigFile(
-	configPath = join(homedir(), ".ssh", "config"),
-): ConfigResolver | undefined {
+function resolverFromConfigFile(configPath = join(homedir(), '.ssh', 'config')): ConfigResolver | undefined {
 	try {
 		const config = readFileSync(configPath).toString();
 		return resolverFromConfig(config);

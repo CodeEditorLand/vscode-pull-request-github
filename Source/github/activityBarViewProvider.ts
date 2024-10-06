@@ -3,35 +3,23 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as vscode from "vscode";
+import * as vscode from 'vscode';
+import { onDidUpdatePR, openPullRequestOnGitHub } from '../commands';
+import { IComment } from '../common/comment';
+import { ReviewEvent as CommonReviewEvent } from '../common/timelineEvent';
+import { dispose, formatError } from '../common/utils';
+import { getNonce, IRequestMessage, WebviewViewBase } from '../common/webview';
+import { ReviewManager } from '../view/reviewManager';
+import { FolderRepositoryManager } from './folderRepositoryManager';
+import { GithubItemStateEnum, IAccount, isTeam, PullRequestMergeability, reviewerId, ReviewEvent, ReviewState } from './interface';
+import { PullRequestModel } from './pullRequestModel';
+import { getDefaultMergeMethod } from './pullRequestOverview';
+import { PullRequestView } from './pullRequestOverviewCommon';
+import { isInCodespaces, parseReviewers } from './utils';
+import { MergeArguments, PullRequest, ReviewType } from './views';
 
-import { onDidUpdatePR, openPullRequestOnGitHub } from "../commands";
-import { IComment } from "../common/comment";
-import { ReviewEvent as CommonReviewEvent } from "../common/timelineEvent";
-import { dispose, formatError } from "../common/utils";
-import { getNonce, IRequestMessage, WebviewViewBase } from "../common/webview";
-import { ReviewManager } from "../view/reviewManager";
-import { FolderRepositoryManager } from "./folderRepositoryManager";
-import {
-	GithubItemStateEnum,
-	IAccount,
-	isTeam,
-	PullRequestMergeability,
-	reviewerId,
-	ReviewEvent,
-	ReviewState,
-} from "./interface";
-import { PullRequestModel } from "./pullRequestModel";
-import { getDefaultMergeMethod } from "./pullRequestOverview";
-import { PullRequestView } from "./pullRequestOverviewCommon";
-import { isInCodespaces, parseReviewers } from "./utils";
-import { MergeArguments, PullRequest, ReviewType } from "./views";
-
-export class PullRequestViewProvider
-	extends WebviewViewBase
-	implements vscode.WebviewViewProvider
-{
-	public readonly viewType = "github:activePullRequest";
+export class PullRequestViewProvider extends WebviewViewBase implements vscode.WebviewViewProvider {
+	public readonly viewType = 'github:activePullRequest';
 	private _existingReviewers: ReviewState[] = [];
 	private _prChangeListener: vscode.Disposable | undefined;
 
@@ -44,13 +32,13 @@ export class PullRequestViewProvider
 		super(extensionUri);
 
 		onDidUpdatePR(
-			(pr) => {
+			pr => {
 				if (pr) {
 					this._item.update(pr);
 				}
 
 				this._postMessage({
-					command: "update-state",
+					command: 'update-state',
 					state: this._item.state,
 				});
 			},
@@ -58,52 +46,22 @@ export class PullRequestViewProvider
 			this._disposables,
 		);
 
-		this._disposables.push(
-			this._folderRepositoryManager.onDidMergePullRequest((_) => {
-				this._postMessage({
-					command: "update-state",
-					state: GithubItemStateEnum.Merged,
-				});
-			}),
-		);
+		this._disposables.push(this._folderRepositoryManager.onDidMergePullRequest(_ => {
+			this._postMessage({
+				command: 'update-state',
+				state: GithubItemStateEnum.Merged,
+			});
+		}));
 
-		this._disposables.push(
-			vscode.commands.registerCommand(
-				"review.approve",
-				(e: { body: string }) => this.approvePullRequestCommand(e),
-			),
-		);
-		this._disposables.push(
-			vscode.commands.registerCommand(
-				"review.comment",
-				(e: { body: string }) => this.submitReviewCommand(e),
-			),
-		);
-		this._disposables.push(
-			vscode.commands.registerCommand(
-				"review.requestChanges",
-				(e: { body: string }) => this.requestChangesCommand(e),
-			),
-		);
-		this._disposables.push(
-			vscode.commands.registerCommand("review.approveOnDotCom", () => {
-				return openPullRequestOnGitHub(
-					this._item,
-					(this._item as any)._telemetry,
-				);
-			}),
-		);
-		this._disposables.push(
-			vscode.commands.registerCommand(
-				"review.requestChangesOnDotCom",
-				() => {
-					return openPullRequestOnGitHub(
-						this._item,
-						(this._item as any)._telemetry,
-					);
-				},
-			),
-		);
+		this._disposables.push(vscode.commands.registerCommand('review.approve', (e: { body: string }) => this.approvePullRequestCommand(e)));
+		this._disposables.push(vscode.commands.registerCommand('review.comment', (e: { body: string }) => this.submitReviewCommand(e)));
+		this._disposables.push(vscode.commands.registerCommand('review.requestChanges', (e: { body: string }) => this.requestChangesCommand(e)));
+		this._disposables.push(vscode.commands.registerCommand('review.approveOnDotCom', () => {
+			return openPullRequestOnGitHub(this._item, (this._item as any)._telemetry);
+		}));
+		this._disposables.push(vscode.commands.registerCommand('review.requestChangesOnDotCom', () => {
+			return openPullRequestOnGitHub(this._item, (this._item as any)._telemetry);
+		}));
 	}
 
 	public resolveWebviewView(
@@ -117,28 +75,12 @@ export class PullRequestViewProvider
 		this.updatePullRequest(this._item);
 	}
 
-	private async updateBranch(
-		message: IRequestMessage<string>,
-	): Promise<void> {
-		if (
-			this._folderRepositoryManager.repository.state.workingTreeChanges
-				.length > 0 ||
-			this._folderRepositoryManager.repository.state.indexChanges.length >
-				0
-		) {
-			await vscode.window.showErrorMessage(
-				vscode.l10n.t(
-					"The pull request branch cannot be updated when the there changed files in the working tree or index. Stash or commit all change and then try again.",
-				),
-				{ modal: true },
-			);
+	private async updateBranch(message: IRequestMessage<string>): Promise<void> {
+		if (this._folderRepositoryManager.repository.state.workingTreeChanges.length > 0 || this._folderRepositoryManager.repository.state.indexChanges.length > 0) {
+			await vscode.window.showErrorMessage(vscode.l10n.t('The pull request branch cannot be updated when the there changed files in the working tree or index. Stash or commit all change and then try again.'), { modal: true });
 			return this._replyMessage(message, {});
 		}
-		const mergeSucceeded =
-			await this._folderRepositoryManager.tryMergeBaseIntoHead(
-				this._item,
-				true,
-			);
+		const mergeSucceeded = await this._folderRepositoryManager.tryMergeBaseIntoHead(this._item, true);
 		if (!mergeSucceeded) {
 			this._replyMessage(message, {});
 		}
@@ -148,11 +90,8 @@ export class PullRequestViewProvider
 		do {
 			mergability = (await this._item.getMergeability()).mergeability;
 			attemptsRemaining--;
-			await new Promise((c) => setTimeout(c, 1000));
-		} while (
-			attemptsRemaining > 0 &&
-			mergability === PullRequestMergeability.Unknown
-		);
+			await new Promise(c => setTimeout(c, 1000));
+		} while (attemptsRemaining > 0 && mergability === PullRequestMergeability.Unknown);
 
 		const result: Partial<PullRequest> = {
 			events: await this._item.getTimelineEvents(),
@@ -169,59 +108,45 @@ export class PullRequestViewProvider
 		}
 
 		switch (message.command) {
-			case "alert":
+			case 'alert':
 				vscode.window.showErrorMessage(message.args);
 				return;
-			case "pr.close":
+			case 'pr.close':
 				return this.close(message);
-			case "pr.comment":
+			case 'pr.comment':
 				return this.createComment(message);
-			case "pr.merge":
+			case 'pr.merge':
 				return this.mergePullRequest(message);
-			case "pr.open-create":
+			case 'pr.open-create':
 				return this.create();
-			case "pr.deleteBranch":
+			case 'pr.deleteBranch':
 				return this.deleteBranch(message);
-			case "pr.readyForReview":
+			case 'pr.readyForReview':
 				return this.setReadyForReview(message);
-			case "pr.approve":
+			case 'pr.approve':
 				return this.approvePullRequestMessage(message);
-			case "pr.request-changes":
+			case 'pr.request-changes':
 				return this.requestChangesMessage(message);
-			case "pr.submit":
+			case 'pr.submit':
 				return this.submitReviewMessage(message);
-			case "pr.openOnGitHub":
-				return openPullRequestOnGitHub(
-					this._item,
-					(this._item as any)._telemetry,
-				);
-			case "pr.checkout-default-branch":
+			case 'pr.openOnGitHub':
+				return openPullRequestOnGitHub(this._item, (this._item as any)._telemetry);
+			case 'pr.checkout-default-branch':
 				return this.checkoutDefaultBranch(message);
-			case "pr.update-branch":
+			case 'pr.update-branch':
 				return this.updateBranch(message);
-			case "pr.re-request-review":
+			case 'pr.re-request-review':
 				return this.reRequestReview(message);
 		}
 	}
 
-	private async checkoutDefaultBranch(
-		message: IRequestMessage<string>,
-	): Promise<void> {
+	private async checkoutDefaultBranch(message: IRequestMessage<string>): Promise<void> {
 		try {
-			const defaultBranch =
-				await this._folderRepositoryManager.getPullRequestRepositoryDefaultBranch(
-					this._item,
-				);
-			const prBranch =
-				this._folderRepositoryManager.repository.state.HEAD?.name;
-			await this._folderRepositoryManager.checkoutDefaultBranch(
-				defaultBranch,
-			);
+			const defaultBranch = await this._folderRepositoryManager.getPullRequestRepositoryDefaultBranch(this._item);
+			const prBranch = this._folderRepositoryManager.repository.state.HEAD?.name;
+			await this._folderRepositoryManager.checkoutDefaultBranch(defaultBranch);
 			if (prBranch) {
-				await this._folderRepositoryManager.cleanupAfterPullRequest(
-					prBranch,
-					this._item,
-				);
+				await this._folderRepositoryManager.cleanupAfterPullRequest(prBranch, this._item);
 			}
 		} finally {
 			// Complete webview promise so that button becomes enabled again
@@ -244,11 +169,7 @@ export class PullRequestViewProvider
 				id = reviewer.reviewer.id;
 				reviewerArray = userReviewers;
 			}
-			if (
-				reviewerArray &&
-				id &&
-				(reviewer.state === "REQUESTED" || id === message.args)
-			) {
+			if (reviewerArray && id && ((reviewer.state === 'REQUESTED') || (id === message.args))) {
 				reviewerArray.push(id);
 				if (id === message.args) {
 					targetReviewer = reviewer;
@@ -257,7 +178,7 @@ export class PullRequestViewProvider
 		}
 		this._item.requestReview(userReviewers, teamReviewers).then(() => {
 			if (targetReviewer) {
-				targetReviewer.state = "REQUESTED";
+				targetReviewer.state = 'REQUESTED';
 			}
 			this._replyMessage(message, {
 				reviewers: this._existingReviewers,
@@ -266,22 +187,14 @@ export class PullRequestViewProvider
 	}
 
 	public async refresh(): Promise<void> {
-		return vscode.window.withProgress(
-			{ location: { viewId: "github:activePullRequest" } },
-			async () => {
-				await this._item.initializeReviewThreadCache();
-				await this.updatePullRequest(this._item);
-			},
-		);
+		return vscode.window.withProgress({ location: { viewId: 'github:activePullRequest' } }, async () => {
+			await this._item.initializeReviewThreadCache();
+			await this.updatePullRequest(this._item);
+		});
 	}
 
-	private getCurrentUserReviewState(
-		reviewers: ReviewState[],
-		currentUser: IAccount,
-	): string | undefined {
-		const review = reviewers.find(
-			(r) => reviewerId(r.reviewer) === currentUser.login,
-		);
+	private getCurrentUserReviewState(reviewers: ReviewState[], currentUser: IAccount): string | undefined {
+		const review = reviewers.find(r => reviewerId(r.reviewer) === currentUser.login);
 		// There will always be a review. If not then the PR shouldn't have been or fetched/shown for the current user
 		return review?.state;
 	}
@@ -292,36 +205,21 @@ export class PullRequestViewProvider
 			dispose(this._prDisposables);
 		}
 		this._prDisposables = [];
-		this._prDisposables.push(
-			pullRequestModel.onDidInvalidate(() =>
-				this.updatePullRequest(pullRequestModel),
-			),
-		);
-		this._prDisposables.push(
-			pullRequestModel.onDidChangePendingReviewState(() =>
-				this.updatePullRequest(pullRequestModel),
-			),
-		);
+		this._prDisposables.push(pullRequestModel.onDidInvalidate(() => this.updatePullRequest(pullRequestModel)));
+		this._prDisposables.push(pullRequestModel.onDidChangePendingReviewState(() => this.updatePullRequest(pullRequestModel)));
 	}
 
 	private _updatePendingVisibility: vscode.Disposable | undefined = undefined;
-	public async updatePullRequest(
-		pullRequestModel: PullRequestModel,
-	): Promise<void> {
+	public async updatePullRequest(pullRequestModel: PullRequestModel): Promise<void> {
 		if (this._view && !this._view.visible) {
 			this._updatePendingVisibility?.dispose();
-			this._updatePendingVisibility = this._view.onDidChangeVisibility(
-				async () => {
-					this.updatePullRequest(pullRequestModel);
-					this._updatePendingVisibility?.dispose();
-				},
-			);
+			this._updatePendingVisibility = this._view.onDidChangeVisibility(async () => {
+				this.updatePullRequest(pullRequestModel);
+				this._updatePendingVisibility?.dispose();
+			});
 		}
 
-		if (
-			this._prDisposables === undefined ||
-			pullRequestModel.number !== this._item.number
-		) {
+		if ((this._prDisposables === undefined) || (pullRequestModel.number !== this._item.number)) {
 			this.registerPrSpecificListeners(pullRequestModel);
 		}
 		this._item = pullRequestModel;
@@ -331,35 +229,17 @@ export class PullRequestViewProvider
 				pullRequestModel.remote.repositoryName,
 				pullRequestModel.number,
 			),
-			this._folderRepositoryManager.getPullRequestRepositoryAccessAndMergeMethods(
-				pullRequestModel,
-			),
+			this._folderRepositoryManager.getPullRequestRepositoryAccessAndMergeMethods(pullRequestModel),
 			pullRequestModel.getTimelineEvents(),
 			pullRequestModel.getReviewRequests(),
-			this._folderRepositoryManager.getBranchNameForPullRequest(
-				pullRequestModel,
-			),
-			this._folderRepositoryManager.getPullRequestRepositoryDefaultBranch(
-				pullRequestModel,
-			),
-			this._folderRepositoryManager.getCurrentUser(
-				pullRequestModel.githubRepository,
-			),
+			this._folderRepositoryManager.getBranchNameForPullRequest(pullRequestModel),
+			this._folderRepositoryManager.getPullRequestRepositoryDefaultBranch(pullRequestModel),
+			this._folderRepositoryManager.getCurrentUser(pullRequestModel.githubRepository),
 			pullRequestModel.canEdit(),
-			pullRequestModel.validateDraftMode(),
+			pullRequestModel.validateDraftMode()
 		])
-			.then((result) => {
-				const [
-					pullRequest,
-					repositoryAccess,
-					timelineEvents,
-					requestedReviewers,
-					branchInfo,
-					defaultBranch,
-					currentUser,
-					viewerCanEdit,
-					hasReviewDraft,
-				] = result;
+			.then(result => {
+				const [pullRequest, repositoryAccess, timelineEvents, requestedReviewers, branchInfo, defaultBranch, currentUser, viewerCanEdit, hasReviewDraft] = result;
 				if (!pullRequest) {
 					throw new Error(
 						`Fail to resolve Pull Request #${pullRequestModel.number} in ${pullRequestModel.remote.owner}/${pullRequestModel.remote.repositoryName}`,
@@ -373,21 +253,16 @@ export class PullRequestViewProvider
 				}
 
 				try {
-					this._view.title = `${vscode.l10n.t("Review Pull Request")} #${pullRequestModel.number.toString()}`;
+					this._view.title = `${vscode.l10n.t('Review Pull Request')} #${pullRequestModel.number.toString()}`;
 				} catch (e) {
 					// If we ry to set the title of the webview too early it will throw an error.
 				}
 
-				const isCurrentlyCheckedOut = pullRequestModel.equals(
-					this._folderRepositoryManager.activePullRequest,
-				);
+				const isCurrentlyCheckedOut = pullRequestModel.equals(this._folderRepositoryManager.activePullRequest);
 				const hasWritePermission = repositoryAccess!.hasWritePermission;
-				const mergeMethodsAvailability =
-					repositoryAccess!.mergeMethodsAvailability;
+				const mergeMethodsAvailability = repositoryAccess!.mergeMethodsAvailability;
 				const canEdit = hasWritePermission || viewerCanEdit;
-				const defaultMergeMethod = getDefaultMergeMethod(
-					mergeMethodsAvailability,
-				);
+				const defaultMergeMethod = getDefaultMergeMethod(mergeMethodsAvailability);
 				this._existingReviewers = parseReviewers(
 					requestedReviewers ?? [],
 					timelineEvents ?? [],
@@ -397,17 +272,10 @@ export class PullRequestViewProvider
 				const isCrossRepository =
 					pullRequest.base &&
 					pullRequest.head &&
-					!pullRequest.base.repositoryCloneUrl.equals(
-						pullRequest.head.repositoryCloneUrl,
-					);
+					!pullRequest.base.repositoryCloneUrl.equals(pullRequest.head.repositoryCloneUrl);
 
-				const continueOnGitHub = !!(
-					isCrossRepository && isInCodespaces()
-				);
-				const reviewState = this.getCurrentUserReviewState(
-					this._existingReviewers,
-					currentUser,
-				);
+				const continueOnGitHub = !!(isCrossRepository && isInCodespaces());
+				const reviewState = this.getCurrentUserReviewState(this._existingReviewers, currentUser);
 
 				const context: Partial<PullRequest> = {
 					number: pullRequest.number,
@@ -423,7 +291,7 @@ export class PullRequestViewProvider
 						avatarUrl: pullRequest.userAvatar,
 						url: pullRequest.author.url,
 						email: pullRequest.author.email,
-						id: pullRequest.author.id,
+						id: pullRequest.author.id
 					},
 					state: pullRequest.state,
 					isCurrentlyCheckedOut: isCurrentlyCheckedOut,
@@ -431,7 +299,7 @@ export class PullRequestViewProvider
 					base: pullRequest.base.label,
 					isRemoteHeadDeleted: pullRequest.isRemoteHeadDeleted,
 					isLocalHeadDeleted: !branchInfo,
-					head: pullRequest.head?.label ?? "",
+					head: pullRequest.head?.label ?? '',
 					canEdit: canEdit,
 					hasWritePermission,
 					mergeable: pullRequest.item.mergeable,
@@ -447,35 +315,30 @@ export class PullRequestViewProvider
 					isAuthor: currentUser.login === pullRequest.author.login,
 					reviewers: this._existingReviewers,
 					continueOnGitHub,
-					isDarkTheme:
-						vscode.window.activeColorTheme.kind ===
-						vscode.ColorThemeKind.Dark,
-					isEnterprise:
-						pullRequest.githubRepository.remote.isEnterprise,
+					isDarkTheme: vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.Dark,
+					isEnterprise: pullRequest.githubRepository.remote.isEnterprise,
 					hasReviewDraft,
-					currentUserReviewState: reviewState,
+					currentUserReviewState: reviewState
 				};
 
 				this._postMessage({
-					command: "pr.initialize",
+					command: 'pr.initialize',
 					pullrequest: context,
 				});
 			})
-			.catch((e) => {
+			.catch(e => {
 				vscode.window.showErrorMessage(formatError(e));
 			});
 	}
 
 	private close(message: IRequestMessage<string>): void {
-		vscode.commands
-			.executeCommand<IComment>("pr.close", this._item, message.args)
-			.then((comment) => {
-				if (comment) {
-					this._replyMessage(message, {
-						value: comment,
-					});
-				}
-			});
+		vscode.commands.executeCommand<IComment>('pr.close', this._item, message.args).then(comment => {
+			if (comment) {
+				this._replyMessage(message, {
+					value: comment,
+				});
+			}
+		});
 	}
 
 	private create() {
@@ -483,7 +346,7 @@ export class PullRequestViewProvider
 	}
 
 	private createComment(message: IRequestMessage<string>) {
-		this._item.createIssueComment(message.args).then((comment) => {
+		this._item.createIssueComment(message.args).then(comment => {
 			this._replyMessage(message, {
 				value: comment,
 			});
@@ -493,8 +356,7 @@ export class PullRequestViewProvider
 	private updateReviewers(review?: CommonReviewEvent): void {
 		if (review && review.state) {
 			const existingReviewer = this._existingReviewers.find(
-				(reviewer) =>
-					review.user.login === reviewerId(reviewer.reviewer),
+				reviewer => review.user.login === reviewerId(reviewer.reviewer),
 			);
 			if (existingReviewer) {
 				existingReviewer.state = review.state;
@@ -507,38 +369,29 @@ export class PullRequestViewProvider
 		}
 	}
 
-	private async doReviewCommand(
-		context: { body: string },
-		reviewType: ReviewType,
-		action: (body: string) => Promise<CommonReviewEvent>,
-	) {
+	private async doReviewCommand(context: { body: string }, reviewType: ReviewType, action: (body: string) => Promise<CommonReviewEvent>) {
 		const submittingMessage = {
-			command: "pr.submitting-review",
-			lastReviewType: reviewType,
+			command: 'pr.submitting-review',
+			lastReviewType: reviewType
 		};
 		this._postMessage(submittingMessage);
 		try {
 			const review = await action(context.body);
 			this.updateReviewers(review);
 			const reviewMessage = {
-				command: "pr.append-review",
+				command: 'pr.append-review',
 				review,
-				reviewers: this._existingReviewers,
+				reviewers: this._existingReviewers
 			};
 			await this._postMessage(reviewMessage);
 		} catch (e) {
-			vscode.window.showErrorMessage(
-				vscode.l10n.t("Submitting review failed. {0}", formatError(e)),
-			);
+			vscode.window.showErrorMessage(vscode.l10n.t('Submitting review failed. {0}', formatError(e)));
 			this._throwError(undefined, `${formatError(e)}`);
-			this._postMessage({ command: "pr.append-review" });
+			this._postMessage({ command: 'pr.append-review' });
 		}
 	}
 
-	private async doReviewMessage(
-		message: IRequestMessage<string>,
-		action: (body) => Promise<CommonReviewEvent>,
-	) {
+	private async doReviewMessage(message: IRequestMessage<string>, action: (body) => Promise<CommonReviewEvent>) {
 		try {
 			const review = await action(message.args);
 			this.updateReviewers(review);
@@ -547,34 +400,21 @@ export class PullRequestViewProvider
 				reviewers: this._existingReviewers,
 			});
 		} catch (e) {
-			vscode.window.showErrorMessage(
-				vscode.l10n.t("Submitting review failed. {0}", formatError(e)),
-			);
+			vscode.window.showErrorMessage(vscode.l10n.t('Submitting review failed. {0}', formatError(e)));
 			this._throwError(message, `${formatError(e)}`);
 		}
 	}
 
 	private approvePullRequest(body: string): Promise<CommonReviewEvent> {
-		return this._item.approve(
-			this._folderRepositoryManager.repository,
-			body,
-		);
+		return this._item.approve(this._folderRepositoryManager.repository, body);
 	}
 
-	private approvePullRequestMessage(
-		message: IRequestMessage<string>,
-	): Promise<void> {
-		return this.doReviewMessage(message, (body) =>
-			this.approvePullRequest(body),
-		);
+	private approvePullRequestMessage(message: IRequestMessage<string>): Promise<void> {
+		return this.doReviewMessage(message, (body) => this.approvePullRequest(body));
 	}
 
-	private approvePullRequestCommand(context: {
-		body: string;
-	}): Promise<void> {
-		return this.doReviewCommand(context, ReviewType.Approve, (body) =>
-			this.approvePullRequest(body),
-		);
+	private approvePullRequestCommand(context: { body: string }): Promise<void> {
+		return this.doReviewCommand(context, ReviewType.Approve, (body) => this.approvePullRequest(body));
 	}
 
 	private requestChanges(body: string): Promise<CommonReviewEvent> {
@@ -582,19 +422,11 @@ export class PullRequestViewProvider
 	}
 
 	private requestChangesCommand(context: { body: string }): Promise<void> {
-		return this.doReviewCommand(
-			context,
-			ReviewType.RequestChanges,
-			(body) => this.requestChanges(body),
-		);
+		return this.doReviewCommand(context, ReviewType.RequestChanges, (body) => this.requestChanges(body));
 	}
 
-	private requestChangesMessage(
-		message: IRequestMessage<string>,
-	): Promise<void> {
-		return this.doReviewMessage(message, (body) =>
-			this.requestChanges(body),
-		);
+	private requestChangesMessage(message: IRequestMessage<string>): Promise<void> {
+		return this.doReviewMessage(message, (body) => this.requestChanges(body));
 	}
 
 	private submitReview(body: string): Promise<CommonReviewEvent> {
@@ -602,9 +434,7 @@ export class PullRequestViewProvider
 	}
 
 	private submitReviewCommand(context: { body: string }) {
-		return this.doReviewCommand(context, ReviewType.Comment, (body) =>
-			this.submitReview(body),
-		);
+		return this.doReviewCommand(context, ReviewType.Comment, (body) => this.submitReview(body));
 	}
 
 	private submitReviewMessage(message: IRequestMessage<string>) {
@@ -612,10 +442,7 @@ export class PullRequestViewProvider
 	}
 
 	private async deleteBranch(message: IRequestMessage<any>) {
-		const result = await PullRequestView.deleteBranch(
-			this._folderRepositoryManager,
-			this._item,
-		);
+		const result = await PullRequestView.deleteBranch(this._folderRepositoryManager, this._item);
 		if (result.isReply) {
 			this._replyMessage(message, result.message);
 		} else {
@@ -623,23 +450,16 @@ export class PullRequestViewProvider
 		}
 	}
 
-	private setReadyForReview(
-		message: IRequestMessage<Record<string, unknown>>,
-	): void {
+	private setReadyForReview(message: IRequestMessage<Record<string, unknown>>): void {
 		this._item
 			.setReadyForReview()
-			.then((result) => {
-				vscode.commands.executeCommand("pr.refreshList");
+			.then(result => {
+				vscode.commands.executeCommand('pr.refreshList');
 
 				this._replyMessage(message, result);
 			})
-			.catch((e) => {
-				vscode.window.showErrorMessage(
-					vscode.l10n.t(
-						"Unable to set PR ready for review. {0}",
-						formatError(e),
-					),
-				);
+			.catch(e => {
+				vscode.window.showErrorMessage(vscode.l10n.t('Unable to set PR ready for review. {0}', formatError(e)));
 				this._throwError(message, {});
 			});
 	}
@@ -648,9 +468,9 @@ export class PullRequestViewProvider
 		message: IRequestMessage<MergeArguments>,
 	): Promise<void> {
 		const { title, description, method } = message.args;
-		const yes = vscode.l10n.t("Yes");
+		const yes = vscode.l10n.t('Yes');
 		const confirmation = await vscode.window.showInformationMessage(
-			vscode.l10n.t("Merge this pull request?"),
+			vscode.l10n.t('Merge this pull request?'),
 			{ modal: true },
 			yes,
 		);
@@ -661,31 +481,19 @@ export class PullRequestViewProvider
 
 		this._folderRepositoryManager
 			.mergePullRequest(this._item, title, description, method)
-			.then((result) => {
-				vscode.commands.executeCommand("pr.refreshList");
+			.then(result => {
+				vscode.commands.executeCommand('pr.refreshList');
 
 				if (!result.merged) {
-					vscode.window.showErrorMessage(
-						vscode.l10n.t(
-							"Merging PR failed: {0}",
-							result?.message ?? "",
-						),
-					);
+					vscode.window.showErrorMessage(vscode.l10n.t('Merging PR failed: {0}', result?.message ?? ''));
 				}
 
 				this._replyMessage(message, {
-					state: result.merged
-						? GithubItemStateEnum.Merged
-						: GithubItemStateEnum.Open,
+					state: result.merged ? GithubItemStateEnum.Merged : GithubItemStateEnum.Open,
 				});
 			})
-			.catch((e) => {
-				vscode.window.showErrorMessage(
-					vscode.l10n.t(
-						"Unable to merge pull request. {0}",
-						formatError(e),
-					),
-				);
+			.catch(e => {
+				vscode.window.showErrorMessage(vscode.l10n.t('Unable to merge pull request. {0}', formatError(e)));
 				this._throwError(message, {});
 			});
 	}
@@ -693,11 +501,7 @@ export class PullRequestViewProvider
 	private _getHtmlForWebview() {
 		const nonce = getNonce();
 
-		const uri = vscode.Uri.joinPath(
-			this._extensionUri,
-			"dist",
-			"webview-open-pr-view.js",
-		);
+		const uri = vscode.Uri.joinPath(this._extensionUri, 'dist', 'webview-open-pr-view.js');
 
 		return `<!DOCTYPE html>
 <html lang="en">

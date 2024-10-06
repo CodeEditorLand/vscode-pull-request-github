@@ -3,7 +3,8 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-declare module "git-credential-node" {
+declare module 'git-credential-node' {
+
 	interface Credentials {
 		username: string;
 		password: string;

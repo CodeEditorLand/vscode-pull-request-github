@@ -3,14 +3,12 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as vscode from "vscode";
+import * as vscode from 'vscode';
+import { FolderRepositoryManager } from '../github/folderRepositoryManager';
+import { IssueModel } from '../github/issueModel';
+import { RepositoriesManager } from '../github/repositoriesManager';
 
-import { FolderRepositoryManager } from "../github/folderRepositoryManager";
-import { IssueModel } from "../github/issueModel";
-import { RepositoriesManager } from "../github/repositoriesManager";
-
-export const CODE_PERMALINK =
-	/http(s)?\:\/\/github\.com\/([^\/]+)\/([^\/]+)\/blob\/([0-9a-fA-F]{40})\/([^#]+)#L(\d+)(-L(\d+))?/;
+export const CODE_PERMALINK = /http(s)?\:\/\/github\.com\/([^\/]+)\/([^\/]+)\/blob\/([0-9a-fA-F]{40})\/([^#]+)#L(\d+)(-L(\d+))?/;
 
 function findCodeLink(issueContent: string): RegExpMatchArray | null {
 	return issueContent.match(CODE_PERMALINK);
@@ -59,10 +57,7 @@ export async function findCodeLinkLocally(
 		return;
 	}
 
-	const path = vscode.Uri.joinPath(
-		linkFolderManager.repository.rootUri,
-		repoSubPath,
-	);
+	const path = vscode.Uri.joinPath(linkFolderManager.repository.rootUri, repoSubPath);
 	try {
 		await vscode.workspace.fs.stat(path);
 	} catch (e) {
@@ -75,38 +70,20 @@ export async function findCodeLinkLocally(
 	};
 }
 
-export async function openCodeLink(
-	issueModel: IssueModel,
-	repositoriesManager: RepositoriesManager,
-) {
+export async function openCodeLink(issueModel: IssueModel, repositoriesManager: RepositoriesManager) {
 	const issueLink = findCodeLink(issueModel.body);
 	if (!issueLink) {
-		vscode.window.showInformationMessage(
-			vscode.l10n.t("Issue has no link."),
-		);
+		vscode.window.showInformationMessage(vscode.l10n.t('Issue has no link.'));
 		return;
 	}
-	const codeLink = await findCodeLinkLocally(
-		issueLink,
-		repositoriesManager,
-		false,
-	);
+	const codeLink = await findCodeLinkLocally(issueLink, repositoriesManager, false);
 	if (!codeLink) {
 		return vscode.env.openExternal(vscode.Uri.parse(issueLink[0]));
 	}
-	const textDocument = await vscode.workspace.openTextDocument(
-		codeLink?.file,
-	);
+	const textDocument = await vscode.workspace.openTextDocument(codeLink?.file);
 	const endingTextDocumentLine = textDocument.lineAt(
-		codeLink.end < textDocument.lineCount
-			? codeLink.end
-			: textDocument.lineCount - 1,
+		codeLink.end < textDocument.lineCount ? codeLink.end : textDocument.lineCount - 1,
 	);
-	const selection = new vscode.Range(
-		codeLink.start,
-		0,
-		codeLink.end,
-		endingTextDocumentLine.text.length,
-	);
+	const selection = new vscode.Range(codeLink.start, 0, codeLink.end, endingTextDocumentLine.text.length);
 	return vscode.window.showTextDocument(codeLink.file, { selection });
 }

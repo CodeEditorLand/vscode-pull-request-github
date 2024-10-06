@@ -3,21 +3,16 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as path from "path";
-import * as vscode from "vscode";
-
-import { IComment } from "../common/comment";
-import Logger from "../common/logger";
-import { DataUri } from "../common/uri";
-import {
-	ALLOWED_USERS,
-	JSDOC_NON_USERS,
-	PHPDOC_NON_USERS,
-} from "../common/user";
-import { stringReplaceAsync } from "../common/utils";
-import { GitHubRepository } from "./githubRepository";
-import { IAccount } from "./interface";
-import { updateCommentReactions } from "./utils";
+import * as path from 'path';
+import * as vscode from 'vscode';
+import { IComment } from '../common/comment';
+import Logger from '../common/logger';
+import { DataUri } from '../common/uri';
+import { ALLOWED_USERS, JSDOC_NON_USERS, PHPDOC_NON_USERS } from '../common/user';
+import { stringReplaceAsync } from '../common/utils';
+import { GitHubRepository } from './githubRepository';
+import { IAccount } from './interface';
+import { updateCommentReactions } from './utils';
 
 export interface GHPRCommentThread extends vscode.CommentThread2 {
 	gitHubThreadId: string;
@@ -52,25 +47,16 @@ export interface GHPRCommentThread extends vscode.CommentThread2 {
 	/**
 	 * Whether the thread has been marked as resolved.
 	 */
-	state?: {
-		resolved: vscode.CommentThreadState;
-		applicability?: vscode.CommentThreadApplicability;
-	};
+	state?: { resolved: vscode.CommentThreadState; applicability?: vscode.CommentThreadApplicability };
 
-	reveal(
-		comment?: vscode.Comment,
-		options?: vscode.CommentThreadRevealOptions,
-	): Promise<void>;
+	reveal(comment?: vscode.Comment, options?: vscode.CommentThreadRevealOptions): Promise<void>;
 
 	dispose: () => void;
 }
 
 export namespace GHPRCommentThread {
 	export function is(value: any): value is GHPRCommentThread {
-		return (
-			value &&
-			typeof (value as GHPRCommentThread).gitHubThreadId === "string"
-		);
+		return (value && (typeof (value as GHPRCommentThread).gitHubThreadId) === 'string');
 	}
 }
 
@@ -113,18 +99,17 @@ abstract class CommentBase implements vscode.Comment {
 	 */
 	public contextValue: string;
 
-	constructor(parent: GHPRCommentThread) {
+	constructor(
+		parent: GHPRCommentThread,
+	) {
 		this.parent = parent;
 	}
 
 	public abstract commentEditId(): number | string;
 
 	startEdit() {
-		this.parent.comments = this.parent.comments.map((cmt) => {
-			if (
-				cmt instanceof CommentBase &&
-				cmt.commentEditId() === this.commentEditId()
-			) {
+		this.parent.comments = this.parent.comments.map(cmt => {
+			if (cmt instanceof CommentBase && cmt.commentEditId() === this.commentEditId()) {
 				cmt.mode = vscode.CommentMode.Editing;
 			}
 
@@ -133,17 +118,11 @@ abstract class CommentBase implements vscode.Comment {
 	}
 
 	protected abstract getCancelEditBody(): string | vscode.MarkdownString;
-	protected abstract doSetBody(
-		body: string | vscode.MarkdownString,
-		refresh: boolean,
-	): Promise<void>;
+	protected abstract doSetBody(body: string | vscode.MarkdownString, refresh: boolean): Promise<void>;
 
 	cancelEdit() {
-		this.parent.comments = this.parent.comments.map((cmt) => {
-			if (
-				cmt instanceof CommentBase &&
-				cmt.commentEditId() === this.commentEditId()
-			) {
+		this.parent.comments = this.parent.comments.map(cmt => {
+			if (cmt instanceof CommentBase && cmt.commentEditId() === this.commentEditId()) {
 				cmt.mode = vscode.CommentMode.Preview;
 				this.doSetBody(this.getCancelEditBody(), true);
 			}
@@ -183,25 +162,17 @@ export class TemporaryComment extends CommentBase {
 		this.mode = vscode.CommentMode.Preview;
 		this.author = {
 			name: currentUser.login,
-			iconPath: currentUser.avatarUrl
-				? vscode.Uri.parse(`${currentUser.avatarUrl}&s=64`)
-				: undefined,
+			iconPath: currentUser.avatarUrl ? vscode.Uri.parse(`${currentUser.avatarUrl}&s=64`) : undefined,
 		};
-		this.label = isDraft ? vscode.l10n.t("Pending") : undefined;
-		this.contextValue = "temporary,canEdit,canDelete";
-		this.originalBody = originalComment
-			? originalComment.rawComment.body
-			: undefined;
-		this.reactions = originalComment
-			? originalComment.reactions
-			: undefined;
+		this.label = isDraft ? vscode.l10n.t('Pending') : undefined;
+		this.contextValue = 'temporary,canEdit,canDelete';
+		this.originalBody = originalComment ? originalComment.rawComment.body : undefined;
+		this.reactions = originalComment ? originalComment.reactions : undefined;
 		this.id = TemporaryComment.idPool++;
 	}
 
-	protected async doSetBody(
-		input: string | vscode.MarkdownString,
-	): Promise<void> {
-		if (typeof input === "string") {
+	protected async doSetBody(input: string | vscode.MarkdownString): Promise<void> {
+		if (typeof input === 'string') {
 			this.input = input;
 		}
 	}
@@ -223,12 +194,11 @@ export class TemporaryComment extends CommentBase {
 	}
 }
 
-const SUGGESTION_EXPRESSION =
-	/```suggestion(\u0020*(\r\n|\n))((?<suggestion>[\s\S]*?)(\r\n|\n))?```/;
+const SUGGESTION_EXPRESSION = /```suggestion(\u0020*(\r\n|\n))((?<suggestion>[\s\S]*?)(\r\n|\n))?```/;
 const IMG_EXPRESSION = /<img .*src=['"](?<src>.+?)['"].*?>/g;
 
 export class GHPRComment extends CommentBase {
-	private static ID = "GHPRComment";
+	private static ID = 'GHPRComment';
 	public commentId: string;
 	public timestamp: Date;
 
@@ -240,32 +210,16 @@ export class GHPRComment extends CommentBase {
 	private _rawBody: string | vscode.MarkdownString;
 	private replacedBody: string;
 
-	constructor(
-		context: vscode.ExtensionContext,
-		comment: IComment,
-		parent: GHPRCommentThread,
-		private readonly githubRepositories?: GitHubRepository[],
-	) {
+	constructor(context: vscode.ExtensionContext, comment: IComment, parent: GHPRCommentThread, private readonly githubRepositories?: GitHubRepository[]) {
 		super(parent);
 		this.rawComment = comment;
 		this.author = {
 			name: comment.user!.login,
-			iconPath:
-				comment.user && comment.user.avatarUrl
-					? vscode.Uri.parse(comment.user.avatarUrl)
-					: undefined,
+			iconPath: comment.user && comment.user.avatarUrl ? vscode.Uri.parse(comment.user.avatarUrl) : undefined,
 		};
 
-		const avatarUrisPromise = comment.user
-			? DataUri.avatarCirclesAsImageDataUris(
-					context,
-					[comment.user],
-					28,
-					28,
-				)
-			: Promise.resolve([]);
-		this.doSetBody(comment.body, !comment.user).then(async () => {
-			// only refresh if there's no user. If there's a user, we'll refresh in the then.
+		const avatarUrisPromise = comment.user ? DataUri.avatarCirclesAsImageDataUris(context, [comment.user], 28, 28) : Promise.resolve([]);
+		this.doSetBody(comment.body, !comment.user).then(async () => { // only refresh if there's no user. If there's a user, we'll refresh in the then.
 			const avatarUris = await avatarUrisPromise;
 			if (avatarUris.length > 0) {
 				this.author.iconPath = avatarUris[0];
@@ -276,22 +230,22 @@ export class GHPRComment extends CommentBase {
 
 		updateCommentReactions(this, comment.reactions);
 
-		this.label = comment.isDraft ? vscode.l10n.t("Pending") : undefined;
+		this.label = comment.isDraft ? vscode.l10n.t('Pending') : undefined;
 
 		const contextValues: string[] = [];
 		if (comment.canEdit) {
-			contextValues.push("canEdit");
+			contextValues.push('canEdit');
 		}
 
 		if (comment.canDelete) {
-			contextValues.push("canDelete");
+			contextValues.push('canDelete');
 		}
 
 		if (this.suggestion !== undefined) {
-			contextValues.push("hasSuggestion");
+			contextValues.push('hasSuggestion');
 		}
 
-		this.contextValue = contextValues.join(",");
+		this.contextValue = contextValues.join(',');
 		this.timestamp = new Date(comment.createdAt);
 	}
 
@@ -305,26 +259,26 @@ export class GHPRComment extends CommentBase {
 		}
 
 		const oldLabel = this.label;
-		this.label = comment.isDraft ? vscode.l10n.t("Pending") : undefined;
+		this.label = comment.isDraft ? vscode.l10n.t('Pending') : undefined;
 		if (this.label !== oldLabel) {
 			refresh = true;
 		}
 
 		const contextValues: string[] = [];
 		if (comment.canEdit) {
-			contextValues.push("canEdit");
+			contextValues.push('canEdit');
 		}
 
 		if (comment.canDelete) {
-			contextValues.push("canDelete");
+			contextValues.push('canDelete');
 		}
 
 		if (this.suggestion !== undefined) {
-			contextValues.push("hasSuggestion");
+			contextValues.push('hasSuggestion');
 		}
 
 		const oldContextValue = this.contextValue;
-		this.contextValue = contextValues.join(",");
+		this.contextValue = contextValues.join(',');
 		if (oldContextValue !== this.contextValue) {
 			refresh = true;
 		}
@@ -350,7 +304,7 @@ export class GHPRComment extends CommentBase {
 		const match = this.rawComment.body.match(SUGGESTION_EXPRESSION);
 		const suggestionBody = match?.groups?.suggestion;
 		if (match) {
-			return suggestionBody ? suggestionBody : "";
+			return suggestionBody ? suggestionBody : '';
 		}
 	}
 
@@ -359,34 +313,23 @@ export class GHPRComment extends CommentBase {
 	}
 
 	private replaceImg(body: string) {
-		return body.replace(
-			IMG_EXPRESSION,
-			(_substring, _1, _2, _3, { src }) => {
-				return `![image](${src})`;
-			},
-		);
+		return body.replace(IMG_EXPRESSION, (_substring, _1, _2, _3, { src }) => {
+			return `![image](${src})`;
+		});
 	}
 
 	private replaceSuggestion(body: string) {
-		return body.replace(
-			new RegExp(SUGGESTION_EXPRESSION, "g"),
-			(_substring: string, ...args: any[]) => {
-				return `***
+		return body.replace(new RegExp(SUGGESTION_EXPRESSION, 'g'), (_substring: string, ...args: any[]) => {
+			return `***
 Suggested change:
 \`\`\`
-${args[3] ?? ""}
+${args[3] ?? ''}
 \`\`\`
 ***`;
-			},
-		);
+		});
 	}
 
-	private async createLocalFilePath(
-		rootUri: vscode.Uri,
-		fileSubPath: string,
-		startLine: number,
-		endLine: number,
-	): Promise<string | undefined> {
+	private async createLocalFilePath(rootUri: vscode.Uri, fileSubPath: string, startLine: number, endLine: number): Promise<string | undefined> {
 		const localFile = vscode.Uri.joinPath(rootUri, fileSubPath);
 		try {
 			const stat = await vscode.workspace.fs.stat(localFile);
@@ -404,129 +347,72 @@ ${args[3] ?? ""}
 			return body;
 		}
 
-		const expression = new RegExp(
-			`https://github.com/(.+)/${githubRepositories[0].remote.repositoryName}/blob/([0-9a-f]{40})/(.*)#L([0-9]+)(-L([0-9]+))?`,
-			"g",
-		);
-		return stringReplaceAsync(
-			body,
-			expression,
-			async (
-				match: string,
-				owner: string,
-				sha: string,
-				file: string,
-				start: string,
-				_endGroup?: string,
-				end?: string,
-				index?: number,
-			) => {
-				if (index && index > 0 && body.charAt(index - 1) === "(") {
-					return match;
-				}
-				const githubRepository = githubRepositories.find(
-					(repository) =>
-						repository.remote.owner.toLocaleLowerCase() ===
-						owner.toLocaleLowerCase(),
-				);
-				if (!githubRepository) {
-					return match;
-				}
-				const startLine = parseInt(start);
-				const endLine = end ? parseInt(end) : startLine + 1;
-				const lineContents = await githubRepository.getLines(
-					sha,
-					file,
-					startLine,
-					endLine,
-				);
-				if (!lineContents) {
-					return match;
-				}
-				const localFile = await this.createLocalFilePath(
-					githubRepository.rootUri,
-					file,
-					startLine,
-					endLine,
-				);
-				const lineMessage = end
-					? `Lines ${startLine} to ${endLine} in \`${sha.substring(0, 7)}\``
-					: `Line ${startLine} in \`${sha.substring(0, 7)}\``;
-				return `
+		const expression = new RegExp(`https://github.com/(.+)/${githubRepositories[0].remote.repositoryName}/blob/([0-9a-f]{40})/(.*)#L([0-9]+)(-L([0-9]+))?`, 'g');
+		return stringReplaceAsync(body, expression, async (match: string, owner: string, sha: string, file: string, start: string, _endGroup?: string, end?: string, index?: number) => {
+			if (index && (index > 0) && (body.charAt(index - 1) === '(')) {
+				return match;
+			}
+			const githubRepository = githubRepositories.find(repository => repository.remote.owner.toLocaleLowerCase() === owner.toLocaleLowerCase());
+			if (!githubRepository) {
+				return match;
+			}
+			const startLine = parseInt(start);
+			const endLine = end ? parseInt(end) : startLine + 1;
+			const lineContents = await githubRepository.getLines(sha, file, startLine, endLine);
+			if (!lineContents) {
+				return match;
+			}
+			const localFile = await this.createLocalFilePath(githubRepository.rootUri, file, startLine, endLine);
+			const lineMessage = end ? `Lines ${startLine} to ${endLine} in \`${sha.substring(0, 7)}\`` : `Line ${startLine} in \`${sha.substring(0, 7)}\``;
+			return `
 ***
-[${file}](${localFile ?? match})${localFile ? ` ([view on GitHub](${match}))` : ""}
+[${file}](${localFile ?? match})${localFile ? ` ([view on GitHub](${match}))` : ''}
 
 ${lineMessage}
 \`\`\`
 ${lineContents}
 \`\`\`
 ***`;
-			},
-		);
+		});
 	}
 
 	private replaceNewlines(body: string) {
-		return body.replace(/(?<!\s)(\r\n|\n)/g, "  \n");
+		return body.replace(/(?<!\s)(\r\n|\n)/g, '  \n');
 	}
 
-	private async replaceBody(
-		body: string | vscode.MarkdownString,
-	): Promise<string> {
-		Logger.trace("Replace comment body", GHPRComment.ID);
+	private async replaceBody(body: string | vscode.MarkdownString): Promise<string> {
+		Logger.trace('Replace comment body', GHPRComment.ID);
 		if (body instanceof vscode.MarkdownString) {
 			const permalinkReplaced = await this.replacePermalink(body.value);
 			return this.replaceImg(this.replaceSuggestion(permalinkReplaced));
 		}
 		const newLinesReplaced = this.replaceNewlines(body);
-		const documentLanguage = (
-			await vscode.workspace.openTextDocument(this.parent.uri)
-		).languageId;
-		const replacerRegex = new RegExp(
-			`([^/\[\`]|^)@(${ALLOWED_USERS})`,
-			"g",
-		);
+		const documentLanguage = (await vscode.workspace.openTextDocument(this.parent.uri)).languageId;
+		const replacerRegex = new RegExp(`([^/\[\`]|^)@(${ALLOWED_USERS})`, 'g');
 		// Replace user
-		const linkified = newLinesReplaced.replace(
-			replacerRegex,
-			(substring, _1, _2, offset) => {
-				// Do not try to replace user if there's a code block.
-				if (
-					(newLinesReplaced.substring(0, offset).match(/```/g)
-						?.length ?? 0) %
-						2 ===
-					1
-				) {
-					return substring;
-				}
-				// Do not try to replace user if it might already be part of a link
-				if (substring.includes("]") || substring.includes(")")) {
-					return substring;
-				}
+		const linkified = newLinesReplaced.replace(replacerRegex, (substring, _1, _2, offset) => {
+			// Do not try to replace user if there's a code block.
+			if ((newLinesReplaced.substring(0, offset).match(/```/g)?.length ?? 0) % 2 === 1) {
+				return substring;
+			}
+			// Do not try to replace user if it might already be part of a link
+			if (substring.includes(']') || substring.includes(')')) {
+				return substring;
+			}
 
-				const username = substring.substring(
-					substring.startsWith("@") ? 1 : 2,
-				);
-				if (
-					((documentLanguage === "javascript" ||
-						documentLanguage === "typescript") &&
-						JSDOC_NON_USERS.includes(username)) ||
-					(documentLanguage === "php" &&
-						PHPDOC_NON_USERS.includes(username))
-				) {
-					return substring;
-				}
-				return `${substring.startsWith("@") ? "" : substring.charAt(0)}[@${username}](${path.dirname(this.rawComment.user!.url)}/${username})`;
-			},
-		);
+			const username = substring.substring(substring.startsWith('@') ? 1 : 2);
+			if ((((documentLanguage === 'javascript') || (documentLanguage === 'typescript')) && JSDOC_NON_USERS.includes(username))
+				|| ((documentLanguage === 'php') && PHPDOC_NON_USERS.includes(username))) {
+				return substring;
+			}
+			return `${substring.startsWith('@') ? '' : substring.charAt(0)}[@${username}](${path.dirname(this.rawComment.user!.url)}/${username})`;
+		});
 
 		const permalinkReplaced = await this.replacePermalink(linkified);
 		return this.replaceImg(this.replaceSuggestion(permalinkReplaced));
 	}
 
-	protected async doSetBody(
-		body: string | vscode.MarkdownString,
-		refresh: boolean,
-	) {
+	protected async doSetBody(body: string | vscode.MarkdownString, refresh: boolean) {
 		this._rawBody = body;
 		const replacedBody = await this.replaceBody(body);
 

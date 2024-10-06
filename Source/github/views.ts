@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { TimelineEvent } from "../common/timelineEvent";
+import { TimelineEvent } from '../common/timelineEvent';
 import {
 	GithubItemStateEnum,
 	IAccount,
@@ -17,12 +17,12 @@ import {
 	PullRequestMergeability,
 	PullRequestReviewRequirement,
 	ReviewState,
-} from "./interface";
+} from './interface';
 
 export enum ReviewType {
-	Comment = "comment",
-	Approve = "approve",
-	RequestChanges = "requestChanges",
+	Comment = 'comment',
+	Approve = 'approve',
+	RequestChanges = 'requestChanges',
 }
 
 export interface PullRequest {
@@ -76,8 +76,8 @@ export interface PullRequest {
 		position: number;
 		state: MergeQueueState;
 	};
-	mergeCommitMeta?: { title: string; description: string };
-	squashCommitMeta?: { title: string; description: string };
+	mergeCommitMeta?: { title: string, description: string };
+	squashCommitMeta?: { title: string, description: string };
 	reviewers: ReviewState[];
 	isDraft?: boolean;
 	isIssue: boolean;
@@ -114,5 +114,5 @@ export enum PreReviewState {
 	None = 0,
 	Available,
 	ReviewedWithComments,
-	ReviewedWithoutComments,
+	ReviewedWithoutComments
 }

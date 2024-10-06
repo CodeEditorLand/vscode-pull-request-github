@@ -3,8 +3,8 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { IAccount, IActor } from "../github/interface";
-import { IComment } from "./comment";
+import { IAccount, IActor } from '../github/interface';
+import { IComment } from './comment';
 
 export enum EventType {
 	Committed,
@@ -49,7 +49,7 @@ export interface ReviewResolveInfo {
 
 export interface ReviewEvent {
 	id: number;
-	reviewThread?: ReviewResolveInfo;
+	reviewThread?: ReviewResolveInfo
 	event: EventType.Reviewed;
 	comments: IComment[];
 	submittedAt: string;
@@ -58,12 +58,7 @@ export interface ReviewEvent {
 	htmlUrl: string;
 	user: IAccount;
 	authorAssociation: string;
-	state?:
-		| "COMMENTED"
-		| "APPROVED"
-		| "CHANGES_REQUESTED"
-		| "PENDING"
-		| "REQUESTED";
+	state?: 'COMMENTED' | 'APPROVED' | 'CHANGES_REQUESTED' | 'PENDING' | 'REQUESTED';
 }
 
 export interface CommitEvent {
@@ -109,11 +104,4 @@ export interface HeadRefDeleteEvent {
 	headRef: string;
 }
 
-export type TimelineEvent =
-	| CommitEvent
-	| ReviewEvent
-	| CommentEvent
-	| NewCommitsSinceReviewEvent
-	| MergedEvent
-	| AssignEvent
-	| HeadRefDeleteEvent;
+export type TimelineEvent = CommitEvent | ReviewEvent | CommentEvent | NewCommitsSinceReviewEvent | MergedEvent | AssignEvent | HeadRefDeleteEvent;

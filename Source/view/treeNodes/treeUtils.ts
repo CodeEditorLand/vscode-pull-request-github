@@ -3,19 +3,16 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as vscode from "vscode";
-
-import { FileChangeNode } from "./fileChangeNode";
-import { TreeNode } from "./treeNode";
+import * as vscode from 'vscode';
+import { FileChangeNode } from './fileChangeNode';
+import { TreeNode } from './treeNode';
 
 export namespace TreeUtils {
-	export function processCheckboxUpdates(
-		checkboxUpdates: vscode.TreeCheckboxChangeEvent<TreeNode>,
-	) {
+	export function processCheckboxUpdates(checkboxUpdates: vscode.TreeCheckboxChangeEvent<TreeNode>) {
 		const checkedNodes: FileChangeNode[] = [];
 		const uncheckedNodes: FileChangeNode[] = [];
 
-		checkboxUpdates.items.forEach((checkboxUpdate) => {
+		checkboxUpdates.items.forEach(checkboxUpdate => {
 			const node = checkboxUpdate[0];
 			const newState = checkboxUpdate[1];
 
@@ -32,13 +29,13 @@ export namespace TreeUtils {
 
 		if (checkedNodes.length > 0) {
 			const prModel = checkedNodes[0].pullRequest;
-			const filenames = checkedNodes.map((n) => n.fileName);
-			prModel.markFiles(filenames, true, "viewed");
+			const filenames = checkedNodes.map(n => n.fileName);
+			prModel.markFiles(filenames, true, 'viewed');
 		}
 		if (uncheckedNodes.length > 0) {
 			const prModel = uncheckedNodes[0].pullRequest;
-			const filenames = uncheckedNodes.map((n) => n.fileName);
-			prModel.markFiles(filenames, true, "unviewed");
+			const filenames = uncheckedNodes.map(n => n.fileName);
+			prModel.markFiles(filenames, true, 'unviewed');
 		}
 	}
 }
