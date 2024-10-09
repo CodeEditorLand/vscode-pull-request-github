@@ -26,7 +26,13 @@ export class MessageHandler {
 		this._commandHandler = commandHandler;
 		this.lastSentReq = 0;
 		this.pendingReplies = Object.create(null);
-		window.addEventListener('message', this.handleMessage.bind(this) as (this: Window, ev: MessageEvent<any>) => any);
+		window.addEventListener(
+			"message",
+			this.handleMessage.bind(this) as (
+				this: Window,
+				ev: MessageEvent<any>,
+			) => any,
+		);
 	}
 
 	public registerCommandHandler(commandHandler: (message: any) => void) {

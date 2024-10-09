@@ -3,8 +3,8 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { DiffSide, SubjectType, ViewedState } from '../common/comment';
-import { ForkDetails } from './githubRepository';
+import { DiffSide, SubjectType, ViewedState } from "../common/comment";
+import { ForkDetails } from "./githubRepository";
 
 interface PageInfo {
 	hasNextPage: boolean;
@@ -73,7 +73,7 @@ export interface ReactionGroup {
 	reactors: {
 		nodes: {
 			login: string;
-		}[]
+		}[];
 		totalCount: number;
 	};
 }
@@ -93,7 +93,7 @@ interface Team {
 	url: string;
 	repositories: {
 		nodes: {
-			name: string
+			name: string;
 		}[];
 	};
 	slug: string;
@@ -177,11 +177,11 @@ export interface AssignedEvent {
 }
 
 export interface MergeQueueEntry {
-	position: number,
+	position: number;
 	state: MergeQueueState;
 	mergeQueue: {
 		url: string;
-	}
+	};
 }
 
 export interface Review {
@@ -196,7 +196,7 @@ export interface Review {
 		url: string;
 		id: string;
 	};
-	state: 'COMMENTED' | 'APPROVED' | 'CHANGES_REQUESTED' | 'PENDING';
+	state: "COMMENTED" | "APPROVED" | "CHANGES_REQUESTED" | "PENDING";
 	body: string;
 	bodyHTML?: string;
 	submittedAt: string;
@@ -219,13 +219,15 @@ export interface ReviewThread {
 	subjectType?: SubjectType;
 	comments: {
 		nodes: ReviewComment[];
-		edges: [{
-			node: {
-				pullRequestReview?: {
-					databaseId: number
-				}
-			}
-		}]
+		edges: [
+			{
+				node: {
+					pullRequestReview?: {
+						databaseId: number;
+					};
+				};
+			},
+		];
 	};
 }
 
@@ -233,7 +235,14 @@ export interface TimelineEventsResponse {
 	repository: {
 		pullRequest: {
 			timelineItems: {
-				nodes: (MergedEvent | Review | IssueComment | Commit | AssignedEvent | HeadRefDeletedEvent)[];
+				nodes: (
+					| MergedEvent
+					| Review
+					| IssueComment
+					| Commit
+					| AssignedEvent
+					| HeadRefDeletedEvent
+				)[];
 			};
 		};
 	} | null;
@@ -246,7 +255,7 @@ export interface LatestReviewCommitResponse {
 			viewerLatestReview: {
 				commit: {
 					oid: string;
-				}
+				};
 			};
 		};
 	} | null;
@@ -289,7 +298,7 @@ export interface PullRequestState {
 		pullRequest: {
 			title: string;
 			number: number;
-			state: 'OPEN' | 'CLOSED' | 'MERGED';
+			state: "OPEN" | "CLOSED" | "MERGED";
 		};
 	} | null;
 }
@@ -298,8 +307,8 @@ export interface PullRequestTemplatesResponse {
 	repository: {
 		pullRequestTemplates: {
 			body: string;
-		}[]
-	}
+		}[];
+	};
 }
 
 export interface PullRequestCommentsResponse {
@@ -364,20 +373,20 @@ export interface PullRequestParticipantsResponse {
 
 export interface CreatePullRequestResponse {
 	createPullRequest: {
-		pullRequest: PullRequest
-	}
+		pullRequest: PullRequest;
+	};
 }
 
 export interface RevertPullRequestResponse {
 	revertPullRequest: {
-		revertPullRequest: PullRequest
-	}
+		revertPullRequest: PullRequest;
+	};
 }
 
 export interface AddReviewThreadResponse {
 	addPullRequestReviewThread: {
 		thread: ReviewThread;
-	}
+	};
 }
 
 export interface AddCommentResponse {
@@ -410,8 +419,15 @@ export interface MarkPullRequestReadyForReviewResponse {
 	markPullRequestReadyForReview: {
 		pullRequest: {
 			isDraft: boolean;
-			mergeable: 'MERGEABLE' | 'CONFLICTING' | 'UNKNOWN';
-			mergeStateStatus: 'BEHIND' | 'BLOCKED' | 'CLEAN' | 'DIRTY' | 'HAS_HOOKS' | 'UNKNOWN' | 'UNSTABLE';
+			mergeable: "MERGEABLE" | "CONFLICTING" | "UNKNOWN";
+			mergeStateStatus:
+				| "BEHIND"
+				| "BLOCKED"
+				| "CLEAN"
+				| "DIRTY"
+				| "HAS_HOOKS"
+				| "UNKNOWN"
+				| "UNSTABLE";
 			viewerCanEnableAutoMerge: boolean;
 			viewerCanDisableAutoMerge: boolean;
 		};
@@ -423,9 +439,9 @@ export interface MergeQueueForBranchResponse {
 		mergeQueue?: {
 			configuration?: {
 				mergeMethod: MergeMethod;
-			}
-		}
-	}
+			};
+		};
+	};
 }
 
 export interface DequeuePullRequestResponse {
@@ -435,7 +451,7 @@ export interface DequeuePullRequestResponse {
 export interface EnqueuePullRequestResponse {
 	enqueuePullRequest: {
 		mergeQueueEntry: MergeQueueEntry;
-	}
+	};
 }
 
 export interface SubmittedReview extends Review {
@@ -507,8 +523,8 @@ export interface GetBranchResponse {
 		ref: {
 			target: {
 				oid: string;
-			}
-		}
+			};
+		};
 	} | null;
 }
 
@@ -558,15 +574,20 @@ export interface SuggestedReviewerResponse {
 	};
 }
 
-export type MergeMethod = 'MERGE' | 'REBASE' | 'SQUASH';
-export type MergeQueueState = 'AWAITING_CHECKS' | 'LOCKED' | 'MERGEABLE' | 'QUEUED' | 'UNMERGEABLE';
+export type MergeMethod = "MERGE" | "REBASE" | "SQUASH";
+export type MergeQueueState =
+	| "AWAITING_CHECKS"
+	| "LOCKED"
+	| "MERGEABLE"
+	| "QUEUED"
+	| "UNMERGEABLE";
 
 export interface PullRequest {
 	id: string;
 	databaseId: number;
 	number: number;
 	url: string;
-	state: 'OPEN' | 'CLOSED' | 'MERGED';
+	state: "OPEN" | "CLOSED" | "MERGED";
 	body: string;
 	bodyHTML: string;
 	title: string;
@@ -613,12 +634,19 @@ export interface PullRequest {
 		}[];
 	};
 	merged: boolean;
-	mergeable: 'MERGEABLE' | 'CONFLICTING' | 'UNKNOWN';
+	mergeable: "MERGEABLE" | "CONFLICTING" | "UNKNOWN";
 	mergeQueueEntry?: MergeQueueEntry | null;
-	mergeStateStatus: 'BEHIND' | 'BLOCKED' | 'CLEAN' | 'DIRTY' | 'HAS_HOOKS' | 'UNKNOWN' | 'UNSTABLE';
+	mergeStateStatus:
+		| "BEHIND"
+		| "BLOCKED"
+		| "CLEAN"
+		| "DIRTY"
+		| "HAS_HOOKS"
+		| "UNKNOWN"
+		| "UNSTABLE";
 	reviewThreads: {
 		totalCount: number;
-	}
+	};
 	autoMergeRequest?: {
 		mergeMethod: MergeMethod;
 	};
@@ -632,8 +660,8 @@ export interface PullRequest {
 			project: {
 				id: string;
 				title: string;
-			},
-			id: string
+			};
+			id: string;
 		}[];
 	};
 	milestone?: {
@@ -653,16 +681,16 @@ export interface PullRequest {
 }
 
 export enum DefaultCommitTitle {
-	prTitle = 'PR_TITLE',
-	commitOrPrTitle = 'COMMIT_OR_PR_TITLE',
-	mergeMessage = 'MERGE_MESSAGE'
+	prTitle = "PR_TITLE",
+	commitOrPrTitle = "COMMIT_OR_PR_TITLE",
+	mergeMessage = "MERGE_MESSAGE",
 }
 
 export enum DefaultCommitMessage {
-	prBody = 'PR_BODY',
-	commitMessages = 'COMMIT_MESSAGES',
-	blank = 'BLANK',
-	prTitle = 'PR_TITLE'
+	prBody = "PR_BODY",
+	commitMessages = "COMMIT_MESSAGES",
+	blank = "BLANK",
+	prTitle = "PR_TITLE",
 }
 
 export interface PullRequestResponse {
@@ -675,15 +703,24 @@ export interface PullRequestResponse {
 export interface PullRequestMergabilityResponse {
 	repository: {
 		pullRequest: {
-			mergeable: 'MERGEABLE' | 'CONFLICTING' | 'UNKNOWN';
-			mergeStateStatus: 'BEHIND' | 'BLOCKED' | 'CLEAN' | 'DIRTY' | 'HAS_HOOKS' | 'UNKNOWN' | 'UNSTABLE';
+			mergeable: "MERGEABLE" | "CONFLICTING" | "UNKNOWN";
+			mergeStateStatus:
+				| "BEHIND"
+				| "BLOCKED"
+				| "CLEAN"
+				| "DIRTY"
+				| "HAS_HOOKS"
+				| "UNKNOWN"
+				| "UNSTABLE";
 			mergeRequirements?: {
 				conditions: {
-					__typename: string | 'PullRequestMergeConflictStateCondition';
-					result: 'PASSED' | 'FAILED';
+					__typename:
+						| string
+						| "PullRequestMergeConflictStateCondition";
+					result: "PASSED" | "FAILED";
 					conflicts: string[];
 				}[];
-			}
+			};
 		};
 	} | null;
 	rateLimit: RateLimit;
@@ -707,7 +744,7 @@ export interface RepoProjectsResponse {
 				title: string;
 				id: string;
 			}[];
-		}
+		};
 	} | null;
 }
 
@@ -719,8 +756,8 @@ export interface OrgProjectsResponse {
 				id: string;
 			}[];
 			pageInfo: PageInfo;
-		}
-	}
+		};
+	};
 }
 
 export interface MilestoneIssuesResponse {
@@ -731,7 +768,7 @@ export interface MilestoneIssuesResponse {
 				createdAt: string;
 				title: string;
 				id: string;
-				number: number
+				number: number;
 				issues: {
 					edges: {
 						node: PullRequest;
@@ -757,8 +794,8 @@ export interface IssuesResponse {
 export interface PullRequestsResponse {
 	repository: {
 		pullRequests: {
-			nodes: PullRequest[]
-		}
+			nodes: PullRequest[];
+		};
 	} | null;
 }
 
@@ -825,7 +862,7 @@ export interface FileContentResponse {
 	repository: {
 		object: {
 			text: string | undefined;
-		}
+		};
 	} | null;
 }
 
@@ -840,7 +877,7 @@ export interface StartReviewResponse {
 export interface StatusContext {
 	__typename: string;
 	id: string;
-	state: 'ERROR' | 'EXPECTED' | 'FAILURE' | 'PENDING' | 'SUCCESS';
+	state: "ERROR" | "EXPECTED" | "FAILURE" | "PENDING" | "SUCCESS";
 	description: string | null;
 	context: string;
 	targetUrl: string | null;
@@ -852,15 +889,15 @@ export interface CheckRun {
 	__typename: string;
 	id: string;
 	conclusion:
-	| 'ACTION_REQUIRED'
-	| 'CANCELLED'
-	| 'FAILURE'
-	| 'NEUTRAL'
-	| 'SKIPPED'
-	| 'STALE'
-	| 'SUCCESS'
-	| 'TIMED_OUT'
-	| null;
+		| "ACTION_REQUIRED"
+		| "CANCELLED"
+		| "FAILURE"
+		| "NEUTRAL"
+		| "SKIPPED"
+		| "STALE"
+		| "SUCCESS"
+		| "TIMED_OUT"
+		| null;
 	name: string;
 	title: string | null;
 	detailsUrl: string | null;
@@ -874,16 +911,29 @@ export interface CheckRun {
 }
 
 export function isCheckRun(x: CheckRun | StatusContext): x is CheckRun {
-	return x.__typename === 'CheckRun';
+	return x.__typename === "CheckRun";
 }
 
 export interface ChecksReviewNode {
-	authorAssociation: 'MEMBER' | 'OWNER' | 'MANNEQUIN' | 'COLLABORATOR' | 'CONTRIBUTOR' | 'FIRST_TIME_CONTRIBUTOR' | 'FIRST_TIMER' | 'NONE';
-	authorCanPushToRepository: boolean
-	state: 'PENDING' | 'COMMENTED' | 'APPROVED' | 'CHANGES_REQUESTED' | 'DISMISSED';
+	authorAssociation:
+		| "MEMBER"
+		| "OWNER"
+		| "MANNEQUIN"
+		| "COLLABORATOR"
+		| "CONTRIBUTOR"
+		| "FIRST_TIME_CONTRIBUTOR"
+		| "FIRST_TIMER"
+		| "NONE";
+	authorCanPushToRepository: boolean;
+	state:
+		| "PENDING"
+		| "COMMENTED"
+		| "APPROVED"
+		| "CHANGES_REQUESTED"
+		| "DISMISSED";
 	author: {
 		login: string;
-	}
+	};
 }
 
 export interface GetChecksResponse {
@@ -905,16 +955,23 @@ export interface GetChecksResponse {
 				} | null;
 			} | null;
 			commits: {
-				nodes: {
-					commit: {
-						statusCheckRollup?: {
-							state: 'EXPECTED' | 'ERROR' | 'FAILURE' | 'PENDING' | 'SUCCESS';
-							contexts: {
-								nodes: (StatusContext | CheckRun)[];
+				nodes:
+					| {
+							commit: {
+								statusCheckRollup?: {
+									state:
+										| "EXPECTED"
+										| "ERROR"
+										| "FAILURE"
+										| "PENDING"
+										| "SUCCESS";
+									contexts: {
+										nodes: (StatusContext | CheckRun)[];
+									};
+								};
 							};
-						};
-					};
-				}[] | undefined;
+					  }[]
+					| undefined;
 			};
 		};
 	} | null;
@@ -923,13 +980,13 @@ export interface GetChecksResponse {
 export interface ResolveReviewThreadResponse {
 	resolveReviewThread: {
 		thread: ReviewThread;
-	}
+	};
 }
 
 export interface UnresolveReviewThreadResponse {
 	unresolveReviewThread: {
 		thread: ReviewThread;
-	}
+	};
 }
 
 export interface PullRequestFilesResponse {
@@ -938,14 +995,14 @@ export interface PullRequestFilesResponse {
 			files: {
 				nodes: {
 					path: string;
-					viewerViewedState: ViewedState
-				}[]
+					viewerViewedState: ViewedState;
+				}[];
 				pageInfo: {
 					hasNextPage: boolean;
 					endCursor: string;
 				};
-			}
-		}
+			};
+		};
 	} | null;
 }
 
@@ -962,8 +1019,15 @@ export interface MergePullRequestResponse {
 	mergePullRequest: {
 		pullRequest: PullRequest & {
 			timelineItems: {
-				nodes: (MergedEvent | Review | IssueComment | Commit | AssignedEvent | HeadRefDeletedEvent)[]
-			}
+				nodes: (
+					| MergedEvent
+					| Review
+					| IssueComment
+					| Commit
+					| AssignedEvent
+					| HeadRefDeletedEvent
+				)[];
+			};
 		};
-	}
+	};
 }

@@ -3,13 +3,17 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as vscode from 'vscode';
-import { CREATE_ISSUE_TRIGGERS, ISSUES_SETTINGS_NAMESPACE } from '../common/settingKeys';
-import { ISSUE_OR_URL_EXPRESSION } from '../github/utils';
-import { MAX_LINE_LENGTH } from './util';
+import * as vscode from "vscode";
+
+import {
+	CREATE_ISSUE_TRIGGERS,
+	ISSUES_SETTINGS_NAMESPACE,
+} from "../common/settingKeys";
+import { ISSUE_OR_URL_EXPRESSION } from "../github/utils";
+import { MAX_LINE_LENGTH } from "./util";
 
 function escapeRegExp(string: string) {
-	return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+	return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 export class IssueTodoProvider implements vscode.CodeActionProvider {
@@ -25,8 +29,17 @@ export class IssueTodoProvider implements vscode.CodeActionProvider {
 	}
 
 	private updateTriggers() {
-		const triggers = vscode.workspace.getConfiguration(ISSUES_SETTINGS_NAMESPACE).get(CREATE_ISSUE_TRIGGERS, []);
-		this.expression = triggers.length > 0 ? new RegExp(triggers.map(trigger => escapeRegExp(trigger)).join('|')) : undefined;
+		const triggers = vscode.workspace
+			.getConfiguration(ISSUES_SETTINGS_NAMESPACE)
+			.get(CREATE_ISSUE_TRIGGERS, []);
+		this.expression =
+			triggers.length > 0
+				? new RegExp(
+						triggers
+							.map((trigger) => escapeRegExp(trigger))
+							.join("|"),
+					)
+				: undefined;
 	}
 
 	async provideCodeActions(
@@ -35,7 +48,10 @@ export class IssueTodoProvider implements vscode.CodeActionProvider {
 		context: vscode.CodeActionContext,
 		_token: vscode.CancellationToken,
 	): Promise<vscode.CodeAction[]> {
-		if (this.expression === undefined || (context.only && context.only !== vscode.CodeActionKind.QuickFix)) {
+		if (
+			this.expression === undefined ||
+			(context.only && context.only !== vscode.CodeActionKind.QuickFix)
+		) {
 			return [];
 		}
 		const codeActions: vscode.CodeAction[] = [];
@@ -49,18 +65,31 @@ export class IssueTodoProvider implements vscode.CodeActionProvider {
 				const search = match?.index ?? -1;
 				if (search >= 0 && match) {
 					const codeAction: vscode.CodeAction = new vscode.CodeAction(
-						vscode.l10n.t('Create GitHub Issue'),
+						vscode.l10n.t("Create GitHub Issue"),
 						vscode.CodeActionKind.QuickFix,
 					);
-					codeAction.ranges = [new vscode.Range(lineNumber, search, lineNumber, search + match[0].length)];
-					const indexOfWhiteSpace = truncatedLine.substring(search).search(/\s/);
+					codeAction.ranges = [
+						new vscode.Range(
+							lineNumber,
+							search,
+							lineNumber,
+							search + match[0].length,
+						),
+					];
+					const indexOfWhiteSpace = truncatedLine
+						.substring(search)
+						.search(/\s/);
 					const insertIndex =
 						search +
-						(indexOfWhiteSpace > 0 ? indexOfWhiteSpace : truncatedLine.match(this.expression)![0].length);
+						(indexOfWhiteSpace > 0
+							? indexOfWhiteSpace
+							: truncatedLine.match(this.expression)![0].length);
 					codeAction.command = {
-						title: vscode.l10n.t('Create GitHub Issue'),
-						command: 'issue.createIssueFromSelection',
-						arguments: [{ document, lineNumber, line, insertIndex, range }],
+						title: vscode.l10n.t("Create GitHub Issue"),
+						command: "issue.createIssueFromSelection",
+						arguments: [
+							{ document, lineNumber, line, insertIndex, range },
+						],
 					};
 					codeActions.push(codeAction);
 					break;

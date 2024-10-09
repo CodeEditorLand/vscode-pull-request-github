@@ -1,4 +1,4 @@
-declare module 'jsdom-global' {
+declare module "jsdom-global" {
 	export = install;
 
 	namespace install {
@@ -8,9 +8,12 @@ declare module 'jsdom-global' {
 			contentType?: string;
 			includeNodeLocations?: boolean;
 			storageQuota?: number;
-			runScripts?: 'outside-only' | 'dangerously';
+			runScripts?: "outside-only" | "dangerously";
 		}
 	}
 
-	function install(markup?: string, options?: install.JSDomOptions): () => void;
+	function install(
+		markup?: string,
+		options?: install.JSDomOptions,
+	): () => void;
 }

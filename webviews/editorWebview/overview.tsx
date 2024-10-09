@@ -3,14 +3,14 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as React from 'react';
-import { PullRequest } from '../../src/github/views';
+import * as React from "react";
 
-import { AddComment, CommentView } from '../components/comment';
-import { Header } from '../components/header';
-import { StatusChecksSection } from '../components/merge';
-import Sidebar from '../components/sidebar';
-import { Timeline } from '../components/timeline';
+import { PullRequest } from "../../src/github/views";
+import { AddComment, CommentView } from "../components/comment";
+import { Header } from "../components/header";
+import { StatusChecksSection } from "../components/merge";
+import Sidebar from "../components/sidebar";
+import { Timeline } from "../components/timeline";
 
 export const Overview = (pr: PullRequest) => (
 	<>
