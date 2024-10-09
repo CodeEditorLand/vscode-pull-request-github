@@ -3,14 +3,14 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import TelemetryReporter from '@vscode/extension-telemetry';
-import * as vscode from 'vscode';
+import TelemetryReporter from "@vscode/extension-telemetry";
+import * as vscode from "vscode";
 import {
 	getExperimentationService,
 	IExperimentationService,
 	IExperimentationTelemetry,
 	TargetPopulation,
-} from 'vscode-tas-client';
+} from "vscode-tas-client";
 
 /* __GDPR__
 	"query-expfeature" : {
@@ -21,9 +21,13 @@ import {
 export class ExperimentationTelemetry implements IExperimentationTelemetry {
 	private sharedProperties: Record<string, string> = {};
 
-	constructor(private baseReporter: TelemetryReporter | undefined) { }
+	constructor(private baseReporter: TelemetryReporter | undefined) {}
 
-	sendTelemetryEvent(eventName: string, properties?: Record<string, string>, measurements?: Record<string, number>) {
+	sendTelemetryEvent(
+		eventName: string,
+		properties?: Record<string, string>,
+		measurements?: Record<string, number>,
+	) {
 		this.baseReporter?.sendTelemetryEvent(
 			eventName,
 			{
@@ -64,13 +68,13 @@ export class ExperimentationTelemetry implements IExperimentationTelemetry {
 
 function getTargetPopulation(): TargetPopulation {
 	switch (vscode.env.uriScheme) {
-		case 'vscode':
+		case "vscode":
 			return TargetPopulation.Public;
-		case 'vscode-insiders':
+		case "vscode-insiders":
 			return TargetPopulation.Insiders;
-		case 'vscode-exploration':
+		case "vscode-exploration":
 			return TargetPopulation.Internal;
-		case 'code-oss':
+		case "code-oss":
 			return TargetPopulation.Team;
 		default:
 			return TargetPopulation.Public;
@@ -93,7 +97,10 @@ class NullExperimentationService implements IExperimentationService {
 		return Promise.resolve(false);
 	}
 
-	getTreatmentVariable<T extends boolean | number | string>(_configId: string, _name: string): T | undefined {
+	getTreatmentVariable<T extends boolean | number | string>(
+		_configId: string,
+		_name: string,
+	): T | undefined {
 		return undefined;
 	}
 
@@ -110,18 +117,18 @@ export async function createExperimentationService(
 	experimentationTelemetry: ExperimentationTelemetry,
 ): Promise<IExperimentationService> {
 	const id = context.extension.id;
-	const name = context.extension.packageJSON['name'];
-	const version: string = context.extension.packageJSON['version'];
+	const name = context.extension.packageJSON["name"];
+	const version: string = context.extension.packageJSON["version"];
 	const targetPopulation = getTargetPopulation();
 
 	// We only create a real experimentation service for the stable version of the extension, not insiders.
-	return name === 'vscode-pull-request-github'
+	return name === "vscode-pull-request-github"
 		? getExperimentationService(
-			id,
-			version,
-			targetPopulation,
-			experimentationTelemetry,
-			context.globalState,
-		)
+				id,
+				version,
+				targetPopulation,
+				experimentationTelemetry,
+				context.globalState,
+			)
 		: new NullExperimentationService();
 }

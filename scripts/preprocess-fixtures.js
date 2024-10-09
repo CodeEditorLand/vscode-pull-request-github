@@ -3,15 +3,15 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-const fs = require('fs');
-const minimist = require('minimist');
-const path = require('path');
+const fs = require("fs");
+const minimist = require("minimist");
+const path = require("path");
 
 const argv = minimist(process.argv.slice(2), {
-	string: ['in', 'out'],
-	boolean: ['help'],
-	alias: { h: 'help', i: 'in', o: 'out' },
-	unknown: param => {
+	string: ["in", "out"],
+	boolean: ["help"],
+	alias: { h: "help", i: "in", o: "out" },
+	unknown: (param) => {
 		console.error(`Unrecognized command-line argument: ${param}\n`);
 		printUsage(console.error, 1);
 	},
@@ -35,11 +35,13 @@ function copyFixtures(inputDir, outputDir) {
 		const isDir = stats.isDirectory();
 
 		if (isDir) {
-			if (file === 'fixtures') {
+			if (file === "fixtures") {
 				const outputFilePath = path.join(outputDir, inputDir, file);
 				const inputFilePath = path.join(inputDir, file);
-				fs.cpSync(inputFilePath, outputFilePath, { recursive: true, force: true, });
-
+				fs.cpSync(inputFilePath, outputFilePath, {
+					recursive: true,
+					force: true,
+				});
 			} else {
 				copyFixtures(filePath, outputDir);
 			}
