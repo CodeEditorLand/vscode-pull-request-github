@@ -501,9 +501,7 @@ export class ReviewManager {
 		return false;
 	}
 
-	private async getUpstreamUrlAndName(
-		branch: Branch,
-	): Promise<{
+	private async getUpstreamUrlAndName(branch: Branch): Promise<{
 		url: string | undefined;
 		branchName: string | undefined;
 		remoteName: string | undefined;
