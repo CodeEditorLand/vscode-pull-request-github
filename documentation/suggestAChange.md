@@ -28,4 +28,4 @@ If a comment has a `suggestion` block in it as described above, the comment acti
 
 This gif shows an example of how to make a suggestion and then apply it.
 
-![Example of how to suggest and accept a change in a PR](/documentation/changelog/0.58.0/suggest-a-change.gif)
+![`Example of how to suggest and accept a change in a PR`](/documentation/changelog/0.58.0/suggest-a-change.gif)
