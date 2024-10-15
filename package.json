@@ -1,51 +1,4 @@
 {
-	"name": "vscode-pull-request-github",
-	"displayName": "%displayName%",
-	"description": "%description%",
-	"icon": "resources/icons/github_logo.png",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/Microsoft/vscode-pull-request-github"
-	},
-	"bugs": {
-		"url": "https://github.com/Microsoft/vscode-pull-request-github/issues"
-	},
-	"enabledApiProposals": [
-		"activeComment",
-		"codiconDecoration",
-		"codeActionRanges",
-		"commentingRangeHint",
-		"commentReactor",
-		"commentReveal",
-		"commentThreadApplicability",
-		"contribAccessibilityHelpContent",
-		"contribCommentEditorActionsMenu",
-		"contribCommentPeekContext",
-		"contribCommentThreadAdditionalMenu",
-		"contribCommentsViewThreadMenus",
-		"contribEditorContentMenu",
-		"contribShareMenu",
-		"diffCommand",
-		"fileComments",
-		"lmTools",
-		"quickDiffProvider",
-		"shareProvider",
-		"tokenInformation",
-		"treeViewMarkdownMessage"
-	],
-	"version": "0.98.0",
-	"publisher": "GitHub",
-	"engines": {
-		"vscode": "^1.94.0"
-	},
-	"categories": [
-		"Other",
-		"AI",
-		"Chat"
-	],
-	"extensionDependencies": [
-		"vscode.github-authentication"
-	],
 	"activationEvents": [
 		"onStartupFinished",
 		"onFileSystem:newIssue",
@@ -63,186 +16,789 @@
 	"contributes": {
 		"chatParticipants": [
 			{
+				"description": "Chat participant for GitHub Pull Requests extension",
+				"fullName": "GitHub",
 				"id": "githubpr",
 				"name": "githubpr",
-				"fullName": "GitHub",
-				"description": "Chat participant for GitHub Pull Requests extension",
 				"when": "config.githubPullRequests.experimental.chat"
+			}
+		],
+		"commands": [
+			{
+				"category": "%command.pull.request.category%",
+				"command": "github.api.preloadPullRequest",
+				"title": "Preload Pull Request"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.create",
+				"icon": "$(git-pull-request-create)",
+				"title": "%command.pr.create.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.pushAndCreate",
+				"icon": "$(git-pull-request-create)",
+				"title": "%command.pr.create.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.pick",
+				"enablement": "viewItem =~ /hasHeadRef/",
+				"icon": "$(arrow-right)",
+				"title": "%command.pr.pick.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.openChanges",
+				"icon": "$(diff-multiple)",
+				"title": "%command.pr.openChanges.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.pickOnVscodeDev",
+				"icon": "$(globe)",
+				"title": "%command.pr.pickOnVscodeDev.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.exit",
+				"title": "%command.pr.exit.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.dismissNotification",
+				"title": "%command.pr.dismissNotification.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.merge",
+				"title": "%command.pr.merge.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.readyForReview",
+				"title": "%command.pr.readyForReview.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.close",
+				"title": "%command.pr.close.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.openPullRequestOnGitHub",
+				"icon": "$(globe)",
+				"title": "%command.pr.openPullRequestOnGitHub.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.openAllDiffs",
+				"title": "%command.pr.openAllDiffs.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.refreshPullRequest",
+				"title": "%command.pr.refreshPullRequest.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.openFileOnGitHub",
+				"title": "%command.pr.openFileOnGitHub.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.copyCommitHash",
+				"title": "%command.pr.copyCommitHash.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.openOriginalFile",
+				"title": "%command.pr.openOriginalFile.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.openModifiedFile",
+				"title": "%command.pr.openModifiedFile.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.openDiffView",
+				"icon": "$(compare-changes)",
+				"title": "%command.pr.openDiffView.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.openDiffViewFromEditor",
+				"icon": "$(git-pull-request)",
+				"title": "%command.pr.openDiffViewFromEditor.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.openDescription",
+				"icon": "$(note)",
+				"title": "%command.pr.openDescription.title%",
+				"when": "github:inReviewMode"
+			},
+			{
+				"command": "pr.openDescriptionToTheSide",
+				"icon": "$(split-horizontal)",
+				"title": "%command.pr.openDescriptionToTheSide.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.refreshDescription",
+				"title": "%command.pr.refreshDescription.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.focusDescriptionInput",
+				"title": "%command.pr.focusDescriptionInput.title%"
+			},
+			{
+				"command": "pr.showDiffSinceLastReview",
+				"icon": "$(git-pull-request-new-changes)",
+				"title": "%command.pr.showDiffSinceLastReview.title%"
+			},
+			{
+				"command": "pr.showDiffAll",
+				"icon": "$(git-pull-request-go-to-changes)",
+				"title": "%command.pr.showDiffAll.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.checkoutByNumber",
+				"icon": "$(symbol-numeric)",
+				"title": "%command.pr.checkoutByNumber.title%"
+			},
+			{
+				"command": "review.openFile",
+				"icon": "$(go-to-file)",
+				"title": "%command.review.openFile.title%"
+			},
+			{
+				"command": "review.openLocalFile",
+				"icon": "$(go-to-file)",
+				"title": "%command.review.openLocalFile.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "review.suggestDiff",
+				"title": "%command.review.suggestDiff.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.refreshList",
+				"icon": "$(refresh)",
+				"title": "%command.pr.refreshList.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.setFileListLayoutAsTree",
+				"icon": "$(list-tree)",
+				"title": "%command.pr.setFileListLayoutAsTree.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.setFileListLayoutAsFlat",
+				"icon": "$(list-flat)",
+				"title": "%command.pr.setFileListLayoutAsFlat.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.refreshChanges",
+				"icon": "$(refresh)",
+				"title": "%command.pr.refreshChanges.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.configurePRViewlet",
+				"icon": "$(gear)",
+				"title": "%command.pr.configurePRViewlet.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.deleteLocalBranch",
+				"title": "%command.pr.deleteLocalBranch.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.signin",
+				"title": "%command.pr.signin.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.signinNoEnterprise",
+				"title": "%command.pr.signin.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.signinenterprise",
+				"title": "%command.pr.signinenterprise.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.deleteLocalBranchesNRemotes",
+				"title": "%command.pr.deleteLocalBranchesNRemotes.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.createComment",
+				"enablement": "!commentIsEmpty",
+				"title": "%command.pr.createComment.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.createSingleComment",
+				"enablement": "!commentIsEmpty",
+				"title": "%command.pr.createSingleComment.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.makeSuggestion",
+				"title": "%command.pr.makeSuggestion.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.startReview",
+				"enablement": "!commentIsEmpty",
+				"title": "%command.pr.startReview.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.editComment",
+				"enablement": "!(comment =~ /temporary/)",
+				"icon": "$(edit)",
+				"title": "%command.pr.editComment.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.cancelEditComment",
+				"title": "%command.pr.cancelEditComment.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.saveComment",
+				"enablement": "!commentIsEmpty",
+				"title": "%command.pr.saveComment.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.deleteComment",
+				"enablement": "!(comment =~ /temporary/)",
+				"icon": "$(trash)",
+				"title": "%command.pr.deleteComment.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.resolveReviewThread",
+				"icon": "$(check)",
+				"title": "%command.pr.resolveReviewThread.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.unresolveReviewThread",
+				"title": "%command.pr.unresolveReviewThread.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.unresolveReviewThreadFromView",
+				"icon": "$(sync)",
+				"title": "%command.pr.unresolveReviewThread.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.diffOutdatedCommentWithHead",
+				"icon": "$(git-compare)",
+				"title": "%command.pr.diffOutdatedCommentWithHead.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.signinAndRefreshList",
+				"title": "%command.pr.signinAndRefreshList.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.configureRemotes",
+				"title": "%command.pr.configureRemotes.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.refreshActivePullRequest",
+				"icon": "$(refresh)",
+				"title": "%command.pr.refreshActivePullRequest.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.markFileAsViewed",
+				"icon": "$(pass)",
+				"title": "%command.pr.markFileAsViewed.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.unmarkFileAsViewed",
+				"icon": "$(pass-filled)",
+				"title": "%command.pr.unmarkFileAsViewed.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.openReview",
+				"title": "%command.pr.openReview.title%"
+			},
+			{
+				"category": "%command.comments.category%",
+				"command": "pr.collapseAllComments",
+				"icon": "$(collapse-all)",
+				"title": "%command.pr.collapseAllComments.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.editQuery",
+				"icon": "$(edit)",
+				"title": "%command.pr.editQuery.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.openPullsWebsite",
+				"icon": "$(globe)",
+				"title": "%command.pr.openPullsWebsite.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.resetViewedFiles",
+				"title": "%command.pr.resetViewedFiles.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.goToNextDiffInPr",
+				"title": "%command.pr.goToNextDiffInPr.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.goToPreviousDiffInPr",
+				"title": "%command.pr.goToPreviousDiffInPr.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.copyCommentLink",
+				"enablement": "!(comment =~ /temporary/)",
+				"icon": "$(copy)",
+				"title": "%command.pr.copyCommentLink.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.applySuggestion",
+				"icon": "$(gift)",
+				"title": "%command.pr.applySuggestion.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.applySuggestionWithCopilot",
+				"icon": "$(sparkle)",
+				"title": "%command.pr.applySuggestionWithCopilot.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.addAssigneesToNewPr",
+				"icon": "$(account)",
+				"title": "%command.pr.addAssigneesToNewPr.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.addReviewersToNewPr",
+				"icon": "$(feedback)",
+				"title": "%command.pr.addReviewersToNewPr.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.addLabelsToNewPr",
+				"icon": "$(tag)",
+				"title": "%command.pr.addLabelsToNewPr.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.addMilestoneToNewPr",
+				"icon": "$(milestone)",
+				"title": "%command.pr.addMilestoneToNewPr.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.addProjectsToNewPr",
+				"icon": "$(github-project)",
+				"title": "%command.pr.addProjectsToNewPr.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.preReview",
+				"enablement": "!pr:preReviewing && !pr:creating",
+				"icon": "$(comment)",
+				"title": "%command.pr.preReview.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.addFileComment",
+				"icon": "$(comment)",
+				"title": "%command.pr.addFileComment.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.checkoutFromReadonlyFile",
+				"title": "%command.pr.pick.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.resolveConflict",
+				"title": "%command.pr.resolveConflict.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.acceptMerge",
+				"title": "%command.pr.acceptMerge.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "review.diffWithPrHead",
+				"title": "%command.review.diffWithPrHead.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "review.diffLocalWithPrHead",
+				"title": "%command.review.diffLocalWithPrHead.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "review.approve",
+				"title": "%command.review.approve.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "review.comment",
+				"title": "%command.review.comment.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "review.requestChanges",
+				"title": "%command.review.requestChanges.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "review.approveOnDotCom",
+				"title": "%command.review.approveOnDotCom.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "review.requestChangesOnDotCom",
+				"title": "%command.review.requestChangesOnDotCom.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "review.approveDescription",
+				"title": "%command.review.approve.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "review.commentDescription",
+				"title": "%command.review.comment.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "review.requestChangesDescription",
+				"title": "%command.review.requestChanges.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "review.approveOnDotComDescription",
+				"title": "%command.review.approveOnDotCom.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "review.requestChangesOnDotComDescription",
+				"title": "%command.review.requestChangesOnDotCom.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "review.createSuggestionsFromChanges",
+				"icon": "$(gift)",
+				"title": "%command.review.createSuggestionsFromChanges.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "review.createSuggestionFromChange",
+				"icon": "$(gift)",
+				"title": "%command.review.createSuggestionFromChange.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.createPrMenuCreate",
+				"title": "%command.pr.createPrMenuCreate.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.createPrMenuDraft",
+				"title": "%command.pr.createPrMenuDraft.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.createPrMenuMergeWhenReady",
+				"title": "%command.pr.createPrMenuMergeWhenReady.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.createPrMenuMerge",
+				"title": "%command.pr.createPrMenuMerge.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.createPrMenuSquash",
+				"title": "%command.pr.createPrMenuSquash.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.createPrMenuRebase",
+				"title": "%command.pr.createPrMenuRebase.title%"
+			},
+			{
+				"category": "%command.issues.category%",
+				"command": "issue.createIssueFromSelection",
+				"title": "%command.issue.createIssueFromSelection.title%"
+			},
+			{
+				"category": "%command.issues.category%",
+				"command": "issue.createIssueFromClipboard",
+				"title": "%command.issue.createIssueFromClipboard.title%"
+			},
+			{
+				"category": "%command.issues.category%",
+				"command": "pr.copyVscodeDevPrLink",
+				"title": "%command.pr.copyVscodeDevPrLink.title%"
+			},
+			{
+				"category": "%command.pull.request.category%",
+				"command": "pr.refreshComments",
+				"icon": "$(refresh)",
+				"title": "%command.pr.refreshComments.title%"
+			},
+			{
+				"category": "%command.issues.category%",
+				"command": "issue.copyGithubDevLinkWithoutRange",
+				"enablement": "!isInEmbeddedEditor",
+				"title": "%command.issue.copyGithubDevLink.title%"
+			},
+			{
+				"category": "%command.issues.category%",
+				"command": "issue.copyGithubDevLinkFile",
+				"enablement": "!isInEmbeddedEditor",
+				"title": "%command.issue.copyGithubDevLink.title%"
+			},
+			{
+				"category": "%command.issues.category%",
+				"command": "issue.copyGithubDevLink",
+				"enablement": "!isInEmbeddedEditor",
+				"title": "%command.issue.copyGithubDevLink.title%"
+			},
+			{
+				"category": "%command.issues.category%",
+				"command": "issue.copyGithubPermalink",
+				"enablement": "!isInEmbeddedEditor",
+				"title": "%command.issue.copyGithubPermalink.title%"
+			},
+			{
+				"category": "%command.issues.category%",
+				"command": "issue.copyGithubHeadLink",
+				"enablement": "!isInEmbeddedEditor",
+				"title": "%command.issue.copyGithubHeadLink.title%"
+			},
+			{
+				"category": "%command.issues.category%",
+				"command": "issue.copyGithubPermalinkWithoutRange",
+				"enablement": "!isInEmbeddedEditor",
+				"title": "%command.issue.copyGithubPermalink.title%"
+			},
+			{
+				"category": "%command.issues.category%",
+				"command": "issue.copyGithubHeadLinkWithoutRange",
+				"enablement": "!isInEmbeddedEditor",
+				"title": "%command.issue.copyGithubHeadLink.title%"
+			},
+			{
+				"category": "%command.issues.category%",
+				"command": "issue.copyMarkdownGithubPermalink",
+				"enablement": "!isInEmbeddedEditor",
+				"title": "%command.issue.copyMarkdownGithubPermalink.title%"
+			},
+			{
+				"category": "%command.issues.category%",
+				"command": "issue.copyMarkdownGithubPermalinkWithoutRange",
+				"enablement": "!isInEmbeddedEditor",
+				"title": "%command.issue.copyMarkdownGithubPermalink.title%"
+			},
+			{
+				"category": "%command.issues.category%",
+				"command": "issue.openGithubPermalink",
+				"title": "%command.issue.openGithubPermalink.title%"
+			},
+			{
+				"category": "%command.issues.category%",
+				"command": "issue.openIssue",
+				"icon": "$(globe)",
+				"title": "%command.issue.openIssue.title%"
+			},
+			{
+				"category": "%command.issues.category%",
+				"command": "issue.copyIssueNumber",
+				"title": "%command.issue.copyIssueNumber.title%"
+			},
+			{
+				"category": "%command.issues.category%",
+				"command": "issue.copyIssueUrl",
+				"title": "%command.issue.copyIssueUrl.title%"
+			},
+			{
+				"category": "%command.issues.category%",
+				"command": "issue.refresh",
+				"icon": "$(refresh)",
+				"title": "%command.issue.refresh.title%"
+			},
+			{
+				"category": "%command.issues.category%",
+				"command": "issue.suggestRefresh",
+				"title": "%command.issue.suggestRefresh.title%"
+			},
+			{
+				"category": "%command.issues.category%",
+				"command": "issue.startWorking",
+				"icon": "$(arrow-right)",
+				"title": "%command.issue.startWorking.title%"
+			},
+			{
+				"category": "%command.issues.category%",
+				"command": "issue.startWorkingBranchDescriptiveTitle",
+				"icon": "$(arrow-right)",
+				"title": "%command.issue.startWorkingBranchDescriptiveTitle.title%"
+			},
+			{
+				"category": "%command.issues.category%",
+				"command": "issue.continueWorking",
+				"icon": "$(arrow-right)",
+				"title": "%command.issue.continueWorking.title%"
+			},
+			{
+				"category": "%command.issues.category%",
+				"command": "issue.startWorkingBranchPrompt",
+				"title": "%command.issue.startWorkingBranchPrompt.title%"
+			},
+			{
+				"category": "%command.issues.category%",
+				"command": "issue.stopWorking",
+				"icon": "$(primitive-square)",
+				"title": "%command.issue.stopWorking.title%"
+			},
+			{
+				"category": "%command.issues.category%",
+				"command": "issue.stopWorkingBranchDescriptiveTitle",
+				"icon": "$(primitive-square)",
+				"title": "%command.issue.stopWorkingBranchDescriptiveTitle.title%"
+			},
+			{
+				"category": "%command.issues.category%",
+				"command": "issue.statusBar",
+				"title": "%command.issue.statusBar.title%"
+			},
+			{
+				"category": "%command.issues.category%",
+				"command": "issue.getCurrent",
+				"title": "%command.issue.getCurrent.title%"
+			},
+			{
+				"category": "%command.issues.category%",
+				"command": "issue.editQuery",
+				"icon": "$(edit)",
+				"title": "%command.issue.editQuery.title%"
+			},
+			{
+				"category": "%command.issues.category%",
+				"command": "issue.createIssue",
+				"icon": "$(plus)",
+				"title": "%command.issue.createIssue.title%"
+			},
+			{
+				"command": "issue.createIssueFromFile",
+				"enablement": "!issues.creatingFromFile",
+				"icon": "$(check)",
+				"title": "%command.issue.createIssueFromFile.title%"
+			},
+			{
+				"command": "issue.issueCompletion",
+				"title": "%command.issue.issueCompletion.title%"
+			},
+			{
+				"command": "issue.userCompletion",
+				"title": "%command.issue.userCompletion.title%"
+			},
+			{
+				"category": "%command.issues.category%",
+				"command": "issue.signinAndRefreshList",
+				"title": "%command.issue.signinAndRefreshList.title%"
+			},
+			{
+				"category": "%command.issues.category%",
+				"command": "issue.goToLinkedCode",
+				"title": "%command.issue.goToLinkedCode.title%"
+			},
+			{
+				"category": "%command.issues.category%",
+				"command": "issues.openIssuesWebsite",
+				"icon": "$(globe)",
+				"title": "%command.issues.openIssuesWebsite.title%"
+			},
+			{
+				"category": "%command.issues.category%",
+				"command": "issue.chatSummarizeIssue",
+				"icon": "$(copilot)",
+				"title": "%command.issue.chatSummarizeIssue.title%"
+			},
+			{
+				"category": "%command.issues.category%",
+				"command": "issue.chatSuggestFix",
+				"icon": "$(sparkle)",
+				"title": "%command.issue.chatSuggestFix.title%"
+			},
+			{
+				"category": "%command.notifications.category%",
+				"command": "notifications.refresh",
+				"icon": "$(refresh)",
+				"title": "%command.notifications.refresh.title%"
+			},
+			{
+				"category": "%command.notifications.category%",
+				"command": "notifications.loadMore",
+				"title": "%command.notifications.loadMore.title%"
+			},
+			{
+				"category": "%command.notifications.category%",
+				"command": "notifications.sortByTimestamp",
+				"title": "%command.notifications.sortByTimestamp.title%"
+			},
+			{
+				"category": "%command.notifications.category%",
+				"command": "notifications.sortByPriority",
+				"title": "%command.notifications.sortByPriority.title%"
+			},
+			{
+				"category": "%command.notifications.category%",
+				"command": "notification.openOnGitHub",
+				"icon": "$(globe)",
+				"title": "%command.notifications.openOnGitHub.title%"
+			},
+			{
+				"category": "%command.notifications.category%",
+				"command": "notification.chatSummarizeNotification",
+				"icon": "$(copilot)",
+				"title": "%command.notification.chatSummarizeNotification.title%"
 			}
 		],
 		"configuration": {
 			"properties": {
-				"githubPullRequests.pullRequestTitle": {
-					"deprecationMessage": "The pull request title now uses the same defaults as GitHub, and can be edited before create.",
-					"type": "string",
-					"enum": [
-						"commit",
-						"branch",
-						"custom",
-						"ask"
-					],
-					"enumDescriptions": [
-						"Use the latest commit message",
-						"Use the branch name",
-						"Specify a custom title",
-						"Ask which of the above methods to use"
-					],
-					"default": "ask",
-					"description": "The title used when creating pull requests."
-				},
-				"githubPullRequests.pullRequestDescription": {
-					"type": "string",
-					"enum": [
-						"template",
-						"commit",
-						"none",
-						"Copilot"
-					],
-					"enumDescriptions": [
-						"%githubPullRequests.pullRequestDescription.template%",
-						"%githubPullRequests.pullRequestDescription.commit%",
-						"%githubPullRequests.pullRequestDescription.none%",
-						"%githubPullRequests.pullRequestDescription.copilot%"
-					],
-					"default": "template",
-					"description": "%githubPullRequests.pullRequestDescription.description%"
-				},
-				"githubPullRequests.defaultCreateOption": {
-					"type": "string",
-					"enum": [
-						"lastUsed",
-						"create",
-						"createDraft",
-						"createAutoMerge"
-					],
-					"markdownEnumDescriptions": [
-						"%githubPullRequests.defaultCreateOption.lastUsed%",
-						"%githubPullRequests.defaultCreateOption.create%",
-						"%githubPullRequests.defaultCreateOption.createDraft%",
-						"%githubPullRequests.defaultCreateOption.createAutoMerge%"
-					],
-					"default": "lastUsed",
-					"description": "%githubPullRequests.defaultCreateOption.description%"
-				},
-				"githubPullRequests.createDraft": {
-					"type": "boolean",
-					"default": false,
-					"deprecationMessage": "Use the setting 'githubPullRequests.defaultCreateOption' instead.",
-					"description": "%githubPullRequests.createDraft%"
-				},
-				"githubPullRequests.logLevel": {
-					"type": "string",
-					"enum": [
-						"info",
-						"debug",
-						"off"
-					],
-					"default": "info",
-					"description": "%githubPullRequests.logLevel.description%",
-					"markdownDeprecationMessage": "%githubPullRequests.logLevel.markdownDeprecationMessage%"
-				},
-				"githubPullRequests.remotes": {
-					"type": "array",
-					"default": [
-						"origin",
-						"upstream"
-					],
-					"items": {
-						"type": "string"
-					},
-					"markdownDescription": "%githubPullRequests.remotes.markdownDescription%"
-				},
-				"githubPullRequests.includeRemotes": {
-					"type": "string",
-					"enum": [
-						"default",
-						"all"
-					],
-					"default": "default",
-					"deprecationMessage": "The setting `githubPullRequests.includeRemotes` has been deprecated. Use `githubPullRequests.remotes` to configure what remotes are shown.",
-					"description": "By default we only support remotes created by users. If you want to see pull requests from remotes this extension created for pull requests, change this setting to 'all'."
-				},
-				"githubPullRequests.queries": {
-					"type": "array",
-					"items": {
-						"type": "object",
-						"properties": {
-							"label": {
-								"type": "string",
-								"description": "%githubPullRequests.queries.label.description%"
-							},
-							"query": {
-								"type": "string",
-								"description": "%githubPullRequests.queries.query.description%"
-							}
-						}
-					},
-					"scope": "resource",
-					"markdownDescription": "%githubPullRequests.queries.markdownDescription%",
-					"default": [
-						{
-							"label": "%githubPullRequests.queries.waitingForMyReview%",
-							"query": "is:open review-requested:${user}"
-						},
-						{
-							"label": "%githubPullRequests.queries.assignedToMe%",
-							"query": "is:open assignee:${user}"
-						},
-						{
-							"label": "%githubPullRequests.queries.createdByMe%",
-							"query": "is:open author:${user}"
-						}
-					]
-				},
-				"githubPullRequests.labelCreated": {
-					"type": "array",
-					"items": {
-						"type": "string",
-						"description": "%githubPullRequests.labelCreated.label.description%"
-					},
-					"default": [],
-					"description": "%githubPullRequests.labelCreated.description%"
-				},
-				"githubPullRequests.defaultMergeMethod": {
-					"type": "string",
-					"enum": [
-						"merge",
-						"squash",
-						"rebase"
-					],
-					"default": "merge",
-					"description": "%githubPullRequests.defaultMergeMethod.description%"
-				},
-				"githubPullRequests.showInSCM": {
-					"type": "boolean",
-					"default": false,
-					"deprecationMessage": "This setting is deprecated. Views can now be dragged to any location.",
-					"description": "When true, show GitHub Pull Requests within the SCM viewlet. Otherwise show a separate view container for them."
-				},
-				"githubPullRequests.notifications": {
-					"type": "string",
-					"enum": [
-						"pullRequests",
-						"off"
-					],
-					"default": "off",
-					"description": "%githubPullRequests.notifications.description%"
-				},
-				"githubPullRequests.fileListLayout": {
-					"type": "string",
-					"enum": [
-						"flat",
-						"tree"
-					],
-					"default": "tree",
-					"description": "%githubPullRequests.fileListLayout.description%"
-				},
-				"githubPullRequests.defaultDeletionMethod.selectLocalBranch": {
-					"type": "boolean",
-					"default": true,
-					"description": "%githubIssues.assignWhenWorking.description%",
-					"type": "boolean"
-				},
 				"githubIssues.createInsertFormat": {
 					"default": "number",
 					"description": "%githubIssues.createInsertFormat.description%",
@@ -819,962 +1375,6 @@
 			"title": "GitHub Pull Requests",
 			"type": "object"
 		},
-		"viewsContainers": {
-			"activitybar": [
-				{
-					"id": "github-pull-requests",
-					"title": "%view.github.pull.requests.name%",
-					"icon": "$(github)"
-				},
-				{
-					"id": "github-pull-request",
-					"title": "%view.github.pull.request.name%",
-					"icon": "$(git-pull-request)"
-				}
-			]
-		},
-		"views": {
-			"github-pull-requests": [
-				{
-					"id": "github:login",
-					"name": "%view.github.login.name%",
-					"when": "ReposManagerStateContext == NeedsAuthentication",
-					"icon": "$(git-pull-request)"
-				},
-				{
-					"id": "pr:github",
-					"name": "%view.pr.github.name%",
-					"when": "ReposManagerStateContext != NeedsAuthentication && !github:resolvingConflicts",
-					"icon": "$(git-pull-request)",
-					"accessibilityHelpContent": "%view.pr.github.accessibilityHelpContent%"
-				},
-				{
-					"id": "issues:github",
-					"name": "%view.issues.github.name%",
-					"when": "ReposManagerStateContext != NeedsAuthentication && !github:resolvingConflicts",
-					"icon": "$(issues)",
-					"accessibilityHelpContent": "%view.pr.github.accessibilityHelpContent%"
-				},
-				{
-					"id": "notifications:github",
-					"name": "%view.notifications.github.name%",
-					"when": "ReposManagerStateContext != NeedsAuthentication && !github:resolvingConflicts && config.githubPullRequests.experimental.notificationsView",
-					"icon": "$(bell)",
-					"accessibilityHelpContent": "%view.pr.github.accessibilityHelpContent%"
-				},
-				{
-					"id": "github:conflictResolution",
-					"name": "%view.github.conflictResolution.name%",
-					"when": "github:resolvingConflicts",
-					"icon": "$(git-merge)"
-				}
-			],
-			"github-pull-request": [
-				{
-					"id": "github:createPullRequestWebview",
-					"type": "webview",
-					"name": "%view.github.create.pull.request.name%",
-					"when": "github:createPullRequest || github:revertPullRequest",
-					"visibility": "visible",
-					"initialSize": 2
-				},
-				{
-					"id": "github:compareChangesFiles",
-					"name": "%view.github.compare.changes.name%",
-					"when": "github:createPullRequest",
-					"visibility": "visible",
-					"initialSize": 1
-				},
-				{
-					"id": "github:compareChangesCommits",
-					"name": "%view.github.compare.changesCommits.name%",
-					"when": "github:createPullRequest",
-					"visibility": "visible",
-					"initialSize": 1
-				},
-				{
-					"id": "prStatus:github",
-					"name": "%view.pr.status.github.name%",
-					"when": "github:inReviewMode && !github:createPullRequest && !github:revertPullRequest",
-					"icon": "$(git-pull-request)",
-					"visibility": "visible",
-					"initialSize": 3
-				},
-				{
-					"id": "github:activePullRequest",
-					"type": "webview",
-					"name": "%view.github.active.pull.request.name%",
-					"when": "github:inReviewMode && github:focusedReview && !github:createPullRequest && !github:revertPullRequest && github:activePRCount <= 1",
-					"initialSize": 2
-				},
-				{
-					"id": "github:activePullRequest:welcome",
-					"name": "%view.github.active.pull.request.welcome.name%",
-					"when": "!github:stateValidated && github:focusedReview"
-				}
-			]
-		},
-		"commands": [
-			{
-				"command": "github.api.preloadPullRequest",
-				"title": "Preload Pull Request",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "pr.create",
-				"title": "%command.pr.create.title%",
-				"icon": "$(git-pull-request-create)",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "pr.pushAndCreate",
-				"title": "%command.pr.create.title%",
-				"icon": "$(git-pull-request-create)",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "pr.pick",
-				"title": "%command.pr.pick.title%",
-				"category": "%command.pull.request.category%",
-				"enablement": "viewItem =~ /hasHeadRef/",
-				"icon": "$(arrow-right)"
-			},
-			{
-				"command": "pr.openChanges",
-				"title": "%command.pr.openChanges.title%",
-				"category": "%command.pull.request.category%",
-				"icon": "$(diff-multiple)"
-			},
-			{
-				"command": "pr.pickOnVscodeDev",
-				"title": "%command.pr.pickOnVscodeDev.title%",
-				"category": "%command.pull.request.category%",
-				"icon": "$(globe)"
-			},
-			{
-				"command": "pr.exit",
-				"title": "%command.pr.exit.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "pr.dismissNotification",
-				"title": "%command.pr.dismissNotification.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "pr.merge",
-				"title": "%command.pr.merge.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "pr.readyForReview",
-				"title": "%command.pr.readyForReview.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "pr.close",
-				"title": "%command.pr.close.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "pr.openPullRequestOnGitHub",
-				"title": "%command.pr.openPullRequestOnGitHub.title%",
-				"category": "%command.pull.request.category%",
-				"icon": "$(globe)"
-			},
-			{
-				"command": "pr.openAllDiffs",
-				"title": "%command.pr.openAllDiffs.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "pr.refreshPullRequest",
-				"title": "%command.pr.refreshPullRequest.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "pr.openFileOnGitHub",
-				"title": "%command.pr.openFileOnGitHub.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "pr.copyCommitHash",
-				"title": "%command.pr.copyCommitHash.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "pr.openOriginalFile",
-				"title": "%command.pr.openOriginalFile.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "pr.openModifiedFile",
-				"title": "%command.pr.openModifiedFile.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "pr.openDiffView",
-				"title": "%command.pr.openDiffView.title%",
-				"category": "%command.pull.request.category%",
-				"icon": "$(compare-changes)"
-			},
-			{
-				"command": "pr.openDiffViewFromEditor",
-				"title": "%command.pr.openDiffViewFromEditor.title%",
-				"category": "%command.pull.request.category%",
-				"icon": "$(git-pull-request)"
-			},
-			{
-				"command": "pr.openDescription",
-				"title": "%command.pr.openDescription.title%",
-				"category": "%command.pull.request.category%",
-				"when": "github:inReviewMode",
-				"icon": "$(note)"
-			},
-			{
-				"command": "pr.openDescriptionToTheSide",
-				"title": "%command.pr.openDescriptionToTheSide.title%",
-				"icon": "$(split-horizontal)"
-			},
-			{
-				"command": "pr.refreshDescription",
-				"title": "%command.pr.refreshDescription.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "pr.focusDescriptionInput",
-				"title": "%command.pr.focusDescriptionInput.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "pr.showDiffSinceLastReview",
-				"title": "%command.pr.showDiffSinceLastReview.title%",
-				"icon": "$(git-pull-request-new-changes)"
-			},
-			{
-				"command": "pr.showDiffAll",
-				"title": "%command.pr.showDiffAll.title%",
-				"icon": "$(git-pull-request-go-to-changes)"
-			},
-			{
-				"command": "pr.checkoutByNumber",
-				"title": "%command.pr.checkoutByNumber.title%",
-				"category": "%command.pull.request.category%",
-				"icon": "$(symbol-numeric)"
-			},
-			{
-				"command": "review.openFile",
-				"title": "%command.review.openFile.title%",
-				"icon": "$(go-to-file)"
-			},
-			{
-				"command": "review.openLocalFile",
-				"title": "%command.review.openLocalFile.title%",
-				"icon": "$(go-to-file)"
-			},
-			{
-				"command": "review.suggestDiff",
-				"title": "%command.review.suggestDiff.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "pr.refreshList",
-				"title": "%command.pr.refreshList.title%",
-				"icon": "$(refresh)",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "pr.setFileListLayoutAsTree",
-				"title": "%command.pr.setFileListLayoutAsTree.title%",
-				"icon": "$(list-tree)",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "pr.setFileListLayoutAsFlat",
-				"title": "%command.pr.setFileListLayoutAsFlat.title%",
-				"icon": "$(list-flat)",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "pr.refreshChanges",
-				"title": "%command.pr.refreshChanges.title%",
-				"icon": "$(refresh)",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "pr.configurePRViewlet",
-				"title": "%command.pr.configurePRViewlet.title%",
-				"category": "%command.pull.request.category%",
-				"icon": "$(gear)"
-			},
-			{
-				"command": "pr.deleteLocalBranch",
-				"title": "%command.pr.deleteLocalBranch.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "pr.signin",
-				"title": "%command.pr.signin.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "pr.signinNoEnterprise",
-				"title": "%command.pr.signin.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "pr.signinenterprise",
-				"title": "%command.pr.signinenterprise.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "pr.deleteLocalBranchesNRemotes",
-				"title": "%command.pr.deleteLocalBranchesNRemotes.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "pr.createComment",
-				"title": "%command.pr.createComment.title%",
-				"category": "%command.pull.request.category%",
-				"enablement": "!commentIsEmpty"
-			},
-			{
-				"command": "pr.createSingleComment",
-				"title": "%command.pr.createSingleComment.title%",
-				"category": "%command.pull.request.category%",
-				"enablement": "!commentIsEmpty"
-			},
-			{
-				"command": "pr.makeSuggestion",
-				"title": "%command.pr.makeSuggestion.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "pr.startReview",
-				"title": "%command.pr.startReview.title%",
-				"category": "%command.pull.request.category%",
-				"enablement": "!commentIsEmpty"
-			},
-			{
-				"command": "pr.editComment",
-				"title": "%command.pr.editComment.title%",
-				"category": "%command.pull.request.category%",
-				"icon": "$(edit)",
-				"enablement": "!(comment =~ /temporary/)"
-			},
-			{
-				"command": "pr.cancelEditComment",
-				"title": "%command.pr.cancelEditComment.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "pr.saveComment",
-				"title": "%command.pr.saveComment.title%",
-				"category": "%command.pull.request.category%",
-				"enablement": "!commentIsEmpty"
-			},
-			{
-				"command": "pr.deleteComment",
-				"title": "%command.pr.deleteComment.title%",
-				"category": "%command.pull.request.category%",
-				"icon": "$(trash)",
-				"enablement": "!(comment =~ /temporary/)"
-			},
-			{
-				"command": "pr.resolveReviewThread",
-				"title": "%command.pr.resolveReviewThread.title%",
-				"category": "%command.pull.request.category%",
-				"icon": "$(check)"
-			},
-			{
-				"command": "pr.unresolveReviewThread",
-				"title": "%command.pr.unresolveReviewThread.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "pr.unresolveReviewThreadFromView",
-				"title": "%command.pr.unresolveReviewThread.title%",
-				"category": "%command.pull.request.category%",
-				"icon": "$(sync)"
-			},
-			{
-				"command": "pr.diffOutdatedCommentWithHead",
-				"title": "%command.pr.diffOutdatedCommentWithHead.title%",
-				"category": "%command.pull.request.category%",
-				"icon": "$(git-compare)"
-			},
-			{
-				"command": "pr.signinAndRefreshList",
-				"title": "%command.pr.signinAndRefreshList.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "pr.configureRemotes",
-				"title": "%command.pr.configureRemotes.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "pr.refreshActivePullRequest",
-				"title": "%command.pr.refreshActivePullRequest.title%",
-				"category": "%command.pull.request.category%",
-				"icon": "$(refresh)"
-			},
-			{
-				"command": "pr.markFileAsViewed",
-				"title": "%command.pr.markFileAsViewed.title%",
-				"category": "%command.pull.request.category%",
-				"icon": "$(pass)"
-			},
-			{
-				"command": "pr.unmarkFileAsViewed",
-				"title": "%command.pr.unmarkFileAsViewed.title%",
-				"category": "%command.pull.request.category%",
-				"icon": "$(pass-filled)"
-			},
-			{
-				"command": "pr.openReview",
-				"title": "%command.pr.openReview.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "pr.collapseAllComments",
-				"title": "%command.pr.collapseAllComments.title%",
-				"category": "%command.comments.category%",
-				"icon": "$(collapse-all)"
-			},
-			{
-				"command": "pr.editQuery",
-				"title": "%command.pr.editQuery.title%",
-				"category": "%command.pull.request.category%",
-				"icon": "$(edit)"
-			},
-			{
-				"command": "pr.openPullsWebsite",
-				"title": "%command.pr.openPullsWebsite.title%",
-				"category": "%command.pull.request.category%",
-				"icon": "$(globe)"
-			},
-			{
-				"command": "pr.resetViewedFiles",
-				"title": "%command.pr.resetViewedFiles.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "pr.goToNextDiffInPr",
-				"title": "%command.pr.goToNextDiffInPr.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "pr.goToPreviousDiffInPr",
-				"title": "%command.pr.goToPreviousDiffInPr.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "pr.copyCommentLink",
-				"title": "%command.pr.copyCommentLink.title%",
-				"category": "%command.pull.request.category%",
-				"icon": "$(copy)",
-				"enablement": "!(comment =~ /temporary/)"
-			},
-			{
-				"command": "pr.applySuggestion",
-				"title": "%command.pr.applySuggestion.title%",
-				"category": "%command.pull.request.category%",
-				"icon": "$(gift)"
-			},
-			{
-				"command": "pr.applySuggestionWithCopilot",
-				"title": "%command.pr.applySuggestionWithCopilot.title%",
-				"category": "%command.pull.request.category%",
-				"icon": "$(sparkle)"
-			},
-			{
-				"command": "pr.addAssigneesToNewPr",
-				"title": "%command.pr.addAssigneesToNewPr.title%",
-				"category": "%command.pull.request.category%",
-				"icon": "$(account)"
-			},
-			{
-				"command": "pr.addReviewersToNewPr",
-				"title": "%command.pr.addReviewersToNewPr.title%",
-				"category": "%command.pull.request.category%",
-				"icon": "$(feedback)"
-			},
-			{
-				"command": "pr.addLabelsToNewPr",
-				"title": "%command.pr.addLabelsToNewPr.title%",
-				"category": "%command.pull.request.category%",
-				"icon": "$(tag)"
-			},
-			{
-				"command": "pr.addMilestoneToNewPr",
-				"title": "%command.pr.addMilestoneToNewPr.title%",
-				"category": "%command.pull.request.category%",
-				"icon": "$(milestone)"
-			},
-			{
-				"command": "pr.addProjectsToNewPr",
-				"title": "%command.pr.addProjectsToNewPr.title%",
-				"category": "%command.pull.request.category%",
-				"icon": "$(github-project)"
-			},
-			{
-				"command": "pr.preReview",
-				"title": "%command.pr.preReview.title%",
-				"category": "%command.pull.request.category%",
-				"enablement": "!pr:preReviewing && !pr:creating",
-				"icon": "$(comment)"
-			},
-			{
-				"command": "pr.addFileComment",
-				"title": "%command.pr.addFileComment.title%",
-				"category": "%command.pull.request.category%",
-				"icon": "$(comment)"
-			},
-			{
-				"command": "pr.checkoutFromReadonlyFile",
-				"title": "%command.pr.pick.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "pr.resolveConflict",
-				"title": "%command.pr.resolveConflict.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "pr.acceptMerge",
-				"title": "%command.pr.acceptMerge.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "review.diffWithPrHead",
-				"title": "%command.review.diffWithPrHead.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "review.diffLocalWithPrHead",
-				"title": "%command.review.diffLocalWithPrHead.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "review.approve",
-				"title": "%command.review.approve.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "review.comment",
-				"title": "%command.review.comment.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "review.requestChanges",
-				"title": "%command.review.requestChanges.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "review.approveOnDotCom",
-				"title": "%command.review.approveOnDotCom.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "review.requestChangesOnDotCom",
-				"title": "%command.review.requestChangesOnDotCom.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "review.approveDescription",
-				"title": "%command.review.approve.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "review.commentDescription",
-				"title": "%command.review.comment.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "review.requestChangesDescription",
-				"title": "%command.review.requestChanges.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "review.approveOnDotComDescription",
-				"title": "%command.review.approveOnDotCom.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "review.requestChangesOnDotComDescription",
-				"title": "%command.review.requestChangesOnDotCom.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "review.createSuggestionsFromChanges",
-				"title": "%command.review.createSuggestionsFromChanges.title%",
-				"icon": "$(gift)",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "review.createSuggestionFromChange",
-				"title": "%command.review.createSuggestionFromChange.title%",
-				"icon": "$(gift)",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "pr.createPrMenuCreate",
-				"title": "%command.pr.createPrMenuCreate.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "pr.createPrMenuDraft",
-				"title": "%command.pr.createPrMenuDraft.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "pr.createPrMenuMergeWhenReady",
-				"title": "%command.pr.createPrMenuMergeWhenReady.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "pr.createPrMenuMerge",
-				"title": "%command.pr.createPrMenuMerge.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "pr.createPrMenuSquash",
-				"title": "%command.pr.createPrMenuSquash.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "pr.createPrMenuRebase",
-				"title": "%command.pr.createPrMenuRebase.title%",
-				"category": "%command.pull.request.category%"
-			},
-			{
-				"command": "issue.createIssueFromSelection",
-				"title": "%command.issue.createIssueFromSelection.title%",
-				"category": "%command.issues.category%"
-			},
-			{
-				"command": "issue.createIssueFromClipboard",
-				"title": "%command.issue.createIssueFromClipboard.title%",
-				"category": "%command.issues.category%"
-			},
-			{
-				"command": "pr.copyVscodeDevPrLink",
-				"title": "%command.pr.copyVscodeDevPrLink.title%",
-				"category": "%command.issues.category%"
-			},
-			{
-				"command": "pr.refreshComments",
-				"title": "%command.pr.refreshComments.title%",
-				"category": "%command.pull.request.category%",
-				"icon": "$(refresh)"
-			},
-			{
-				"command": "issue.copyGithubDevLinkWithoutRange",
-				"title": "%command.issue.copyGithubDevLink.title%",
-				"category": "%command.issues.category%",
-				"enablement": "!isInEmbeddedEditor"
-			},
-			{
-				"command": "issue.copyGithubDevLinkFile",
-				"title": "%command.issue.copyGithubDevLink.title%",
-				"category": "%command.issues.category%",
-				"enablement": "!isInEmbeddedEditor"
-			},
-			{
-				"command": "issue.copyGithubDevLink",
-				"title": "%command.issue.copyGithubDevLink.title%",
-				"category": "%command.issues.category%",
-				"enablement": "!isInEmbeddedEditor"
-			},
-			{
-				"command": "issue.copyGithubPermalink",
-				"title": "%command.issue.copyGithubPermalink.title%",
-				"category": "%command.issues.category%",
-				"enablement": "!isInEmbeddedEditor"
-			},
-			{
-				"command": "issue.copyGithubHeadLink",
-				"title": "%command.issue.copyGithubHeadLink.title%",
-				"category": "%command.issues.category%",
-				"enablement": "!isInEmbeddedEditor"
-			},
-			{
-				"command": "issue.copyGithubPermalinkWithoutRange",
-				"title": "%command.issue.copyGithubPermalink.title%",
-				"category": "%command.issues.category%",
-				"enablement": "!isInEmbeddedEditor"
-			},
-			{
-				"command": "issue.copyGithubHeadLinkWithoutRange",
-				"title": "%command.issue.copyGithubHeadLink.title%",
-				"category": "%command.issues.category%",
-				"enablement": "!isInEmbeddedEditor"
-			},
-			{
-				"command": "issue.copyMarkdownGithubPermalink",
-				"title": "%command.issue.copyMarkdownGithubPermalink.title%",
-				"category": "%command.issues.category%",
-				"enablement": "!isInEmbeddedEditor"
-			},
-			{
-				"command": "issue.copyMarkdownGithubPermalinkWithoutRange",
-				"title": "%command.issue.copyMarkdownGithubPermalink.title%",
-				"category": "%command.issues.category%",
-				"enablement": "!isInEmbeddedEditor"
-			},
-			{
-				"command": "issue.openGithubPermalink",
-				"title": "%command.issue.openGithubPermalink.title%",
-				"category": "%command.issues.category%"
-			},
-			{
-				"command": "issue.openIssue",
-				"title": "%command.issue.openIssue.title%",
-				"category": "%command.issues.category%",
-				"icon": "$(globe)"
-			},
-			{
-				"command": "issue.copyIssueNumber",
-				"title": "%command.issue.copyIssueNumber.title%",
-				"category": "%command.issues.category%"
-			},
-			{
-				"command": "issue.copyIssueUrl",
-				"title": "%command.issue.copyIssueUrl.title%",
-				"category": "%command.issues.category%"
-			},
-			{
-				"command": "issue.refresh",
-				"title": "%command.issue.refresh.title%",
-				"category": "%command.issues.category%",
-				"icon": "$(refresh)"
-			},
-			{
-				"command": "issue.suggestRefresh",
-				"title": "%command.issue.suggestRefresh.title%",
-				"category": "%command.issues.category%"
-			},
-			{
-				"command": "issue.startWorking",
-				"title": "%command.issue.startWorking.title%",
-				"category": "%command.issues.category%",
-				"icon": "$(arrow-right)"
-			},
-			{
-				"command": "issue.startWorkingBranchDescriptiveTitle",
-				"title": "%command.issue.startWorkingBranchDescriptiveTitle.title%",
-				"category": "%command.issues.category%",
-				"icon": "$(arrow-right)"
-			},
-			{
-				"command": "issue.continueWorking",
-				"title": "%command.issue.continueWorking.title%",
-				"category": "%command.issues.category%",
-				"icon": "$(arrow-right)"
-			},
-			{
-				"command": "issue.startWorkingBranchPrompt",
-				"title": "%command.issue.startWorkingBranchPrompt.title%",
-				"category": "%command.issues.category%"
-			},
-			{
-				"command": "issue.stopWorking",
-				"title": "%command.issue.stopWorking.title%",
-				"category": "%command.issues.category%",
-				"icon": "$(primitive-square)"
-			},
-			{
-				"command": "issue.stopWorkingBranchDescriptiveTitle",
-				"title": "%command.issue.stopWorkingBranchDescriptiveTitle.title%",
-				"category": "%command.issues.category%",
-				"icon": "$(primitive-square)"
-			},
-			{
-				"command": "issue.statusBar",
-				"title": "%command.issue.statusBar.title%",
-				"category": "%command.issues.category%"
-			},
-			{
-				"command": "issue.getCurrent",
-				"title": "%command.issue.getCurrent.title%",
-				"category": "%command.issues.category%"
-			},
-			{
-				"command": "issue.editQuery",
-				"title": "%command.issue.editQuery.title%",
-				"category": "%command.issues.category%",
-				"icon": "$(edit)"
-			},
-			{
-				"command": "issue.createIssue",
-				"title": "%command.issue.createIssue.title%",
-				"category": "%command.issues.category%",
-				"icon": "$(plus)"
-			},
-			{
-				"command": "issue.createIssueFromFile",
-				"title": "%command.issue.createIssueFromFile.title%",
-				"icon": "$(check)",
-				"enablement": "!issues.creatingFromFile"
-			},
-			{
-				"command": "issue.issueCompletion",
-				"title": "%command.issue.issueCompletion.title%"
-			},
-			{
-				"command": "issue.userCompletion",
-				"title": "%command.issue.userCompletion.title%"
-			},
-			{
-				"command": "issue.signinAndRefreshList",
-				"title": "%command.issue.signinAndRefreshList.title%",
-				"category": "%command.issues.category%"
-			},
-			{
-				"command": "issue.goToLinkedCode",
-				"title": "%command.issue.goToLinkedCode.title%",
-				"category": "%command.issues.category%"
-			},
-			{
-				"command": "issues.openIssuesWebsite",
-				"title": "%command.issues.openIssuesWebsite.title%",
-				"category": "%command.issues.category%",
-				"icon": "$(globe)"
-			},
-			{
-				"command": "issue.chatSummarizeIssue",
-				"title": "%command.issue.chatSummarizeIssue.title%",
-				"category": "%command.issues.category%",
-				"icon": "$(copilot)"
-			},
-			{
-				"command": "issue.chatSuggestFix",
-				"title": "%command.issue.chatSuggestFix.title%",
-				"category": "%command.issues.category%",
-				"icon": "$(sparkle)"
-			},
-			{
-				"command": "notifications.refresh",
-				"title": "%command.notifications.refresh.title%",
-				"category": "%command.notifications.category%",
-				"icon": "$(refresh)"
-			},
-			{
-				"command": "notifications.loadMore",
-				"title": "%command.notifications.loadMore.title%",
-				"category": "%command.notifications.category%"
-			},
-			{
-				"command": "notifications.sortByTimestamp",
-				"title": "%command.notifications.sortByTimestamp.title%",
-				"category": "%command.notifications.category%"
-			},
-			{
-				"command": "notifications.sortByPriority",
-				"title": "%command.notifications.sortByPriority.title%",
-				"category": "%command.notifications.category%"
-			},
-			{
-				"command": "notification.openOnGitHub",
-				"title": "%command.notifications.openOnGitHub.title%",
-				"category": "%command.notifications.category%",
-				"icon": "$(globe)"
-			},
-			{
-				"command": "notification.chatSummarizeNotification",
-				"title": "%command.notification.chatSummarizeNotification.title%",
-				"category": "%command.notifications.category%",
-				"icon": "$(copilot)"
-			}
-		],
-		"viewsWelcome": [
-			{
-				"view": "github:login",
-				"when": "ReposManagerStateContext == NeedsAuthentication && github:hasGitHubRemotes",
-				"contents": "%welcome.github.login.contents%"
-			},
-			{
-				"view": "pr:github",
-				"when": "gitNotInstalled",
-				"contents": "%welcome.github.noGit.contents%"
-			},
-			{
-				"view": "github:login",
-				"when": "ReposManagerStateContext == NeedsAuthentication && !github:hasGitHubRemotes && gitOpenRepositoryCount",
-				"contents": "%welcome.github.loginNoEnterprise.contents%"
-			},
-			{
-				"view": "github:login",
-				"when": "ReposManagerStateContext == NeedsAuthentication && !github:hasGitHubRemotes && gitOpenRepositoryCount",
-				"contents": "%welcome.github.loginWithEnterprise.contents%"
-			},
-			{
-				"view": "pr:github",
-				"when": "git.state != initialized && !github:initialized && workspaceFolderCount > 0",
-				"contents": "%welcome.pr.github.uninitialized.contents%"
-			},
-			{
-				"view": "pr:github",
-				"when": "workspaceFolderCount > 0 && github:loadingPrsTree",
-				"contents": "%welcome.pr.github.uninitialized.contents%"
-			},
-			{
-				"view": "pr:github",
-				"when": "workspaceFolderCount == 0",
-				"contents": "%welcome.pr.github.noFolder.contents%"
-			},
-			{
-				"view": "pr:github",
-				"when": "git.state == initialized && gitOpenRepositoryCount == 0 && workspaceFolderCount > 0 && git.parentRepositoryCount == 0",
-				"contents": "%welcome.pr.github.noRepo.contents%"
-			},
-			{
-				"view": "pr:github",
-				"when": "git.state == initialized && gitOpenRepositoryCount == 0 && workspaceFolderCount > 0 && git.parentRepositoryCount == 1",
-				"contents": "%welcome.pr.github.parentRepo.contents%"
-			},
-			{
-				"view": "pr:github",
-				"when": "git.state == initialized && gitOpenRepositoryCount == 0 && workspaceFolderCount > 0 && git.parentRepositoryCount > 1",
-				"contents": "%welcome.pr.github.parentRepo.contents%"
-			},
-			{
-				"view": "issues:github",
-				"when": "git.state != initialized && !github:initialized && workspaceFolderCount > 0",
-				"contents": "%welcome.issues.github.uninitialized.contents%"
-			},
-			{
-				"view": "issues:github",
-				"when": "workspaceFolderCount > 0 && github:loadingPrsTree",
-				"contents": "%welcome.issues.github.uninitialized.contents%"
-			},
-			{
-				"view": "issues:github",
-				"when": "workspaceFolderCount == 0",
-				"contents": "%welcome.issues.github.noFolder.contents%"
-			},
-			{
-				"view": "issues:github",
-				"when": "git.state == initialized && gitOpenRepositoryCount == 0 && workspaceFolderCount > 0 && git.parentRepositoryCount == 0",
-				"contents": "%welcome.issues.github.noRepo.contents%"
-			},
-			{
-				"view": "issues:github",
-				"when": "git.state == initialized && gitOpenRepositoryCount == 0 && workspaceFolderCount > 0 && git.parentRepositoryCount == 1",
-				"contents": "%welcome.pr.github.parentRepo.contents%"
-			},
-			{
-				"view": "issues:github",
-				"when": "git.state == initialized && gitOpenRepositoryCount == 0 && workspaceFolderCount > 0 && git.parentRepositoryCount > 1",
-				"contents": "%welcome.pr.github.parentRepo.contents%"
-			},
-			{
-				"view": "github:activePullRequest:welcome",
-				"when": "!github:stateValidated",
-				"contents": "%welcome.github.activePullRequest.contents%"
-			}
-		],
 		"keybindings": [
 			{
 				"command": "issue.suggestRefresh",
@@ -1798,6 +1398,260 @@
 				"key": "ctrl+k m",
 				"mac": "cmd+k m",
 				"when": "commentEditorFocused"
+			}
+		],
+		"languageModelTools": [
+			{
+				"canBeReferencedInPrompt": true,
+				"displayName": "Get GitHub Issue",
+				"icon": "$(info)",
+				"modelDescription": "A GitHub issue, which includes the title, body, and comments.",
+				"name": "github-pull-request_issue",
+				"parametersSchema": {
+					"properties": {
+						"issueNumber": {
+							"description": "The number of the issue to get.",
+							"type": "number"
+						},
+						"repo": {
+							"description": "The repository to get the issue from.",
+							"properties": {
+								"name": {
+									"description": "The name of the repository to get the issue from.",
+									"type": "string"
+								},
+								"owner": {
+									"description": "The owner of the repository to get the issue from.",
+									"type": "string"
+								}
+							},
+							"required": [
+								"owner",
+								"name"
+							],
+							"type": "object"
+						}
+					},
+					"required": [
+						"issueNumber"
+					],
+					"type": "object"
+				},
+				"supportedContentTypes": [
+					"text/plain"
+				],
+				"tags": [
+					"github",
+					"issues"
+				],
+				"toolReferenceName": "issue",
+				"when": "config.githubPullRequests.experimental.chat"
+			},
+			{
+				"canBeReferencedInPrompt": true,
+				"displayName": "Suggest a Fix for a GitHub Issue",
+				"icon": "$(info)",
+				"modelDescription": "Summarize and suggest a fix for a GitHub issue.",
+				"name": "github-pull-request_suggest-fix",
+				"parametersSchema": {
+					"properties": {
+						"issueNumber": {
+							"description": "The number of the issue to get.",
+							"type": "number"
+						},
+						"repo": {
+							"description": "The repository to get the issue from.",
+							"properties": {
+								"name": {
+									"description": "The name of the repository to get the issue from.",
+									"type": "string"
+								},
+								"owner": {
+									"description": "The owner of the repository to get the issue from.",
+									"type": "string"
+								}
+							},
+							"required": [
+								"owner",
+								"name"
+							],
+							"type": "object"
+						}
+					},
+					"required": [
+						"issueNumber",
+						"repo"
+					],
+					"type": "object"
+				},
+				"supportedContentTypes": [
+					"text/plain"
+				],
+				"tags": [
+					"github",
+					"issues"
+				],
+				"toolReferenceName": "suggest-fix",
+				"when": "config.githubPullRequests.experimental.chat"
+			},
+			{
+				"canBeReferencedInPrompt": true,
+				"displayName": "Convert natural language to a GitHub search query",
+				"icon": "$(search)",
+				"modelDescription": "Converts natural language to a GitHub search query. Should ALWAYS be called before doing a search.",
+				"name": "github-pull-request_formSearchQuery",
+				"parametersSchema": {
+					"properties": {
+						"naturalLanguageString": {
+							"description": "A plain text description of what the search should be.",
+							"type": "string"
+						},
+						"repo": {
+							"description": "The repository to get the issue from.",
+							"properties": {
+								"name": {
+									"description": "The name of the repository to get the issue from.",
+									"type": "string"
+								},
+								"owner": {
+									"description": "The owner of the repository to get the issue from.",
+									"type": "string"
+								}
+							},
+							"required": [
+								"owner",
+								"name"
+							],
+							"type": "object"
+						}
+					},
+					"required": [
+						"naturalLanguageString"
+					],
+					"type": "object"
+				},
+				"supportedContentTypes": [
+					"text/plain",
+					"text/display"
+				],
+				"tags": [
+					"github",
+					"issues",
+					"search",
+					"query",
+					"natural language"
+				],
+				"toolReferenceName": "searchSyntax",
+				"when": "config.githubPullRequests.experimental.chat"
+			},
+			{
+				"canBeReferencedInPrompt": true,
+				"displayName": "Execute a GitHub search",
+				"icon": "$(search)",
+				"modelDescription": "Execute a GitHub search given a well formed GitHub search query. Call github-pull-request_formSearchQuery first to get good search syntax and pass the exact result in as the 'query'.",
+				"name": "github-pull-request_doSearch",
+				"parametersSchema": {
+					"properties": {
+						"query": {
+							"description": "A well formed GitHub search query using proper GitHub search syntax.",
+							"type": "string"
+						},
+						"repo": {
+							"description": "The repository to get the issue from.",
+							"properties": {
+								"name": {
+									"description": "The name of the repository to get the issue from.",
+									"type": "string"
+								},
+								"owner": {
+									"description": "The owner of the repository to get the issue from.",
+									"type": "string"
+								}
+							},
+							"required": [
+								"owner",
+								"name"
+							],
+							"type": "object"
+						}
+					},
+					"required": [
+						"query"
+					],
+					"type": "object"
+				},
+				"supportedContentTypes": [
+					"text/plain",
+					"text/json"
+				],
+				"tags": [
+					"github",
+					"issues",
+					"search"
+				],
+				"toolReferenceName": "doSearch",
+				"when": "config.githubPullRequests.experimental.chat"
+			},
+			{
+				"canBeReferencedInPrompt": false,
+				"displayName": "Render issue items in a markdown table.",
+				"icon": "$(paintcan)",
+				"modelDescription": "Render issue items from an issue search in a markdown table.",
+				"name": "github-pull-request_renderIssues",
+				"parametersSchema": {
+					"properties": {
+						"arrayOfIssues": {
+							"description": "An array or stringified array of GitHub Issues.",
+							"oneOf": [
+								{
+									"description": "An array of GitHub Issues.",
+									"items": {
+										"properties": {
+											"body": {
+												"description": "The body of the issue.",
+												"type": "string"
+											},
+											"number": {
+												"description": "The number of the issue.",
+												"type": "number"
+											},
+											"title": {
+												"description": "The title of the issue.",
+												"type": "string"
+											},
+											"url": {
+												"description": "The URL of the issue.",
+												"type": "string"
+											}
+										},
+										"type": "object"
+									},
+									"type": "array"
+								},
+								{
+									"description": "A Json stringified array of GitHub Issues.",
+									"type": "string"
+								}
+							]
+						}
+					},
+					"required": [
+						"issues"
+					],
+					"type": "object"
+				},
+				"supportedContentTypes": [
+					"text/plain",
+					"text/markdown"
+				],
+				"tags": [
+					"github",
+					"issues",
+					"render",
+					"display"
+				],
+				"toolReferenceName": "renderIssues",
+				"when": "config.githubPullRequests.experimental.chat"
 			}
 		],
 		"menus": {
@@ -2347,135 +2201,135 @@
 				},
 				{
 					"command": "pr.refreshList",
-					"when": "gitHubOpenRepositoryCount != 0 && github:initialized && view == pr:github",
-					"group": "navigation@2"
+					"group": "navigation@2",
+					"when": "gitHubOpenRepositoryCount != 0 && github:initialized && view == pr:github"
 				},
 				{
 					"command": "pr.openPullsWebsite",
-					"when": "gitHubOpenRepositoryCount != 0 && github:initialized && view == pr:github",
-					"group": "overflow@1"
+					"group": "overflow@1",
+					"when": "gitHubOpenRepositoryCount != 0 && github:initialized && view == pr:github"
 				},
 				{
 					"command": "pr.checkoutByNumber",
-					"when": "gitHubOpenRepositoryCount != 0 && github:initialized && view == pr:github",
-					"group": "overflow@2"
+					"group": "overflow@2",
+					"when": "gitHubOpenRepositoryCount != 0 && github:initialized && view == pr:github"
 				},
 				{
 					"command": "pr.configurePRViewlet",
-					"when": "gitHubOpenRepositoryCount != 0 && github:initialized && view == pr:github",
-					"group": "overflow@3"
+					"group": "overflow@3",
+					"when": "gitHubOpenRepositoryCount != 0 && github:initialized && view == pr:github"
 				},
 				{
 					"command": "pr.refreshChanges",
-					"when": "view == prStatus:github",
-					"group": "navigation@2"
+					"group": "navigation@2",
+					"when": "view == prStatus:github"
 				},
 				{
 					"command": "pr.setFileListLayoutAsTree",
-					"when": "view == prStatus:github && fileListLayout:flat",
-					"group": "navigation"
+					"group": "navigation",
+					"when": "view == prStatus:github && fileListLayout:flat"
 				},
 				{
 					"command": "pr.setFileListLayoutAsFlat",
-					"when": "view == prStatus:github && !fileListLayout:flat",
-					"group": "navigation"
+					"group": "navigation",
+					"when": "view == prStatus:github && !fileListLayout:flat"
 				},
 				{
 					"command": "issue.createIssue",
-					"when": "view == issues:github && github:hasGitHubRemotes",
-					"group": "navigation@1"
+					"group": "navigation@1",
+					"when": "view == issues:github && github:hasGitHubRemotes"
 				},
 				{
 					"command": "issue.refresh",
-					"when": "view == issues:github",
-					"group": "navigation@2"
+					"group": "navigation@2",
+					"when": "view == issues:github"
 				},
 				{
 					"command": "issues.openIssuesWebsite",
-					"when": "gitHubOpenRepositoryCount != 0 && github:initialized && view == issues:github",
-					"group": "overflow@1"
+					"group": "overflow@1",
+					"when": "gitHubOpenRepositoryCount != 0 && github:initialized && view == issues:github"
 				},
 				{
 					"command": "pr.configurePRViewlet",
-					"when": "gitHubOpenRepositoryCount != 0 && github:initialized && view == issues:github",
-					"group": "overflow@2"
+					"group": "overflow@2",
+					"when": "gitHubOpenRepositoryCount != 0 && github:initialized && view == issues:github"
 				},
 				{
 					"command": "pr.refreshActivePullRequest",
-					"when": "view == github:activePullRequest && github:hasGitHubRemotes",
-					"group": "navigation@1"
+					"group": "navigation@1",
+					"when": "view == github:activePullRequest && github:hasGitHubRemotes"
 				},
 				{
 					"command": "pr.openDescription",
-					"when": "view == github:activePullRequest && github:hasGitHubRemotes",
-					"group": "navigation@2"
+					"group": "navigation@2",
+					"when": "view == github:activePullRequest && github:hasGitHubRemotes"
 				},
 				{
 					"command": "pr.openPullRequestOnGitHub",
-					"when": "view == github:activePullRequest && github:hasGitHubRemotes",
-					"group": "navigation@3"
+					"group": "navigation@3",
+					"when": "view == github:activePullRequest && github:hasGitHubRemotes"
 				},
 				{
 					"command": "pr.addAssigneesToNewPr",
-					"when": "view == github:createPullRequestWebview && github:createPrPermissions != READ && github:createPrPermissions",
-					"group": "navigation@1"
+					"group": "navigation@1",
+					"when": "view == github:createPullRequestWebview && github:createPrPermissions != READ && github:createPrPermissions"
 				},
 				{
 					"command": "pr.addReviewersToNewPr",
-					"when": "view == github:createPullRequestWebview && github:createPrPermissions != READ && github:createPrPermissions",
-					"group": "navigation@2"
+					"group": "navigation@2",
+					"when": "view == github:createPullRequestWebview && github:createPrPermissions != READ && github:createPrPermissions"
 				},
 				{
 					"command": "pr.addLabelsToNewPr",
-					"when": "view == github:createPullRequestWebview && github:createPrPermissions != READ && github:createPrPermissions",
-					"group": "navigation@3"
+					"group": "navigation@3",
+					"when": "view == github:createPullRequestWebview && github:createPrPermissions != READ && github:createPrPermissions"
 				},
 				{
 					"command": "pr.addMilestoneToNewPr",
-					"when": "view == github:createPullRequestWebview && github:createPrPermissions != READ && github:createPrPermissions",
-					"group": "navigation@4"
+					"group": "navigation@4",
+					"when": "view == github:createPullRequestWebview && github:createPrPermissions != READ && github:createPrPermissions"
 				},
 				{
 					"command": "pr.addProjectsToNewPr",
-					"when": "view == github:createPullRequestWebview && github:createPrPermissions != READ && github:createPrPermissions",
-					"group": "navigation@5"
+					"group": "navigation@5",
+					"when": "view == github:createPullRequestWebview && github:createPrPermissions != READ && github:createPrPermissions"
 				},
 				{
 					"command": "pr.refreshComments",
-					"when": "view == workbench.panel.comments",
-					"group": "navigation"
+					"group": "navigation",
+					"when": "view == workbench.panel.comments"
 				},
 				{
 					"command": "notifications.sortByTimestamp",
-					"when": "gitHubOpenRepositoryCount != 0 && github:initialized && view == notifications:github",
-					"group": "sortNotifications@1"
+					"group": "sortNotifications@1",
+					"when": "gitHubOpenRepositoryCount != 0 && github:initialized && view == notifications:github"
 				},
 				{
 					"command": "notifications.sortByPriority",
-					"when": "gitHubOpenRepositoryCount != 0 && github:initialized && view == notifications:github",
-					"group": "sortNotifications@2"
+					"group": "sortNotifications@2",
+					"when": "gitHubOpenRepositoryCount != 0 && github:initialized && view == notifications:github"
 				},
 				{
 					"command": "notifications.refresh",
-					"when": "gitHubOpenRepositoryCount != 0 && github:initialized && view == notifications:github",
-					"group": "navigation@1"
+					"group": "navigation@1",
+					"when": "gitHubOpenRepositoryCount != 0 && github:initialized && view == notifications:github"
 				}
 			],
 			"comments/comment/editorActions": [
 				{
 					"command": "pr.pick",
-					"when": "view == pr:github && viewItem =~ /(pullrequest(:local)?:nonactive)|(description:nonactive)/",
-					"group": "1_pullrequest@1"
+					"group": "1_pullrequest@1",
+					"when": "view == pr:github && viewItem =~ /(pullrequest(:local)?:nonactive)|(description:nonactive)/"
 				},
 				{
 					"command": "pr.pick",
-					"when": "view == pr:github && viewItem =~ /description:nonactive/",
-					"group": "inline@0"
+					"group": "inline@0",
+					"when": "view == pr:github && viewItem =~ /description:nonactive/"
 				},
 				{
 					"command": "pr.openChanges",
-					"when": "view =~ /(pr|prStatus):github/ && viewItem =~ /description/ && config.multiDiffEditor.experimental.enabled",
-					"group": "inline@1"
+					"group": "inline@1",
+					"when": "view =~ /(pr|prStatus):github/ && viewItem =~ /description/ && config.multiDiffEditor.experimental.enabled"
 				},
 				{
 					"command": "pr.showDiffSinceLastReview",
@@ -2576,23 +2430,23 @@
 				},
 				{
 					"command": "issue.openIssue",
-					"when": "view == issues:github && viewItem =~ /^(link)?(current|continue)?issue/ && !github.copilot-chat.activated",
-					"group": "inline@2"
+					"group": "inline@2",
+					"when": "view == issues:github && viewItem =~ /^(link)?(current|continue)?issue/ && !github.copilot-chat.activated"
 				},
 				{
 					"command": "issue.chatSummarizeIssue",
-					"when": "view == issues:github && viewItem =~ /^(link)?(current|continue)?issue/ && github.copilot-chat.activated",
-					"group": "inline@0"
+					"group": "inline@0",
+					"when": "view == issues:github && viewItem =~ /^(link)?(current|continue)?issue/ && github.copilot-chat.activated"
 				},
 				{
 					"command": "issue.chatSuggestFix",
-					"when": "view == issues:github && viewItem =~ /^(link)?(current|continue)?issue/ && github.copilot-chat.activated",
-					"group": "inline@1"
+					"group": "inline@1",
+					"when": "view == issues:github && viewItem =~ /^(link)?(current|continue)?issue/ && github.copilot-chat.activated"
 				},
 				{
 					"command": "issue.openIssue",
-					"when": "view == issues:github && viewItem =~ /^(link)?(current|continue)?issue/",
-					"group": "issues_0@1"
+					"group": "issues_0@1",
+					"when": "view == issues:github && viewItem =~ /^(link)?(current|continue)?issue/"
 				},
 				{
 					"command": "pr.startReview",
@@ -2601,79 +2455,79 @@
 				},
 				{
 					"command": "issue.startWorking",
-					"when": "view == issues:github && viewItem =~ /^(link)?issue/ && config.githubIssues.useBranchForIssues != on",
-					"group": "inline@2"
+					"group": "inline@2",
+					"when": "view == issues:github && viewItem =~ /^(link)?issue/ && config.githubIssues.useBranchForIssues != on"
 				},
 				{
 					"command": "issue.startWorkingBranchDescriptiveTitle",
-					"when": "view == issues:github && viewItem =~ /^(link)?issue/ && config.githubIssues.useBranchForIssues == on",
-					"group": "inline@2"
+					"group": "inline@2",
+					"when": "view == issues:github && viewItem =~ /^(link)?issue/ && config.githubIssues.useBranchForIssues == on"
 				},
 				{
 					"command": "issue.startWorking",
-					"when": "view == issues:github && viewItem =~ /^(link)?continueissue/ && config.githubIssues.useBranchForIssues != on",
-					"group": "inline@2"
+					"group": "inline@2",
+					"when": "view == issues:github && viewItem =~ /^(link)?continueissue/ && config.githubIssues.useBranchForIssues != on"
 				},
 				{
 					"command": "issue.startWorkingBranchDescriptiveTitle",
-					"when": "view == issues:github && viewItem =~ /^(link)?continueissue/ && config.githubIssues.useBranchForIssues == on",
-					"group": "inline@2"
+					"group": "inline@2",
+					"when": "view == issues:github && viewItem =~ /^(link)?continueissue/ && config.githubIssues.useBranchForIssues == on"
 				},
 				{
-					"command": "issue.startWorking",
 					"alt": "issue.startWorkingBranchPrompt",
-					"when": "view == issues:github && viewItem =~ /^(link)?issue/",
-					"group": "issues_0@2"
+					"command": "issue.startWorking",
+					"group": "issues_0@2",
+					"when": "view == issues:github && viewItem =~ /^(link)?issue/"
 				},
 				{
 					"command": "issue.continueWorking",
-					"when": "view == issues:github && viewItem =~ /^(link)?continueissue/",
-					"group": "issues_0@2"
+					"group": "issues_0@2",
+					"when": "view == issues:github && viewItem =~ /^(link)?continueissue/"
 				},
 				{
 					"command": "pr.create",
-					"when": "view == issues:github && viewItem =~ /^(link)?currentissue/",
-					"group": "issues_0@2"
+					"group": "issues_0@2",
+					"when": "view == issues:github && viewItem =~ /^(link)?currentissue/"
 				},
 				{
 					"command": "issue.stopWorking",
-					"when": "view == issues:github && viewItem =~ /^(link)?currentissue/",
-					"group": "issues_0@3"
+					"group": "issues_0@3",
+					"when": "view == issues:github && viewItem =~ /^(link)?currentissue/"
 				},
 				{
 					"command": "issue.stopWorking",
-					"when": "view == issues:github && viewItem =~ /^(link)?currentissue/ && config.githubIssues.useBranchForIssues != on",
-					"group": "inline@1"
+					"group": "inline@1",
+					"when": "view == issues:github && viewItem =~ /^(link)?currentissue/ && config.githubIssues.useBranchForIssues != on"
 				},
 				{
 					"command": "issue.stopWorkingBranchDescriptiveTitle",
-					"when": "view == issues:github && viewItem =~ /^(link)?currentissue/ && config.githubIssues.useBranchForIssues == on",
-					"group": "inline@1"
+					"group": "inline@1",
+					"when": "view == issues:github && viewItem =~ /^(link)?currentissue/ && config.githubIssues.useBranchForIssues == on"
 				},
 				{
 					"command": "issue.chatSummarizeIssue",
-					"when": "view == issues:github && viewItem =~ /^(link)?(current|continue)?issue/ && github.copilot-chat.activated",
-					"group": "issues_1@0"
+					"group": "issues_1@0",
+					"when": "view == issues:github && viewItem =~ /^(link)?(current|continue)?issue/ && github.copilot-chat.activated"
 				},
 				{
 					"command": "issue.chatSuggestFix",
-					"when": "view == issues:github && viewItem =~ /^(link)?(current|continue)?issue/ && github.copilot-chat.activated",
-					"group": "issues_1@1"
+					"group": "issues_1@1",
+					"when": "view == issues:github && viewItem =~ /^(link)?(current|continue)?issue/ && github.copilot-chat.activated"
 				},
 				{
 					"command": "issue.copyIssueNumber",
-					"when": "view == issues:github && viewItem =~ /^(link)?(current|continue)?issue/",
-					"group": "issues_2@1"
+					"group": "issues_2@1",
+					"when": "view == issues:github && viewItem =~ /^(link)?(current|continue)?issue/"
 				},
 				{
 					"command": "issue.copyIssueUrl",
-					"when": "view == issues:github && viewItem =~ /^(link)?(current|continue)?issue/",
-					"group": "issues_2@2"
+					"group": "issues_2@2",
+					"when": "view == issues:github && viewItem =~ /^(link)?(current|continue)?issue/"
 				},
 				{
 					"command": "issue.editQuery",
-					"when": "view == issues:github && viewItem == query",
-					"group": "inline"
+					"group": "inline",
+					"when": "view == issues:github && viewItem == query"
 				},
 				{
 					"command": "issue.editQuery",
@@ -3507,275 +3361,22 @@
 				"view": "github:activePullRequest:welcome",
 				"when": "!github:stateValidated"
 			}
-		],
-		"languageModelTools": [
-			{
-				"name": "github-pull-request_issue",
-				"tags": [
-					"github",
-					"issues"
-				],
-				"toolReferenceName": "issue",
-				"displayName": "Get GitHub Issue",
-				"modelDescription": "A GitHub issue, which includes the title, body, and comments.",
-				"icon": "$(info)",
-				"canBeReferencedInPrompt": true,
-				"parametersSchema": {
-					"type": "object",
-					"properties": {
-						"repo": {
-							"type": "object",
-							"description": "The repository to get the issue from.",
-							"properties": {
-								"owner": {
-									"type": "string",
-									"description": "The owner of the repository to get the issue from."
-								},
-								"name": {
-									"type": "string",
-									"description": "The name of the repository to get the issue from."
-								}
-							},
-							"required": [
-								"owner",
-								"name"
-							]
-						},
-						"issueNumber": {
-							"type": "number",
-							"description": "The number of the issue to get."
-						}
-					},
-					"required": [
-						"issueNumber"
-					]
-				},
-				"supportedContentTypes": [
-					"text/plain"
-				],
-				"when": "config.githubPullRequests.experimental.chat"
-			},
-			{
-				"name": "github-pull-request_suggest-fix",
-				"tags": [
-					"github",
-					"issues"
-				],
-				"toolReferenceName": "suggest-fix",
-				"displayName": "Suggest a Fix for a GitHub Issue",
-				"modelDescription": "Summarize and suggest a fix for a GitHub issue.",
-				"icon": "$(info)",
-				"canBeReferencedInPrompt": true,
-				"parametersSchema": {
-					"type": "object",
-					"properties": {
-						"repo": {
-							"type": "object",
-							"description": "The repository to get the issue from.",
-							"properties": {
-								"owner": {
-									"type": "string",
-									"description": "The owner of the repository to get the issue from."
-								},
-								"name": {
-									"type": "string",
-									"description": "The name of the repository to get the issue from."
-								}
-							},
-							"required": [
-								"owner",
-								"name"
-							]
-						},
-						"issueNumber": {
-							"type": "number",
-							"description": "The number of the issue to get."
-						}
-					},
-					"required": [
-						"issueNumber",
-						"repo"
-					]
-				},
-				"supportedContentTypes": [
-					"text/plain"
-				],
-				"when": "config.githubPullRequests.experimental.chat"
-			},
-			{
-				"name": "github-pull-request_formSearchQuery",
-				"tags": [
-					"github",
-					"issues",
-					"search",
-					"query",
-					"natural language"
-				],
-				"toolReferenceName": "searchSyntax",
-				"displayName": "Convert natural language to a GitHub search query",
-				"modelDescription": "Converts natural language to a GitHub search query. Should ALWAYS be called before doing a search.",
-				"icon": "$(search)",
-				"canBeReferencedInPrompt": true,
-				"parametersSchema": {
-					"type": "object",
-					"properties": {
-						"repo": {
-							"type": "object",
-							"description": "The repository to get the issue from.",
-							"properties": {
-								"owner": {
-									"type": "string",
-									"description": "The owner of the repository to get the issue from."
-								},
-								"name": {
-									"type": "string",
-									"description": "The name of the repository to get the issue from."
-								}
-							},
-							"required": [
-								"owner",
-								"name"
-							]
-						},
-						"naturalLanguageString": {
-							"type": "string",
-							"description": "A plain text description of what the search should be."
-						}
-					},
-					"required": [
-						"naturalLanguageString"
-					]
-				},
-				"supportedContentTypes": [
-					"text/plain",
-					"text/display"
-				],
-				"when": "config.githubPullRequests.experimental.chat"
-			},
-			{
-				"name": "github-pull-request_doSearch",
-				"tags": [
-					"github",
-					"issues",
-					"search"
-				],
-				"toolReferenceName": "doSearch",
-				"displayName": "Execute a GitHub search",
-				"modelDescription": "Execute a GitHub search given a well formed GitHub search query. Call github-pull-request_formSearchQuery first to get good search syntax and pass the exact result in as the 'query'.",
-				"icon": "$(search)",
-				"canBeReferencedInPrompt": true,
-				"parametersSchema": {
-					"type": "object",
-					"properties": {
-						"repo": {
-							"type": "object",
-							"description": "The repository to get the issue from.",
-							"properties": {
-								"owner": {
-									"type": "string",
-									"description": "The owner of the repository to get the issue from."
-								},
-								"name": {
-									"type": "string",
-									"description": "The name of the repository to get the issue from."
-								}
-							},
-							"required": [
-								"owner",
-								"name"
-							]
-						},
-						"query": {
-							"type": "string",
-							"description": "A well formed GitHub search query using proper GitHub search syntax."
-						}
-					},
-					"required": [
-						"query"
-					]
-				},
-				"supportedContentTypes": [
-					"text/plain",
-					"text/json"
-				],
-				"when": "config.githubPullRequests.experimental.chat"
-			},
-			{
-				"name": "github-pull-request_renderIssues",
-				"tags": [
-					"github",
-					"issues",
-					"render",
-					"display"
-				],
-				"toolReferenceName": "renderIssues",
-				"displayName": "Render issue items in a markdown table.",
-				"modelDescription": "Render issue items from an issue search in a markdown table.",
-				"icon": "$(paintcan)",
-				"canBeReferencedInPrompt": false,
-				"parametersSchema": {
-					"type": "object",
-					"properties": {
-						"arrayOfIssues": {
-							"oneOf": [
-								{
-									"type": "array",
-									"description": "An array of GitHub Issues.",
-									"items": {
-										"type": "object",
-										"properties": {
-											"title": {
-												"type": "string",
-												"description": "The title of the issue."
-											},
-											"number": {
-												"type": "number",
-												"description": "The number of the issue."
-											},
-											"body": {
-												"type": "string",
-												"description": "The body of the issue."
-											},
-											"url": {
-												"type": "string",
-												"description": "The URL of the issue."
-											}
-										}
-									}
-								},
-								{
-									"type": "string",
-									"description": "A Json stringified array of GitHub Issues."
-								}
-							],
-							"description": "An array or stringified array of GitHub Issues."
-						}
-					},
-					"required": [
-						"issues"
-					]
-				},
-				"supportedContentTypes": [
-					"text/plain",
-					"text/markdown"
-				],
-				"when": "config.githubPullRequests.experimental.chat"
-			}
 		]
 	},
 	"dependencies": {
 		"@octokit/rest": "21.0.2",
 		"@octokit/types": "13.6.1",
+		"@vscode/prompt-tsx": "0.3.0-alpha.5",
 		"apollo-boost": "0.4.9",
 		"apollo-link-context": "1.0.20",
 		"cockatiel": "3.2.1",
 		"cross-fetch": "4.0.0",
 		"dayjs": "1.11.13",
-		"debounce": "2.1.1",
+		"debounce": "2.2.0",
 		"events": "3.3.0",
 		"fast-deep-equal": "3.1.3",
 		"lru-cache": "11.0.1",
-		"marked": "14.1.2",
+		"marked": "14.1.3",
 		"ssh-config": "5.0.0",
 		"tunnel": "0.0.6",
 		"url-search-params-polyfill": "8.2.5",
@@ -3873,98 +3474,6 @@
 		"test:preprocess-gql": "node scripts/preprocess-gql --in src/github/queries.gql --out out/src/github/queries.gql && node scripts/preprocess-gql --in src/github/queriesExtra.gql --out out/src/github/queriesExtra.gql && node scripts/preprocess-gql --in src/github/queriesShared.gql --out out/src/github/queriesShared.gql && node scripts/preprocess-gql --in src/github/queriesLimited.gql --out out/src/github/queriesLimited.gql",
 		"test:preprocess-svg": "node scripts/preprocess-svg --in ../resources/ --out out/resources",
 		"update-dts": "cd \"src/@types\" && npx vscode-dts main && npx vscode-dts dev",
-		"watch": "webpack --watch --mode development --env esbuild",
-		"watch:web": "webpack --watch --mode development --config-name extension:webworker --config-name webviews",
-		"hygiene": "node ./build/hygiene.js",
-		"prepare": "husky install"
-	},
-	"devDependencies": {
-		"@types/chai": "^4.1.4",
-		"@types/glob": "7.1.3",
-		"@types/lru-cache": "^5.1.0",
-		"@types/marked": "^0.7.2",
-		"@types/mocha": "^8.2.2",
-		"@types/node": "18.17.1",
-		"@types/react": "^16.8.4",
-		"@types/react-dom": "^16.8.2",
-		"@types/sinon": "7.0.11",
-		"@types/temp": "0.8.34",
-		"@types/vscode": "1.89.0",
-		"@types/webpack-env": "^1.16.0",
-		"@typescript-eslint/eslint-plugin": "6.10.0",
-		"@typescript-eslint/parser": "6.10.0",
-		"@vscode/test-electron": "^2.3.8",
-		"@vscode/test-web": "^0.0.29",
-		"assert": "^2.0.0",
-		"buffer": "^6.0.3",
-		"constants-browserify": "^1.0.0",
-		"crypto-browserify": "3.12.0",
-		"css-loader": "5.1.3",
-		"esbuild-loader": "2.10.0",
-		"eslint": "7.22.0",
-		"eslint-cli": "1.1.1",
-		"eslint-plugin-import": "2.22.1",
-		"event-stream": "^4.0.1",
-		"fork-ts-checker-webpack-plugin": "6.1.1",
-		"glob": "7.1.6",
-		"graphql": "15.5.0",
-		"graphql-tag": "2.11.0",
-		"gulp-filter": "^7.0.0",
-		"husky": "^8.0.1",
-		"jsdom": "19.0.0",
-		"jsdom-global": "3.0.2",
-		"json5": "2.2.2",
-		"merge-options": "3.0.4",
-		"minimist": "^1.2.6",
-		"mkdirp": "1.0.4",
-		"mocha": "^9.0.1",
-		"mocha-junit-reporter": "1.23.0",
-		"mocha-multi-reporters": "1.1.7",
-		"os-browserify": "^0.3.0",
-		"p-all": "^1.0.0",
-		"path-browserify": "1.0.1",
-		"process": "^0.11.10",
-		"raw-loader": "4.0.2",
-		"react-testing-library": "7.0.1",
-		"sinon": "9.0.0",
-		"source-map-support": "0.5.19",
-		"stream-browserify": "^3.0.0",
-		"style-loader": "2.0.0",
-		"svg-inline-loader": "^0.8.2",
-		"temp": "0.9.4",
-		"terser-webpack-plugin": "5.1.1",
-		"timers-browserify": "^2.0.12",
-		"ts-loader": "8.0.18",
-		"tty": "1.0.1",
-		"typescript": "4.5.5",
-		"typescript-formatter": "^7.2.2",
-		"vinyl-fs": "^3.0.3",
-		"webpack": "5.94.0",
-		"webpack-cli": "4.2.0"
-	},
-	"dependencies": {
-		"@octokit/rest": "18.2.1",
-		"@octokit/types": "6.10.1",
-		"@vscode/extension-telemetry": "0.7.5",
-		"@vscode/prompt-tsx": "^0.2.11-alpha",
-		"apollo-boost": "^0.4.9",
-		"apollo-link-context": "1.0.20",
-		"cockatiel": "^3.1.1",
-		"cross-fetch": "3.1.5",
-		"dayjs": "1.10.4",
-		"debounce": "^1.2.1",
-		"events": "3.2.0",
-		"fast-deep-equal": "^3.1.3",
-		"lru-cache": "6.0.0",
-		"marked": "^4.0.10",
-		"react": "^16.12.0",
-		"react-dom": "^16.12.0",
-		"ssh-config": "4.1.1",
-		"tunnel": "0.0.6",
-		"url-search-params-polyfill": "^8.1.1",
-		"uuid": "8.3.2",
-		"vscode-tas-client": "^0.1.75",
-		"vsls": "^0.3.967"
-	},
-	"license": "MIT"
+		"watch:web": "webpack --watch --mode development --config-name extension:webworker --config-name webviews"
+	}
 }
