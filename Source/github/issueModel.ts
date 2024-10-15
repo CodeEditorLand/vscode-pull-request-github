@@ -3,15 +3,13 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as vscode from "vscode";
-
-import { IComment } from "../common/comment";
-import Logger from "../common/logger";
-import { Remote } from "../common/remote";
-import { TimelineEvent } from "../common/timelineEvent";
-import { formatError } from "../common/utils";
-import { OctokitCommon } from "./common";
-import { GitHubRepository } from "./githubRepository";
+import * as vscode from 'vscode';
+import { IComment } from '../common/comment';
+import Logger from '../common/logger';
+import { Remote } from '../common/remote';
+import { TimelineEvent } from '../common/timelineEvent';
+import { formatError } from '../common/utils';
+import { GitHubRepository } from './githubRepository';
 import {
 	AddIssueCommentResponse,
 	AddPullRequestToProjectResponse,
@@ -203,27 +201,6 @@ export class IssueModel<TItem extends Issue = Issue> {
 	canEdit(): Promise<boolean> {
 		const username = this.author && this.author.login;
 		return this.githubRepository.isCurrentUser(username);
-	}
-
-	async getIssueComments(): Promise<OctokitCommon.IssuesListCommentsResponseData> {
-		Logger.debug(
-			`Fetch issue comments of PR #${this.number} - enter`,
-			IssueModel.ID,
-		);
-		const { octokit, remote } = await this.githubRepository.ensure();
-
-		const promise = await octokit.call(octokit.api.issues.listComments, {
-			owner: remote.owner,
-			repo: remote.repositoryName,
-			issue_number: this.number,
-			per_page: 100,
-		});
-		Logger.debug(
-			`Fetch issue comments of PR #${this.number} - done`,
-			IssueModel.ID,
-		);
-
-		return promise.data;
 	}
 
 	async createIssueComment(text: string): Promise<IComment> {

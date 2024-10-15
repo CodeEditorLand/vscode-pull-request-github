@@ -156,9 +156,7 @@ export class IssueOverviewPanel<
 				}
 
 				this._item = issue as TItem;
-				this.setPanelTitle(
-					`Pull Request #${issueModel.number.toString()}`,
-				);
+				this.setPanelTitle(`Issue #${issueModel.number.toString()}`);
 
 				Logger.debug("pr.initialize", IssueOverviewPanel.ID);
 				this._postMessage({
@@ -166,6 +164,7 @@ export class IssueOverviewPanel<
 					pullrequest: {
 						number: this._item.number,
 						title: this._item.title,
+						titleHTML: this._item.titleHTML,
 						url: this._item.html_url,
 						createdAt: this._item.createdAt,
 						body: this._item.body,
@@ -205,9 +204,7 @@ export class IssueOverviewPanel<
 			scrollPosition: this._scrollPosition,
 		});
 
-		this._panel.webview.html = this.getHtmlForWebview(
-			issueModel.number.toString(),
-		);
+		this._panel.webview.html = this.getHtmlForWebview();
 		return this.updateIssue(issueModel);
 	}
 
@@ -443,7 +440,7 @@ export class IssueOverviewPanel<
 		}
 	}
 
-	protected getHtmlForWebview(number: string) {
+	protected getHtmlForWebview() {
 		const nonce = getNonce();
 
 		const uri = vscode.Uri.joinPath(
@@ -459,7 +456,6 @@ export class IssueOverviewPanel<
 		<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src vscode-resource: https:; media-src https:; script-src 'nonce-${nonce}'; style-src vscode-resource: 'unsafe-inline' http: https: data:;">
 
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<title>Pull Request #${number}</title>
 	</head>
 	<body class="${process.platform}">
 		<div id=app></div>

@@ -3,26 +3,23 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { OctokitResponse } from "@octokit/types";
-import * as vscode from "vscode";
-
-import { AuthProvider } from "../common/authentication";
-import Logger from "../common/logger";
-import {
-	NOTIFICATION_SETTING,
-	PR_SETTINGS_NAMESPACE,
-} from "../common/settingKeys";
-import { createPRNodeUri } from "../common/uri";
-import { PullRequestsTreeDataProvider } from "../view/prsTreeDataProvider";
-import { CategoryTreeNode } from "../view/treeNodes/categoryNode";
-import { PRNode } from "../view/treeNodes/pullRequestNode";
-import { TreeNode } from "../view/treeNodes/treeNode";
-import { CredentialStore, GitHub } from "./credentials";
-import { GitHubRepository } from "./githubRepository";
-import { PullRequestState } from "./graphql";
-import { PullRequestModel } from "./pullRequestModel";
-import { RepositoriesManager } from "./repositoriesManager";
-import { hasEnterpriseUri } from "./utils";
+import { OctokitResponse } from '@octokit/types';
+import * as vscode from 'vscode';
+import { AuthProvider } from '../common/authentication';
+import Logger from '../common/logger';
+import { NOTIFICATION_SETTING, PR_SETTINGS_NAMESPACE } from '../common/settingKeys';
+import { createPRNodeUri } from '../common/uri';
+import { PullRequestsTreeDataProvider } from '../view/prsTreeDataProvider';
+import { CategoryTreeNode } from '../view/treeNodes/categoryNode';
+import { PRNode } from '../view/treeNodes/pullRequestNode';
+import { TreeNode } from '../view/treeNodes/treeNode';
+import { CredentialStore, GitHub } from './credentials';
+import { GitHubRepository } from './githubRepository';
+import { PullRequestState } from './graphql';
+import { IssueModel } from './issueModel';
+import { PullRequestModel } from './pullRequestModel';
+import { RepositoriesManager } from './repositoriesManager';
+import { hasEnterpriseUri } from './utils';
 
 const DEFAULT_POLLING_DURATION = 60;
 
@@ -155,9 +152,7 @@ export class NotificationProvider implements vscode.Disposable {
 		);
 	}
 
-	private getPrIdentifier(
-		pullRequest: PullRequestModel | OctokitResponse<any>["data"],
-	): string {
+	private getPrIdentifier(pullRequest: IssueModel | OctokitResponse<any>['data']): string {
 		if (pullRequest instanceof PullRequestModel) {
 			return `${pullRequest.remote.url}:${pullRequest.number}`;
 		}
@@ -168,11 +163,10 @@ export class NotificationProvider implements vscode.Disposable {
 
 	/* Takes a PullRequestModel or a PRIdentifier and
 	returns true if there is a Notification for the corresponding PR */
-	public hasNotification(pullRequest: PullRequestModel | string): boolean {
-		const identifier =
-			pullRequest instanceof PullRequestModel
-				? this.getPrIdentifier(pullRequest)
-				: pullRequest;
+	public hasNotification(pullRequest: IssueModel | string): boolean {
+		const identifier = pullRequest instanceof IssueModel ?
+			this.getPrIdentifier(pullRequest) :
+			pullRequest;
 		const prNotifications = this._notifications.get(identifier);
 		return prNotifications !== undefined && prNotifications.length > 0;
 	}
@@ -311,7 +305,7 @@ export class NotificationProvider implements vscode.Disposable {
 		);
 	}
 
-	public async markPrNotificationsAsRead(pullRequestModel: PullRequestModel) {
+	public async markPrNotificationsAsRead(pullRequestModel: IssueModel) {
 		const identifier = this.getPrIdentifier(pullRequestModel);
 		const prNotifications = this._notifications.get(identifier);
 		if (prNotifications && prNotifications.length) {

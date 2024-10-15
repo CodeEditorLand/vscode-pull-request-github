@@ -4,43 +4,30 @@
  *--------------------------------------------------------------------------------------------*/
 "use strict";
 
-import * as crypto from "crypto";
-import * as OctokitTypes from "@octokit/types";
-import * as vscode from "vscode";
-
-import { Repository } from "../api/api";
-import { GitApiImpl } from "../api/api1";
-import { AuthProvider, GitHubServerType } from "../common/authentication";
-import {
-	IComment,
-	IReviewThread,
-	Reaction,
-	SubjectType,
-} from "../common/comment";
-import { DiffHunk, parseDiffHunk } from "../common/diffHunk";
-import { GitHubRef } from "../common/githubRef";
-import Logger from "../common/logger";
-import { Remote } from "../common/remote";
-import { Resource } from "../common/resources";
-import {
-	GITHUB_ENTERPRISE,
-	OVERRIDE_DEFAULT_BRANCH,
-	PR_SETTINGS_NAMESPACE,
-	URI,
-} from "../common/settingKeys";
-import * as Common from "../common/timelineEvent";
-import { uniqBy } from "../common/utils";
-import { OctokitCommon } from "./common";
-import {
-	FolderRepositoryManager,
-	PullRequestDefaults,
-} from "./folderRepositoryManager";
-import { GitHubRepository, ViewerPermission } from "./githubRepository";
-import * as GraphQL from "./graphql";
+import * as crypto from 'crypto';
+import * as OctokitTypes from '@octokit/types';
+import * as vscode from 'vscode';
+import { Repository } from '../api/api';
+import { GitApiImpl } from '../api/api1';
+import { AuthProvider, GitHubServerType } from '../common/authentication';
+import { IComment, IReviewThread, Reaction, SubjectType } from '../common/comment';
+import { DiffHunk, parseDiffHunk } from '../common/diffHunk';
+import { GitHubRef } from '../common/githubRef';
+import Logger from '../common/logger';
+import { Remote } from '../common/remote';
+import { Resource } from '../common/resources';
+import { GITHUB_ENTERPRISE, OVERRIDE_DEFAULT_BRANCH, PR_SETTINGS_NAMESPACE, URI } from '../common/settingKeys';
+import * as Common from '../common/timelineEvent';
+import { gitHubLabelColor, uniqBy } from '../common/utils';
+import { OctokitCommon } from './common';
+import { FolderRepositoryManager, PullRequestDefaults } from './folderRepositoryManager';
+import { GitHubRepository, ViewerPermission } from './githubRepository';
+import * as GraphQL from './graphql';
 import {
 	IAccount,
 	IActor,
 	IGitHubRef,
+	IIssueComment,
 	ILabel,
 	IMilestone,
 	IProjectItem,
@@ -50,6 +37,8 @@ import {
 	MergeMethod,
 	MergeQueueEntry,
 	MergeQueueState,
+	Notification,
+	NotificationSubjectType,
 	PullRequest,
 	PullRequestMergeability,
 	reviewerId,
@@ -480,6 +469,8 @@ export function convertRESTPullRequestToRawPullRequest(
 		suggestedReviewers: [], // suggested reviewers only available through GraphQL API
 		projectItems: [], // projects only available through GraphQL API
 		commits: [], // commits only available through GraphQL API
+		reactionCount: 0, // reaction count only available through GraphQL API
+		commentCount: 0 // comment count only available through GraphQL API
 	};
 
 	// mergeable is not included in the list response, will need to fetch later
@@ -509,6 +500,7 @@ export function convertRESTIssueToRawPullRequest(
 		labels,
 		node_id,
 		id,
+		comments
 	} = pullRequest;
 
 	const item: Issue = {
@@ -538,6 +530,8 @@ export function convertRESTIssueToRawPullRequest(
 					},
 		),
 		projectItems: [], // projects only available through GraphQL API
+		reactionCount: 0, // reaction count only available through GraphQL API
+		commentCount: comments
 	};
 
 	return item;
@@ -976,6 +970,8 @@ export function parseGraphQLPullRequest(
 			parseAuthor(assignee, githubRepository),
 		),
 		commits: parseCommits(graphQLPullRequest.commits.nodes),
+		reactionCount: graphQLPullRequest.reactions.totalCount,
+		commentCount: graphQLPullRequest.comments.totalCount,
 	};
 	pr.mergeCommitMeta = parseCommitMeta(
 		graphQLPullRequest.baseRepository.mergeCommitTitle,
@@ -1070,12 +1066,14 @@ function parseComments(
 		author: IAccount;
 		body: string;
 		databaseId: number;
+		reactionCount: number;
 	}[] = [];
 	for (const comment of comments) {
 		parsedComments.push({
 			author: parseAuthor(comment.author, githubRepository),
 			body: comment.body,
 			databaseId: comment.databaseId,
+			reactionCount: comment.reactions.totalCount
 		});
 	}
 
@@ -1110,6 +1108,18 @@ export function parseGraphQLIssue(
 			issue.repository?.owner.login ?? githubRepository.remote.owner,
 		repositoryUrl: issue.repository?.url ?? githubRepository.remote.url,
 		projectItems: parseProjectItems(issue.projectItems?.nodes),
+		comments: issue.comments.nodes?.map(comment => parseIssueComment(comment)),
+		reactionCount: issue.reactions.totalCount,
+		commentCount: issue.comments.totalCount
+	};
+}
+
+function parseIssueComment(comment: GraphQL.AbbreviatedIssueComment): IIssueComment {
+	return {
+		author: comment.author,
+		body: comment.body,
+		databaseId: comment.databaseId,
+		reactionCount: comment.reactions.totalCount
 	};
 }
 
@@ -1558,6 +1568,31 @@ export function parseReviewers(
 	return reviewers;
 }
 
+export function parseNotification(notification: OctokitCommon.Notification): Notification | undefined {
+	if (!notification.subject.url) {
+		return undefined;
+	}
+	const owner = notification.repository.owner.login;
+	const name = notification.repository.name;
+	const id = notification.subject.url.split('/').pop();
+
+	return {
+		owner,
+		name,
+		key: `${owner}/${name}#${id}`,
+		id: id!,
+		subject: {
+			title: notification.subject.title,
+			type: notification.subject.type as NotificationSubjectType,
+			url: notification.subject.url
+		},
+		lastReadAt: new Date(notification.last_read_at),
+		reason: notification.reason,
+		unread: notification.unread,
+		updatedAd: new Date(notification.updated_at),
+	};
+}
+
 export function insertNewCommitsSinceReview(
 	timelineEvents: Common.TimelineEvent[],
 	latestReviewCommitOid: string | undefined,
@@ -1814,4 +1849,10 @@ export async function findDotComAndEnterpriseRemotes(
 export function vscodeDevPrLink(pullRequest: PullRequestModel) {
 	const itemUri = vscode.Uri.parse(pullRequest.html_url);
 	return `https://${vscode.env.appName.toLowerCase().includes("insider") ? "insiders." : ""}vscode.dev/github${itemUri.path}`;
+}
+
+export function makeLabel(label: ILabel): string {
+	const isDarkTheme = vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.Dark;
+	const labelColor = gitHubLabelColor(label.color, isDarkTheme, true);
+	return `<span style="color:${labelColor.textColor};background-color:${labelColor.backgroundColor};">&nbsp;&nbsp;${label.name.trim()}&nbsp;&nbsp;</span>`;
 }
