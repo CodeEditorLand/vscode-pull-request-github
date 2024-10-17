@@ -1,51 +1,4 @@
 {
-	"name": "vscode-pull-request-github",
-	"displayName": "%displayName%",
-	"description": "%description%",
-	"icon": "resources/icons/github_logo.png",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/Microsoft/vscode-pull-request-github"
-	},
-	"bugs": {
-		"url": "https://github.com/Microsoft/vscode-pull-request-github/issues"
-	},
-	"enabledApiProposals": [
-		"activeComment",
-		"codiconDecoration",
-		"codeActionRanges",
-		"commentingRangeHint",
-		"commentReactor",
-		"commentReveal",
-		"commentThreadApplicability",
-		"contribAccessibilityHelpContent",
-		"contribCommentEditorActionsMenu",
-		"contribCommentPeekContext",
-		"contribCommentThreadAdditionalMenu",
-		"contribCommentsViewThreadMenus",
-		"contribEditorContentMenu",
-		"contribShareMenu",
-		"diffCommand",
-		"fileComments",
-		"lmTools",
-		"quickDiffProvider",
-		"shareProvider",
-		"tokenInformation",
-		"treeViewMarkdownMessage"
-	],
-	"version": "0.98.0",
-	"publisher": "GitHub",
-	"engines": {
-		"vscode": "^1.95.0"
-	},
-	"categories": [
-		"Other",
-		"AI",
-		"Chat"
-	],
-	"extensionDependencies": [
-		"vscode.github-authentication"
-	],
 	"activationEvents": [
 		"onStartupFinished",
 		"onFileSystem:newIssue",
@@ -54,29 +7,11 @@
 		"onFileSystem:review"
 	],
 	"browser": "./dist/browser/extension",
-	"l10n": "./dist/browser/extension",
-	"main": "./dist/extension",
-	"browser": "./dist/browser/extension",
-	"scripts": {
-		"browsertest": "yarn run browsertest:preprocess && node ./dist/browser/test/runTests.js",
-		"browsertest:preprocess": "tsc ./src/test/browser/runTests.ts --outDir ./dist/browser/test --rootDir ./src/test/browser --target es6 --module commonjs",
-		"bundle": "webpack --mode production --env esbuild",
-		"bundle:node": "webpack --mode production --config-name extension:node --config-name webviews",
-		"bundle:web": "webpack --mode production --config-name extension:webworker --config-name webviews",
-		"clean": "rm -r dist/",
-		"compile": "webpack --mode development --env esbuild",
-		"compile:node": "webpack --mode development --config-name extension:node --config-name webviews",
-		"compile:test": "tsc -p tsconfig.test.json",
-		"compile:web": "webpack --mode development --config-name extension:webworker --config-name webviews",
-		"hygiene": "node ./build/hygiene.js",
-		"lint:browser": "eslint --fix --cache --cache-location .eslintcache.browser --config .eslintrc.browser.json --ignore-pattern src/env/node/**/* \"{src,webviews}/**/*.{ts,tsx}\"",
-		"prepare": "husky install",
-		"test:preprocess": "yarn run compile:test && yarn run test:preprocess-gql && yarn run test:preprocess-svg && yarn run test:preprocess-fixtures",
-		"test:preprocess-fixtures": "node scripts/preprocess-fixtures --in src --out out",
-		"test:preprocess-gql": "node scripts/preprocess-gql --in src/github/queries.gql --out out/src/github/queries.gql && node scripts/preprocess-gql --in src/github/queriesExtra.gql --out out/src/github/queriesExtra.gql && node scripts/preprocess-gql --in src/github/queriesShared.gql --out out/src/github/queriesShared.gql && node scripts/preprocess-gql --in src/github/queriesLimited.gql --out out/src/github/queriesLimited.gql",
-		"test:preprocess-svg": "node scripts/preprocess-svg --in ../resources/ --out out/resources",
-		"update-dts": "cd \"src/@types\" && npx vscode-dts main && npx vscode-dts dev",
-		"watch:web": "webpack --watch --mode development --config-name extension:webworker --config-name webviews"
+	"capabilities": {
+		"untrustedWorkspaces": {
+			"supported": true
+		},
+		"virtualWorkspaces": true
 	},
 	"contributes": {
 		"chatParticipants": [
@@ -1468,25 +1403,25 @@
 		"languageModelTools": [
 			{
 				"canBeReferencedInPrompt": true,
-				"displayName": "Get GitHub Issue",
+				"displayName": "%languageModelTools.github-pull-request_fetch.displayName%",
 				"icon": "$(info)",
-				"modelDescription": "A GitHub issue, which includes the title, body, and comments.",
-				"name": "github-pull-request_issue",
+				"modelDescription": "Get a GitHub issue/PR, which includes the title, body, and comments.",
+				"name": "github-pull-request_fetch",
 				"parametersSchema": {
 					"properties": {
 						"issueNumber": {
-							"description": "The number of the issue to get.",
+							"description": "The number of the issue/PR to get.",
 							"type": "number"
 						},
 						"repo": {
-							"description": "The repository to get the issue from.",
+							"description": "The repository to get the issue/PR from.",
 							"properties": {
 								"name": {
-									"description": "The name of the repository to get the issue from.",
+									"description": "The name of the repository to get the issue/PR from.",
 									"type": "string"
 								},
 								"owner": {
-									"description": "The owner of the repository to get the issue from.",
+									"description": "The owner of the repository to get the issue/PR from.",
 									"type": "string"
 								}
 							},
@@ -1503,18 +1438,80 @@
 					"type": "object"
 				},
 				"supportedContentTypes": [
-					"text/plain"
+					"text/plain",
+					"text/json"
 				],
 				"tags": [
 					"github",
-					"issues"
+					"issues",
+					"prs"
 				],
-				"toolReferenceName": "issue",
+				"toolReferenceName": "fetch",
 				"when": "config.githubPullRequests.experimental.chat"
 			},
 			{
 				"canBeReferencedInPrompt": true,
-				"displayName": "Suggest a Fix for a GitHub Issue",
+				"displayName": "%languageModelTools.github-pull-request_summarize.displayName%",
+				"icon": "$(info)",
+				"modelDescription": "Returns a summary of a GitHub issue or PR given issue/PR details.",
+				"name": "github-pull-request_summarize",
+				"parametersSchema": {
+					"properties": {
+						"body": {
+							"description": "The body of the issue/PR",
+							"type": "string"
+						},
+						"comments": {
+							"description": "The array of associated string comments",
+							"items": {
+								"type": "string"
+							},
+							"type": "array"
+						},
+						"fileChanges": {
+							"description": "For a PR, the array of associated file changes",
+							"items": {
+								"properties": {
+									"fileName": {
+										"description": "The name of the file of the change",
+										"type": "string"
+									},
+									"patch": {
+										"description": "The patch of the change",
+										"type": "string"
+									}
+								},
+								"type": "object"
+							},
+							"type": "array"
+						},
+						"title": {
+							"description": "The title of the issue/PR",
+							"type": "string"
+						}
+					},
+					"required": [
+						"title",
+						"body",
+						"comments"
+					],
+					"type": "object"
+				},
+				"supportedContentTypes": [
+					"text/plain",
+					"text/json"
+				],
+				"tags": [
+					"github",
+					"issues",
+					"prs"
+				],
+				"toolReferenceName": "summarize",
+				"when": "config.githubPullRequests.experimental.chat"
+			},
+			{
+				"canBeReferencedInPrompt": true,
+				"displayName": "%languageModelTools.github-pull-request_suggest-fix.displayName%",
 				"icon": "$(info)",
 				"modelDescription": "Summarize and suggest a fix for a GitHub issue.",
 				"name": "github-pull-request_suggest-fix",
@@ -1561,7 +1558,7 @@
 			},
 			{
 				"canBeReferencedInPrompt": true,
-				"displayName": "Convert natural language to a GitHub search query",
+				"displayName": "%languageModelTools.github-pull-request_formSearchQuery.displayName%",
 				"icon": "$(search)",
 				"modelDescription": "Converts natural language to a GitHub search query. Should ALWAYS be called before doing a search.",
 				"name": "github-pull-request_formSearchQuery",
@@ -1611,7 +1608,7 @@
 			},
 			{
 				"canBeReferencedInPrompt": true,
-				"displayName": "Execute a GitHub search",
+				"displayName": "%languageModelTools.github-pull-request_doSearch.displayName%",
 				"icon": "$(search)",
 				"modelDescription": "Execute a GitHub search given a well formed GitHub search query. Call github-pull-request_formSearchQuery first to get good search syntax and pass the exact result in as the 'query'.",
 				"name": "github-pull-request_doSearch",
@@ -1659,7 +1656,7 @@
 			},
 			{
 				"canBeReferencedInPrompt": false,
-				"displayName": "Render issue items in a markdown table.",
+				"displayName": "%languageModelTools.github-pull-request_renderIssues.displayName%",
 				"icon": "$(paintcan)",
 				"modelDescription": "Render issue items from an issue search in a markdown table.",
 				"name": "github-pull-request_renderIssues",
@@ -3251,331 +3248,8 @@
 				},
 				"scheme": "review"
 			}
-		],
-		"languageModelTools": [
-			{
-				"name": "github-pull-request_fetch",
-				"tags": [
-					"github",
-					"issues",
-					"prs"
-				],
-				"toolReferenceName": "fetch",
-				"displayName": "%languageModelTools.github-pull-request_fetch.displayName%",
-				"modelDescription": "Get a GitHub issue/PR, which includes the title, body, and comments.",
-				"icon": "$(info)",
-				"canBeReferencedInPrompt": true,
-				"parametersSchema": {
-					"type": "object",
-					"properties": {
-						"repo": {
-							"type": "object",
-							"description": "The repository to get the issue/PR from.",
-							"properties": {
-								"owner": {
-									"type": "string",
-									"description": "The owner of the repository to get the issue/PR from."
-								},
-								"name": {
-									"type": "string",
-									"description": "The name of the repository to get the issue/PR from."
-								}
-							},
-							"required": [
-								"owner",
-								"name"
-							]
-						},
-						"issueNumber": {
-							"type": "number",
-							"description": "The number of the issue/PR to get."
-						}
-					},
-					"required": [
-						"issueNumber"
-					]
-				},
-				"supportedContentTypes": [
-					"text/plain",
-					"text/json"
-				],
-				"when": "config.githubPullRequests.experimental.chat"
-			},
-			{
-				"name": "github-pull-request_summarize",
-				"tags": [
-					"github",
-					"issues",
-					"prs"
-				],
-				"toolReferenceName": "summarize",
-				"displayName": "%languageModelTools.github-pull-request_summarize.displayName%",
-				"modelDescription": "Returns a summary of a GitHub issue or PR given issue/PR details.",
-				"icon": "$(info)",
-				"canBeReferencedInPrompt": true,
-				"parametersSchema": {
-					"type": "object",
-					"properties": {
-						"title": {
-							"type": "string",
-							"description": "The title of the issue/PR"
-						},
-						"body": {
-							"type": "string",
-							"description": "The body of the issue/PR"
-						},
-						"comments": {
-							"type": "array",
-							"items": {
-								"type": "string"
-							},
-							"description": "The array of associated string comments"
-						},
-						"fileChanges": {
-							"type": "array",
-							"items": {
-								"type": "object",
-								"properties": {
-									"fileName": {
-										"type": "string",
-										"description": "The name of the file of the change"
-									},
-									"patch": {
-										"type": "string",
-										"description": "The patch of the change"
-									}
-								}
-							},
-							"description": "For a PR, the array of associated file changes"
-						}
-					},
-					"required": [
-						"title",
-						"body",
-						"comments"
-					]
-				},
-				"supportedContentTypes": [
-					"text/plain",
-					"text/json"
-				],
-				"when": "config.githubPullRequests.experimental.chat"
-			},
-			{
-				"name": "github-pull-request_suggest-fix",
-				"tags": [
-					"github",
-					"issues"
-				],
-				"toolReferenceName": "suggest-fix",
-				"displayName": "%languageModelTools.github-pull-request_suggest-fix.displayName%",
-				"modelDescription": "Summarize and suggest a fix for a GitHub issue.",
-				"icon": "$(info)",
-				"canBeReferencedInPrompt": true,
-				"parametersSchema": {
-					"type": "object",
-					"properties": {
-						"repo": {
-							"type": "object",
-							"description": "The repository to get the issue from.",
-							"properties": {
-								"owner": {
-									"type": "string",
-									"description": "The owner of the repository to get the issue from."
-								},
-								"name": {
-									"type": "string",
-									"description": "The name of the repository to get the issue from."
-								}
-							},
-							"required": [
-								"owner",
-								"name"
-							]
-						},
-						"issueNumber": {
-							"type": "number",
-							"description": "The number of the issue to get."
-						}
-					},
-					"required": [
-						"issueNumber",
-						"repo"
-					]
-				},
-				"supportedContentTypes": [
-					"text/plain"
-				],
-				"when": "config.githubPullRequests.experimental.chat"
-			},
-			{
-				"name": "github-pull-request_formSearchQuery",
-				"tags": [
-					"github",
-					"issues",
-					"search",
-					"query",
-					"natural language"
-				],
-				"toolReferenceName": "searchSyntax",
-				"displayName": "%languageModelTools.github-pull-request_formSearchQuery.displayName%",
-				"modelDescription": "Converts natural language to a GitHub search query. Should ALWAYS be called before doing a search.",
-				"icon": "$(search)",
-				"canBeReferencedInPrompt": true,
-				"parametersSchema": {
-					"type": "object",
-					"properties": {
-						"repo": {
-							"type": "object",
-							"description": "The repository to get the issue from.",
-							"properties": {
-								"owner": {
-									"type": "string",
-									"description": "The owner of the repository to get the issue from."
-								},
-								"name": {
-									"type": "string",
-									"description": "The name of the repository to get the issue from."
-								}
-							},
-							"required": [
-								"owner",
-								"name"
-							]
-						},
-						"naturalLanguageString": {
-							"type": "string",
-							"description": "A plain text description of what the search should be."
-						}
-					},
-					"required": [
-						"naturalLanguageString"
-					]
-				},
-				"supportedContentTypes": [
-					"text/plain",
-					"text/display"
-				],
-				"when": "config.githubPullRequests.experimental.chat"
-			},
-			{
-				"name": "github-pull-request_doSearch",
-				"tags": [
-					"github",
-					"issues",
-					"search"
-				],
-				"toolReferenceName": "doSearch",
-				"displayName": "%languageModelTools.github-pull-request_doSearch.displayName%",
-				"modelDescription": "Execute a GitHub search given a well formed GitHub search query. Call github-pull-request_formSearchQuery first to get good search syntax and pass the exact result in as the 'query'.",
-				"icon": "$(search)",
-				"canBeReferencedInPrompt": true,
-				"parametersSchema": {
-					"type": "object",
-					"properties": {
-						"repo": {
-							"type": "object",
-							"description": "The repository to get the issue from.",
-							"properties": {
-								"owner": {
-									"type": "string",
-									"description": "The owner of the repository to get the issue from."
-								},
-								"name": {
-									"type": "string",
-									"description": "The name of the repository to get the issue from."
-								}
-							},
-							"required": [
-								"owner",
-								"name"
-							]
-						},
-						"query": {
-							"type": "string",
-							"description": "A well formed GitHub search query using proper GitHub search syntax."
-						}
-					},
-					"required": [
-						"query"
-					]
-				},
-				"supportedContentTypes": [
-					"text/plain",
-					"text/json"
-				],
-				"when": "config.githubPullRequests.experimental.chat"
-			},
-			{
-				"name": "github-pull-request_renderIssues",
-				"tags": [
-					"github",
-					"issues",
-					"render",
-					"display"
-				],
-				"toolReferenceName": "renderIssues",
-				"displayName": "%languageModelTools.github-pull-request_renderIssues.displayName%",
-				"modelDescription": "Render issue items from an issue search in a markdown table.",
-				"icon": "$(paintcan)",
-				"canBeReferencedInPrompt": false,
-				"parametersSchema": {
-					"type": "object",
-					"properties": {
-						"arrayOfIssues": {
-							"oneOf": [
-								{
-									"type": "array",
-									"description": "An array of GitHub Issues.",
-									"items": {
-										"type": "object",
-										"properties": {
-											"title": {
-												"type": "string",
-												"description": "The title of the issue."
-											},
-											"number": {
-												"type": "number",
-												"description": "The number of the issue."
-											},
-											"body": {
-												"type": "string",
-												"description": "The body of the issue."
-											},
-											"url": {
-												"type": "string",
-												"description": "The URL of the issue."
-											}
-										}
-									}
-								},
-								{
-									"type": "string",
-									"description": "A Json stringified array of GitHub Issues."
-								}
-							],
-							"description": "An array or stringified array of GitHub Issues."
-						}
-					},
-					"required": [
-						"issues"
-					]
-				},
-				"supportedContentTypes": [
-					"text/plain",
-					"text/markdown"
-				],
-				"when": "config.githubPullRequests.experimental.chat"
-			}
 		]
 	},
-	"activationEvents": [
-		"onStartupFinished",
-		"onFileSystem:newIssue",
-		"onFileSystem:pr",
-		"onFileSystem:githubpr",
-		"onFileSystem:review"
-	],
 	"dependencies": {
 		"@octokit/rest": "21.0.2",
 		"@octokit/types": "13.6.1",
@@ -3596,6 +3270,7 @@
 		"uuid": "10.0.0",
 		"vsls": "1.0.4753"
 	},
+	"description": "%description%",
 	"devDependencies": {
 		"@types/chai": "5.0.0",
 		"@types/glob": "8.1.0",
@@ -3637,16 +3312,7 @@
 		"typescript-formatter": "7.2.2",
 		"vinyl-fs": "4.0.0"
 	},
-	"extensionDependencies": [
-		"vscode.github-authentication"
-	],
-	"icon": "resources/icons/github_logo.png",
-	"capabilities": {
-		"untrustedWorkspaces": {
-			"supported": true
-		},
-		"virtualWorkspaces": true
-	},
+	"displayName": "%displayName%",
 	"enabledApiProposals": [
 		"activeComment",
 		"codiconDecoration",
@@ -3669,5 +3335,32 @@
 		"tokenInformation",
 		"treeViewMarkdownMessage"
 	],
-	"l10n": "./dist/browser/extension"
+	"extensionDependencies": [
+		"vscode.github-authentication"
+	],
+	"icon": "resources/icons/github_logo.png",
+	"l10n": "./dist/browser/extension",
+	"main": "./dist/extension",
+	"name": "vscode-pull-request-github",
+	"scripts": {
+		"browsertest": "yarn run browsertest:preprocess && node ./dist/browser/test/runTests.js",
+		"browsertest:preprocess": "tsc ./src/test/browser/runTests.ts --outDir ./dist/browser/test --rootDir ./src/test/browser --target es6 --module commonjs",
+		"bundle": "webpack --mode production --env esbuild",
+		"bundle:node": "webpack --mode production --config-name extension:node --config-name webviews",
+		"bundle:web": "webpack --mode production --config-name extension:webworker --config-name webviews",
+		"clean": "rm -r dist/",
+		"compile": "webpack --mode development --env esbuild",
+		"compile:node": "webpack --mode development --config-name extension:node --config-name webviews",
+		"compile:test": "tsc -p tsconfig.test.json",
+		"compile:web": "webpack --mode development --config-name extension:webworker --config-name webviews",
+		"hygiene": "node ./build/hygiene.js",
+		"lint:browser": "eslint --fix --cache --cache-location .eslintcache.browser --config .eslintrc.browser.json --ignore-pattern src/env/node/**/* \"{src,webviews}/**/*.{ts,tsx}\"",
+		"prepare": "husky install",
+		"test:preprocess": "yarn run compile:test && yarn run test:preprocess-gql && yarn run test:preprocess-svg && yarn run test:preprocess-fixtures",
+		"test:preprocess-fixtures": "node scripts/preprocess-fixtures --in src --out out",
+		"test:preprocess-gql": "node scripts/preprocess-gql --in src/github/queries.gql --out out/src/github/queries.gql && node scripts/preprocess-gql --in src/github/queriesExtra.gql --out out/src/github/queriesExtra.gql && node scripts/preprocess-gql --in src/github/queriesShared.gql --out out/src/github/queriesShared.gql && node scripts/preprocess-gql --in src/github/queriesLimited.gql --out out/src/github/queriesLimited.gql",
+		"test:preprocess-svg": "node scripts/preprocess-svg --in ../resources/ --out out/resources",
+		"update-dts": "cd \"src/@types\" && npx vscode-dts main && npx vscode-dts dev",
+		"watch:web": "webpack --watch --mode development --config-name extension:webworker --config-name webviews"
+	}
 }
