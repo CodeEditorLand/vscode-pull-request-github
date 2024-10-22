@@ -11,10 +11,9 @@ import React, {
 	useReducer,
 	useRef,
 	useState,
-} from "react";
-
-import { EventType, ReviewEvent } from "../../src/common/timelineEvent";
-import { groupBy } from "../../src/common/utils";
+} from 'react';
+import { EventType, ReviewEvent } from '../../src/common/timelineEvent';
+import { groupBy } from '../../src/common/utils';
 import {
 	CheckState,
 	GithubItemStateEnum,
@@ -24,63 +23,40 @@ import {
 	PullRequestReviewRequirement,
 	reviewerId,
 	ReviewState,
-} from "../../src/github/interface";
-import { PullRequest } from "../../src/github/views";
-import PullRequestContext from "../common/context";
-import { Reviewer } from "../components/reviewer";
-import { AutoMerge, QueuedToMerge } from "./automergeSelect";
-import { Dropdown } from "./dropdown";
-import {
-	alertIcon,
-	checkIcon,
-	closeIcon,
-	mergeIcon,
-	pendingIcon,
-	requestChanges,
-	skipIcon,
-} from "./icon";
-import { nbsp } from "./space";
-import { Avatar } from "./user";
+} from '../../src/github/interface';
+import { PullRequest } from '../../src/github/views';
+import PullRequestContext from '../common/context';
+import { Reviewer } from '../components/reviewer';
+import { AutoMerge, QueuedToMerge } from './automergeSelect';
+import { Dropdown } from './dropdown';
+import { alertIcon, checkIcon, closeIcon, mergeIcon, pendingIcon, requestChanges, skipIcon } from './icon';
+import { nbsp } from './space';
+import { Avatar } from './user';
 
-const PRStatusMessage = ({
-	pr,
-	isSimple,
-}: {
-	pr: PullRequest;
-	isSimple: boolean;
-}) => {
+const PRStatusMessage = ({ pr, isSimple }: { pr: PullRequest; isSimple: boolean }) => {
 	return pr.state === GithubItemStateEnum.Merged ? (
 		<div className="branch-status-message">
-			<div className="branch-status-icon">
-				{isSimple ? mergeIcon : null}
-			</div>{" "}
-			{"Pull request successfully merged."}
+			<div className="branch-status-icon">{isSimple ? mergeIcon : null}</div>{' '}
+			{'Pull request successfully merged.'}
 		</div>
 	) : pr.state === GithubItemStateEnum.Closed ? (
-		<div className="branch-status-message">
-			{"This pull request is closed."}
-		</div>
+		<div className="branch-status-message">{'This pull request is closed.'}</div>
 	) : null;
 };
 
 const DeleteOption = ({ pr }: { pr: PullRequest }) => {
-	return pr.state === GithubItemStateEnum.Open ? null : (
-		<DeleteBranch {...pr} />
-	);
+	return pr.state === GithubItemStateEnum.Open ? null : <DeleteBranch {...pr} />;
 };
 
 const StatusChecks = ({ pr }: { pr: PullRequest }) => {
 	const { state, status } = pr;
 	const [showDetails, toggleDetails] = useReducer(
-		(show) => !show,
-		status?.statuses.some((s) => s.state === CheckState.Failure) ?? false,
+		show => !show,
+		status?.statuses.some(s => s.state === CheckState.Failure) ?? false,
 	) as [boolean, () => void];
 
 	useEffect(() => {
-		if (
-			status?.statuses.some((s) => s.state === CheckState.Failure) ??
-			false
-		) {
+		if (status?.statuses.some(s => s.state === CheckState.Failure) ?? false) {
 			if (!showDetails) {
 				toggleDetails();
 			}
@@ -96,19 +72,16 @@ const StatusChecks = ({ pr }: { pr: PullRequest }) => {
 			<div className="status-section">
 				<div className="status-item">
 					<StateIcon state={status.state} />
-					<p className="status-item-detail-text">
-						{getSummaryLabel(status.statuses)}
-					</p>
+					<p className="status-item-detail-text">{getSummaryLabel(status.statuses)}</p>
 					<button
 						id="status-checks-display-button"
 						className="secondary small-button"
-						onClick={toggleDetails}>
-						{showDetails ? "Hide" : "Show"}
+						onClick={toggleDetails}
+					>
+						{showDetails ? 'Hide' : 'Show'}
 					</button>
 				</div>
-				{showDetails ? (
-					<StatusCheckDetails statuses={status.statuses} />
-				) : null}
+				{showDetails ? <StatusCheckDetails statuses={status.statuses} /> : null}
 			</div>
 		</>
 	) : null;
@@ -125,7 +98,7 @@ const RequiredReviewers = ({ pr }: { pr: PullRequest }) => {
 				<div className="status-item">
 					<RequiredReviewStateIcon state={reviewRequirement.state} />
 					<p className="status-item-detail-text">
-						{getRequiredReviewSummary(reviewRequirement)}
+					{getRequiredReviewSummary(reviewRequirement)}
 					</p>
 				</div>
 			</div>
@@ -133,24 +106,14 @@ const RequiredReviewers = ({ pr }: { pr: PullRequest }) => {
 	);
 };
 
-const InlineReviewers = ({
-	pr,
-	isSimple,
-}: {
-	pr: PullRequest;
-	isSimple: boolean;
-}) => {
-	if (
-		!isSimple ||
-		pr.state !== GithubItemStateEnum.Open ||
-		pr.reviewers.length === 0
-	) {
+const InlineReviewers = ({ pr, isSimple }: { pr: PullRequest; isSimple: boolean }) => {
+	if (!isSimple || pr.state !== GithubItemStateEnum.Open || pr.reviewers.length === 0) {
 		return null;
 	}
 
 	// match an event to each reviewer
 	// Use events as the outer loop as there are likely to be more events than reviewers
-	const reviewInfos: { event: ReviewEvent; reviewState: ReviewState }[] = [];
+	const reviewInfos: {event: ReviewEvent, reviewState: ReviewState}[] = [];
 	const remainingReviewers = new Set(pr.reviewers);
 	let eventIndex = pr.events.length - 1;
 	while (eventIndex >= 0 && remainingReviewers.size > 0) {
@@ -158,7 +121,7 @@ const InlineReviewers = ({
 		if (event.event === EventType.Reviewed) {
 			for (const reviewState of remainingReviewers) {
 				if (event.user.id === reviewState.reviewer.id) {
-					reviewInfos.push({ event, reviewState });
+					reviewInfos.push({event, reviewState});
 					remainingReviewers.delete(reviewState);
 					break;
 				}
@@ -167,28 +130,18 @@ const InlineReviewers = ({
 		eventIndex--;
 	}
 
-	return (
-		<div className="section">
-			{" "}
-			{reviewInfos.map((reviewerInfo) => {
-				return (
-					<Reviewer
-						key={reviewerId(reviewerInfo.reviewState.reviewer)}
-						{...reviewerInfo}
-					/>
-				);
-			})}
-		</div>
+	return  (
+			<div className="section">
+				{' '}
+				{reviewInfos.map(reviewerInfo => {
+
+					return <Reviewer key={reviewerId(reviewerInfo.reviewState.reviewer)} {...reviewerInfo} />;
+				})}
+			</div>
 	);
 };
 
-export const StatusChecksSection = ({
-	pr,
-	isSimple,
-}: {
-	pr: PullRequest;
-	isSimple: boolean;
-}) => {
+export const StatusChecksSection = ({ pr, isSimple }: { pr: PullRequest; isSimple: boolean }) => {
 	if (pr.isIssue) {
 		return null;
 	}
@@ -209,17 +162,11 @@ export const StatusChecksSection = ({
 	);
 };
 
-export const MergeStatusAndActions = ({
-	pr,
-	isSimple,
-}: {
-	pr: PullRequest;
-	isSimple: boolean;
-}) => {
+export const MergeStatusAndActions = ({ pr, isSimple }: { pr: PullRequest; isSimple: boolean }) => {
 	const { create, checkMergeability } = useContext(PullRequestContext);
 
 	if (isSimple && pr.state !== GithubItemStateEnum.Open) {
-		const string = "Create New Pull Request...";
+		const string = 'Create New Pull Request...';
 		return (
 			<div className="branch-status-container">
 				<form>
@@ -236,10 +183,7 @@ export const MergeStatusAndActions = ({
 	const { mergeable: _mergeable } = pr;
 
 	const [mergeable, setMergeability] = useState(_mergeable);
-	if (
-		_mergeable !== mergeable &&
-		_mergeable !== PullRequestMergeability.Unknown
-	) {
+	if ((_mergeable !== mergeable) && (_mergeable !== PullRequestMergeability.Unknown)) {
 		setMergeability(_mergeable);
 	}
 
@@ -255,18 +199,8 @@ export const MergeStatusAndActions = ({
 
 	return (
 		<div>
-			<MergeStatus
-				mergeable={mergeable}
-				isSimple={isSimple}
-				isCurrentlyCheckedOut={pr.isCurrentlyCheckedOut}
-				canUpdateBranch={pr.canUpdateBranch}
-			/>
-			<OfferToUpdate
-				mergeable={mergeable}
-				isSimple={isSimple}
-				isCurrentlyCheckedOut={pr.isCurrentlyCheckedOut}
-				canUpdateBranch={pr.canUpdateBranch}
-			/>
+			<MergeStatus mergeable={mergeable} isSimple={isSimple} isCurrentlyCheckedOut={pr.isCurrentlyCheckedOut} canUpdateBranch={pr.canUpdateBranch} />
+			<OfferToUpdate mergeable={mergeable} isSimple={isSimple} isCurrentlyCheckedOut={pr.isCurrentlyCheckedOut} canUpdateBranch={pr.canUpdateBranch} />
 			<PrActions pr={{ ...pr, mergeable }} isSimple={isSimple} />
 		</div>
 	);
@@ -274,17 +208,7 @@ export const MergeStatusAndActions = ({
 
 export default StatusChecksSection;
 
-export const MergeStatus = ({
-	mergeable,
-	isSimple,
-	isCurrentlyCheckedOut,
-	canUpdateBranch,
-}: {
-	mergeable: PullRequestMergeability;
-	isSimple: boolean;
-	isCurrentlyCheckedOut: boolean;
-	canUpdateBranch: boolean;
-}) => {
+export const MergeStatus = ({ mergeable, isSimple, isCurrentlyCheckedOut, canUpdateBranch }: { mergeable: PullRequestMergeability; isSimple: boolean; isCurrentlyCheckedOut: boolean, canUpdateBranch: boolean }) => {
 	const { updateBranch } = useContext(PullRequestContext);
 	const [busy, setBusy] = useState(false);
 
@@ -294,22 +218,22 @@ export const MergeStatus = ({
 	};
 
 	let icon: JSX.Element | null = pendingIcon;
-	let summary: string = "Checking if this branch can be merged...";
+	let summary: string = 'Checking if this branch can be merged...';
 	let action: string | null = null;
 	if (mergeable === PullRequestMergeability.Mergeable) {
 		icon = checkIcon;
-		summary = "This branch has no conflicts with the base branch.";
+		summary = 'This branch has no conflicts with the base branch.';
 	} else if (mergeable === PullRequestMergeability.Conflict) {
 		icon = closeIcon;
-		summary = "This branch has conflicts that must be resolved.";
-		action = "Resolve conflicts";
+		summary = 'This branch has conflicts that must be resolved.';
+		action = 'Resolve conflicts';
 	} else if (mergeable === PullRequestMergeability.NotMergeable) {
 		icon = closeIcon;
-		summary = "Branch protection policy must be fulfilled before merging.";
+		summary = 'Branch protection policy must be fulfilled before merging.';
 	} else if (mergeable === PullRequestMergeability.Behind) {
 		icon = closeIcon;
-		summary = "This branch is out-of-date with the base branch.";
-		action = "Update with merge commit";
+		summary = 'This branch is out-of-date with the base branch.';
+		action = 'Update with merge commit';
 	}
 
 	if (isSimple) {
@@ -321,60 +245,39 @@ export const MergeStatus = ({
 	return (
 		<div className="status-item status-section">
 			{icon}
-			<p>{summary}</p>
-			{action && canUpdateBranch ? (
+			<p>
+				{summary}
+			</p>
+			{(action && canUpdateBranch) ?
 				<div className="button-container">
-					<button
-						className="secondary"
-						onClick={onClick}
-						disabled={busy}>
+					<button className="secondary" onClick={onClick} disabled={busy} >
 						{action}
 					</button>
 				</div>
-			) : null}
+			: null}
 		</div>
 	);
 };
 
-export const OfferToUpdate = ({
-	mergeable,
-	isSimple,
-	isCurrentlyCheckedOut,
-	canUpdateBranch,
-}: {
-	mergeable: PullRequestMergeability;
-	isSimple: boolean;
-	isCurrentlyCheckedOut: boolean;
-	canUpdateBranch: boolean;
-}) => {
+export const OfferToUpdate = ({ mergeable, isSimple, isCurrentlyCheckedOut, canUpdateBranch }: { mergeable: PullRequestMergeability; isSimple: boolean; isCurrentlyCheckedOut: boolean, canUpdateBranch: boolean }) => {
 	const { updateBranch } = useContext(PullRequestContext);
 	const [isBusy, setBusy] = useState(false);
 	const update = () => {
 		setBusy(true);
 		updateBranch().finally(() => setBusy(false));
 	};
-	const isNotCheckedoutWithConflicts =
-		!isCurrentlyCheckedOut &&
-		mergeable === PullRequestMergeability.Conflict;
-	if (
-		!canUpdateBranch ||
-		isNotCheckedoutWithConflicts ||
-		isSimple ||
-		mergeable === PullRequestMergeability.Behind ||
-		mergeable === PullRequestMergeability.Conflict ||
-		mergeable === PullRequestMergeability.Unknown
-	) {
+	const isNotCheckedoutWithConflicts = !isCurrentlyCheckedOut && mergeable === PullRequestMergeability.Conflict;
+	if (!canUpdateBranch || isNotCheckedoutWithConflicts || isSimple || mergeable === PullRequestMergeability.Behind || mergeable === PullRequestMergeability.Conflict || mergeable === PullRequestMergeability.Unknown) {
 		return null;
 	}
 	return (
 		<div className="status-item status-section">
 			{alertIcon}
 			<p>This branch is out-of-date with the base branch.</p>
-			<button className="secondary" onClick={update} disabled={isBusy}>
-				Update with merge commit
-			</button>
+			<button className="secondary" onClick={update} disabled={isBusy} >Update with merge commit</button>
 		</div>
 	);
+
 };
 
 export const ReadyForReview = ({ isSimple }: { isSimple: boolean }) => {
@@ -393,23 +296,15 @@ export const ReadyForReview = ({ isSimple }: { isSimple: boolean }) => {
 
 	return (
 		<div className="ready-for-review-container">
-			<div className="ready-for-review-text-wrapper">
-				<div className="ready-for-review-icon">
-					{isSimple ? null : alertIcon}
-				</div>
+			<div className='ready-for-review-text-wrapper'>
+				<div className="ready-for-review-icon">{isSimple ? null : alertIcon}</div>
 				<div>
-					<div className="ready-for-review-heading">
-						This pull request is still a work in progress.
-					</div>
-					<div className="ready-for-review-meta">
-						Draft pull requests cannot be merged.
-					</div>
+					<div className="ready-for-review-heading">This pull request is still a work in progress.</div>
+					<div className="ready-for-review-meta">Draft pull requests cannot be merged.</div>
 				</div>
 			</div>
-			<div className="button-container">
-				<button disabled={isBusy} onClick={markReadyForReview}>
-					Ready for review
-				</button>
+			<div className='button-container'>
+				<button disabled={isBusy} onClick={markReadyForReview}>Ready for review</button>
 			</div>
 		</div>
 	);
@@ -421,70 +316,40 @@ export const Merge = (pr: PullRequest) => {
 	const [selectedMethod, selectMethod] = useState<MergeMethod | null>(null);
 
 	if (pr.mergeQueueMethod) {
-		return (
-			<div>
-				<div id="merge-comment-form">
-					<button onClick={() => ctx.enqueue()}>
-						Add to Merge Queue
-					</button>
-				</div>
+		return <div>
+			<div id='merge-comment-form'>
+				<button onClick={() => ctx.enqueue()}>Add to Merge Queue</button>
 			</div>
-		);
+		</div>;
 	}
 
 	if (selectedMethod) {
-		return (
-			<ConfirmMerge
-				pr={pr}
-				method={selectedMethod}
-				cancel={() => selectMethod(null)}
-			/>
-		);
+		return <ConfirmMerge pr={pr} method={selectedMethod} cancel={() => selectMethod(null)} />;
 	}
 
 	return (
 		<div className="automerge-section wrapper">
-			<button
-				onClick={() =>
-					selectMethod(select.current!.value as MergeMethod)
-				}>
-				Merge Pull Request
-			</button>
+			<button onClick={() => selectMethod(select.current!.value as MergeMethod)}>Merge Pull Request</button>
 			{nbsp}using method{nbsp}
 			<MergeSelect ref={select} {...pr} />
 		</div>
 	);
 };
 
-export const PrActions = ({
-	pr,
-	isSimple,
-}: {
-	pr: PullRequest;
-	isSimple: boolean;
-}) => {
+export const PrActions = ({ pr, isSimple }: { pr: PullRequest; isSimple: boolean }) => {
 	const { hasWritePermission, canEdit, isDraft, mergeable } = pr;
 	if (isDraft) {
 		// Only PR author and users with push rights can mark draft as ready for review
 		return canEdit ? <ReadyForReview isSimple={isSimple} /> : null;
 	}
 
-	if (
-		mergeable === PullRequestMergeability.Mergeable &&
-		hasWritePermission &&
-		!pr.mergeQueueEntry
-	) {
+	if (mergeable === PullRequestMergeability.Mergeable && hasWritePermission && !pr.mergeQueueEntry) {
 		return isSimple ? <MergeSimple {...pr} /> : <Merge {...pr} />;
 	} else if (!isSimple && hasWritePermission && !pr.mergeQueueEntry) {
 		const ctx = useContext(PullRequestContext);
 		return (
 			<AutoMerge
-				updateState={(
-					params: Partial<{
-						autoMerge: boolean;
-						autoMergeMethod: MergeMethod;
-					}>,
-				) => {
+				updateState={(params: Partial<{ autoMerge: boolean; autoMergeMethod: MergeMethod }>) => {
 					return ctx.updateAutoMerge(params);
 				}}
 				{...pr}
@@ -502,10 +367,7 @@ export const PrActions = ({
 export const MergeOnGitHub = () => {
 	const { openOnGitHub } = useContext(PullRequestContext);
 	return (
-		<button
-			id="merge-on-github"
-			type="submit"
-			onClick={() => openOnGitHub()}>
+		<button id="merge-on-github" type="submit" onClick={() => openOnGitHub()}>
 			Merge on github.com
 		</button>
 	);
@@ -515,27 +377,21 @@ export const MergeSimple = (pr: PullRequest) => {
 	const { merge, updatePR } = useContext(PullRequestContext);
 	async function submitAction(selected: MergeMethod): Promise<void> {
 		const newContext = await merge({
-			title: "",
-			description: "",
+			title: '',
+			description: '',
 			method: selected,
 		});
 		updatePR(newContext);
 	}
 
 	const availableOptions = Object.keys(MERGE_METHODS)
-		.filter((method) => pr.mergeMethodsAvailability[method])
+		.filter(method => pr.mergeMethodsAvailability[method])
 		.reduce((methods, key) => {
 			methods[key] = MERGE_METHODS[key];
 			return methods;
 		}, {});
 
-	return (
-		<Dropdown
-			options={availableOptions}
-			defaultOption={pr.defaultMergeMethod}
-			submitAction={submitAction}
-		/>
-	);
+	return <Dropdown options={availableOptions} defaultOption={pr.defaultMergeMethod} submitAction={submitAction} />;
 };
 
 export const DeleteBranch = (pr: PullRequest) => {
@@ -548,7 +404,7 @@ export const DeleteBranch = (pr: PullRequest) => {
 		return (
 			<div className="branch-status-container">
 				<form
-					onSubmit={async (event) => {
+					onSubmit={async event => {
 						event.preventDefault();
 
 						try {
@@ -560,11 +416,9 @@ export const DeleteBranch = (pr: PullRequest) => {
 						} finally {
 							setBusy(false);
 						}
-					}}>
-					<button
-						disabled={isBusy}
-						className="secondary"
-						type="submit">
+					}}
+				>
+					<button disabled={isBusy} className="secondary" type="submit">
 						Delete branch...
 					</button>
 				</form>
@@ -573,23 +427,14 @@ export const DeleteBranch = (pr: PullRequest) => {
 	}
 };
 
-function ConfirmMerge({
-	pr,
-	method,
-	cancel,
-}: {
-	pr: PullRequest;
-	method: MergeMethod;
-	cancel: () => void;
-}) {
+function ConfirmMerge({ pr, method, cancel }: { pr: PullRequest; method: MergeMethod; cancel: () => void }) {
 	const { merge, updatePR, changeEmail } = useContext(PullRequestContext);
 	const [isBusy, setBusy] = useState(false);
 	const emailForCommit = pr.emailForCommit;
 	return (
 		<div>
-			<form
-				id="merge-comment-form"
-				onSubmit={async (event) => {
+			<form id='merge-comment-form'
+				onSubmit={async event => {
 					event.preventDefault();
 
 					try {
@@ -599,56 +444,29 @@ function ConfirmMerge({
 							title: title?.value,
 							description: description?.value,
 							method,
-							email: emailForCommit,
+							email: emailForCommit
 						});
 						updatePR(mergeResult);
 					} finally {
 						setBusy(false);
 					}
-				}}>
-				{method === "rebase" ? null : (
-					<input
-						type="text"
-						name="title"
-						defaultValue={getDefaultTitleText(method, pr)}
-					/>
-				)}
-				{method === "rebase" ? null : (
-					<textarea
-						name="description"
-						defaultValue={getDefaultDescriptionText(method, pr)}
-					/>
-				)}
-				{method === "rebase" || !emailForCommit ? null : (
-					<div className="commit-association">
+				}}
+			>
+				{method === 'rebase' ? null : (<input type="text" name="title" defaultValue={getDefaultTitleText(method, pr)} />)}
+				{method === 'rebase' ? null : (<textarea name="description" defaultValue={getDefaultDescriptionText(method, pr)} />)}
+				{(method === 'rebase' || !emailForCommit) ? null : (
+					<div className='commit-association'>
 						<span>
-							Commit will be associated with{" "}
-							<button
-								className="input-box"
-								title="Change email"
-								aria-label="Change email"
-								disabled={isBusy}
-								onClick={() => {
-									setBusy(true);
-									changeEmail(emailForCommit).finally(() =>
-										setBusy(false),
-									);
-								}}>
-								{emailForCommit}
-							</button>
+							Commit will be associated with <button className='input-box' title='Change email' aria-label='Change email' disabled={isBusy} onClick={() => {
+								setBusy(true);
+								changeEmail(emailForCommit).finally(() => setBusy(false));
+							}}>{emailForCommit}</button>
 						</span>
 					</div>
 				)}
-				<div
-					className="form-actions"
-					id={method === "rebase" ? "rebase-actions" : ""}>
-					<button className="secondary" onClick={cancel}>
-						Cancel
-					</button>
-					<button disabled={isBusy} type="submit" id="confirm-merge">
-						{method === "rebase" ? "Confirm " : ""}
-						{MERGE_METHODS[method]}
-					</button>
+				<div className="form-actions" id={method === 'rebase' ? 'rebase-actions' : ''}>
+					<button className="secondary" onClick={cancel}>Cancel</button>
+					<button disabled={isBusy} type="submit" id="confirm-merge">{method === 'rebase' ? 'Confirm ' : ''}{MERGE_METHODS[method]}</button>
 				</div>
 			</form>
 		</div>
@@ -657,108 +475,69 @@ function ConfirmMerge({
 
 function getDefaultTitleText(mergeMethod: string, pr: PullRequest) {
 	switch (mergeMethod) {
-		case "merge":
-			return (
-				pr.mergeCommitMeta?.title ??
-				`Merge pull request #${pr.number} from ${pr.head}`
-			);
-		case "squash":
+		case 'merge':
+			return pr.mergeCommitMeta?.title ?? `Merge pull request #${pr.number} from ${pr.head}`;
+		case 'squash':
 			return pr.squashCommitMeta?.title ?? `${pr.title} (#${pr.number})`;
 		default:
-			return "";
+			return '';
 	}
 }
 
 function getDefaultDescriptionText(mergeMethod: string, pr: PullRequest) {
 	switch (mergeMethod) {
-		case "merge":
+		case 'merge':
 			return pr.mergeCommitMeta?.description ?? pr.title;
-		case "squash":
-			return pr.squashCommitMeta?.description ?? "";
+		case 'squash':
+			return pr.squashCommitMeta?.description ?? '';
 		default:
-			return "";
+			return '';
 	}
 }
 
 const MERGE_METHODS = {
-	merge: "Create Merge Commit",
-	squash: "Squash and Merge",
-	rebase: "Rebase and Merge",
+	merge: 'Create Merge Commit',
+	squash: 'Squash and Merge',
+	rebase: 'Rebase and Merge',
 };
 
-type MergeSelectProps = Pick<PullRequest, "mergeMethodsAvailability"> &
-	Pick<PullRequest, "defaultMergeMethod"> & {
-		onChange?: ChangeEventHandler<HTMLSelectElement>;
-		name?: string;
-		title?: string;
-		ariaLabel?: string;
-		disabled?: boolean;
-	};
+type MergeSelectProps = Pick<PullRequest, 'mergeMethodsAvailability'> &
+	Pick<PullRequest, 'defaultMergeMethod'> & { onChange?: ChangeEventHandler<HTMLSelectElement>, name?: string, title?: string, ariaLabel?: string, disabled?: boolean };
 
-export const MergeSelect = React.forwardRef<
-	HTMLSelectElement,
-	MergeSelectProps
->(
-	(
-		{
-			defaultMergeMethod,
-			mergeMethodsAvailability: avail,
-			onChange,
-			ariaLabel,
-			name,
-			title,
-			disabled,
-		}: MergeSelectProps,
-		ref,
-	) => {
-		return (
-			<select
-				ref={ref}
-				defaultValue={defaultMergeMethod}
-				onChange={onChange}
-				disabled={disabled}
-				aria-label={ariaLabel ?? "Select merge method"}
-				name={name}
-				title={title}>
-				{Object.entries(MERGE_METHODS).map(([method, text]) => (
-					<option
-						key={method}
-						value={method}
-						disabled={!avail[method]}>
-						{text}
-						{!avail[method] ? " (not enabled)" : null}
-					</option>
-				))}
-			</select>
-		);
+export const MergeSelect = React.forwardRef<HTMLSelectElement, MergeSelectProps>(
+	({ defaultMergeMethod, mergeMethodsAvailability: avail, onChange, ariaLabel, name, title, disabled }: MergeSelectProps, ref) => {
+		return <select ref={ref} defaultValue={defaultMergeMethod} onChange={onChange} disabled={disabled} aria-label={ariaLabel ?? 'Select merge method'} name={name} title={title}>
+			{Object.entries(MERGE_METHODS).map(([method, text]) => (
+				<option key={method} value={method} disabled={!avail[method]}>
+					{text}
+					{!avail[method] ? ' (not enabled)' : null}
+				</option>
+			))}
+		</select>;
 	},
 );
 
-const StatusCheckDetails = ({
-	statuses,
-}: {
-	statuses: PullRequestCheckStatus[];
-}) => (
-	<div className="status-scroll">
-		{statuses.map((s) => (
+const StatusCheckDetails = ( { statuses }: { statuses: PullRequestCheckStatus[] }) => (
+	<div className='status-scroll'>
+		{statuses.map(s => (
 			<div key={s.id} className="status-check">
 				<div className="status-check-details">
 					<StateIcon state={s.state} />
 					<Avatar for={{ avatarUrl: s.avatarUrl, url: s.url }} />
 					<span className="status-check-detail-text">
 						{/* allow-any-unicode-next-line */}
-						{s.context} {s.description ? `— ${s.description}` : ""}
+						{s.context} {s.description ? `— ${s.description}` : ''}
 					</span>
 				</div>
 				<div>
-					{s.isRequired ? (
-						<span className="label">Required</span>
-					) : null}
-					{!!s.targetUrl ? (
-						<a href={s.targetUrl} title={s.targetUrl}>
-							Details
-						</a>
-					) : null}
+				{s.isRequired ? (
+					<span className="label">Required</span>
+				) : null }
+				{!!s.targetUrl ? (
+					<a href={s.targetUrl} title={s.targetUrl}>
+						Details
+					</a>
+				) : null}
 				</div>
 			</div>
 		))}
@@ -779,30 +558,28 @@ function getSummaryLabel(statuses: PullRequestCheckStatus[]) {
 	const statusPhrases: string[] = [];
 	for (const statusType of Object.keys(statusTypes)) {
 		const numOfType = statusTypes[statusType].length;
-		let statusAdjective = "";
+		let statusAdjective = '';
 		switch (statusType) {
 			case CheckState.Success:
-				statusAdjective = "successful";
+				statusAdjective = 'successful';
 				break;
 			case CheckState.Failure:
-				statusAdjective = "failed";
+				statusAdjective = 'failed';
 				break;
 			case CheckState.Neutral:
-				statusAdjective = "skipped";
+				statusAdjective = 'skipped';
 				break;
 			default:
-				statusAdjective = "pending";
+				statusAdjective = 'pending';
 		}
 
 		const status =
-			numOfType > 1
-				? `${numOfType} ${statusAdjective} checks`
-				: `${numOfType} ${statusAdjective} check`;
+			numOfType > 1 ? `${numOfType} ${statusAdjective} checks` : `${numOfType} ${statusAdjective} check`;
 
 		statusPhrases.push(status);
 	}
 
-	return statusPhrases.join(" and ");
+	return statusPhrases.join(' and ');
 }
 
 function StateIcon({ state }: { state: CheckState }) {
@@ -835,10 +612,10 @@ function getRequiredReviewSummary(requirement: PullRequestReviewRequirement) {
 
 	switch (requirement.state) {
 		case CheckState.Failure:
-			return `At least ${requiredCount} approving review${requiredCount > 1 ? "s" : ""} is required by reviewers with write access.`;
+			return `At least ${requiredCount} approving review${requiredCount > 1 ? 's' : ''} is required by reviewers with write access.`;
 		case CheckState.Pending:
-			return `${requestedChangesCount} review${requestedChangesCount > 1 ? "s" : ""} requesting changes by reviewers with write access.`;
+			return `${requestedChangesCount} review${requestedChangesCount > 1 ? 's' : ''} requesting changes by reviewers with write access.`;
 	}
 
-	return `${approvalCount} approving review${approvalCount > 1 ? "s" : ""} by reviewers with write access.`;
+	return `${approvalCount} approving review${approvalCount > 1 ? 's' : ''} by reviewers with write access.`;
 }

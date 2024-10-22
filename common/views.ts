@@ -3,16 +3,8 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import {
-	IAccount,
-	ILabel,
-	IMilestone,
-	IProject,
-	ITeam,
-	MergeMethod,
-	MergeMethodsAvailability,
-} from "../src/github/interface";
-import { PreReviewState } from "../src/github/views";
+import { IAccount, ILabel, IMilestone, IProject, ITeam, MergeMethod, MergeMethodsAvailability } from '../src/github/interface';
+import { PreReviewState } from '../src/github/views';
 
 export interface RemoteInfo {
 	owner: string;
@@ -65,7 +57,7 @@ export interface CreatePullRequest {
 	body: string;
 	owner: string;
 	repo: string;
-	base: string;
+	base: string
 	compareBranch: string;
 	compareOwner: string;
 	compareRepo: string;
@@ -80,7 +72,7 @@ export interface CreatePullRequestNew {
 	body: string;
 	owner: string;
 	repo: string;
-	base: string;
+	base: string
 	compareBranch: string;
 	compareOwner: string;
 	compareRepo: string;
