@@ -3,24 +3,17 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as vscode from "vscode";
+import * as vscode from 'vscode';
 
-export abstract class ReadonlyFileSystemProvider
-	implements vscode.FileSystemProvider
-{
-	protected _onDidChangeFile = new vscode.EventEmitter<
-		vscode.FileChangeEvent[]
-	>();
+export abstract class ReadonlyFileSystemProvider implements vscode.FileSystemProvider {
+	protected _onDidChangeFile = new vscode.EventEmitter<vscode.FileChangeEvent[]>();
 	onDidChangeFile = this._onDidChangeFile.event;
 
-	constructor() {}
+	constructor() { }
 
-	watch(
-		_uri: vscode.Uri,
-		_options: { recursive: boolean; excludes: string[] },
-	): vscode.Disposable {
+	watch(_uri: vscode.Uri, _options: { recursive: boolean; excludes: string[]; }): vscode.Disposable {
 		/** no op */
-		return { dispose: () => {} };
+		return { dispose: () => { } };
 	}
 
 	stat(_uri: any): vscode.FileStat {
@@ -29,7 +22,7 @@ export abstract class ReadonlyFileSystemProvider
 			type: vscode.FileType.File,
 			ctime: 0,
 			mtime: new Date().getTime(),
-			size: 0,
+			size: 0
 		};
 	}
 
@@ -43,23 +36,15 @@ export abstract class ReadonlyFileSystemProvider
 
 	abstract readFile(_uri: vscode.Uri): Promise<Uint8Array>;
 
-	writeFile(
-		_uri: vscode.Uri,
-		_content: Uint8Array,
-		_options: { create: boolean; overwrite: boolean },
-	): void {
+	writeFile(_uri: vscode.Uri, _content: Uint8Array, _options: { create: boolean; overwrite: boolean; }): void {
 		/** no op */
 	}
 
-	delete(_uri: vscode.Uri, _options: { recursive: boolean }): void {
+	delete(_uri: vscode.Uri, _options: { recursive: boolean; }): void {
 		/** no op */
 	}
 
-	rename(
-		_oldUri: vscode.Uri,
-		_newUri: vscode.Uri,
-		_options: { overwrite: boolean },
-	): void {
+	rename(_oldUri: vscode.Uri, _newUri: vscode.Uri, _options: { overwrite: boolean; }): void {
 		/** no op */
 	}
 }

@@ -2,31 +2,28 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-"use strict";
+'use strict';
 
-import * as vscode from "vscode";
+import * as vscode from 'vscode';
+import { IComment } from '../common/comment';
+import Logger from '../common/logger';
+import { ITelemetry } from '../common/telemetry';
+import { asPromise, formatError } from '../common/utils';
+import { getNonce, IRequestMessage, WebviewBase } from '../common/webview';
+import { DescriptionNode } from '../view/treeNodes/descriptionNode';
+import { FolderRepositoryManager } from './folderRepositoryManager';
+import { ILabel } from './interface';
+import { IssueModel } from './issueModel';
+import { getLabelOptions } from './quickPicks';
 
-import { IComment } from "../common/comment";
-import Logger from "../common/logger";
-import { ITelemetry } from "../common/telemetry";
-import { asPromise, formatError } from "../common/utils";
-import { getNonce, IRequestMessage, WebviewBase } from "../common/webview";
-import { DescriptionNode } from "../view/treeNodes/descriptionNode";
-import { FolderRepositoryManager } from "./folderRepositoryManager";
-import { ILabel } from "./interface";
-import { IssueModel } from "./issueModel";
-import { getLabelOptions } from "./quickPicks";
-
-export class IssueOverviewPanel<
-	TItem extends IssueModel = IssueModel,
-> extends WebviewBase {
-	public static ID: string = "IssueOverviewPanel";
+export class IssueOverviewPanel<TItem extends IssueModel = IssueModel> extends WebviewBase {
+	public static ID: string = 'IssueOverviewPanel';
 	/**
 	 * Track the currently panel. Only allow a single panel to exist at a time.
 	 */
 	public static currentPanel?: IssueOverviewPanel;
 
-	private static readonly _viewType: string = "IssueOverview";
+	private static readonly _viewType: string = 'IssueOverview';
 
 	protected readonly _panel: vscode.WebviewPanel;
 	protected _disposables: vscode.Disposable[] = [];
@@ -63,10 +60,7 @@ export class IssueOverviewPanel<
 			);
 		}
 
-		await IssueOverviewPanel.currentPanel!.update(
-			folderRepositoryManager,
-			issue,
-		);
+		await IssueOverviewPanel.currentPanel!.update(folderRepositoryManager, issue);
 	}
 
 	public static refresh(): void {
@@ -102,7 +96,7 @@ export class IssueOverviewPanel<
 			retainContextWhenHidden: true,
 
 			// And restrict the webview to only loading content from our extension's `dist` directory.
-			localResourceRoots: [vscode.Uri.joinPath(_extensionUri, "dist")],
+			localResourceRoots: [vscode.Uri.joinPath(_extensionUri, 'dist')],
 		});
 
 		this._webview = this._panel.webview;
@@ -113,13 +107,11 @@ export class IssueOverviewPanel<
 		this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
 
 		this._folderRepositoryManager.onDidChangeActiveIssue(
-			(_) => {
+			_ => {
 				if (this._folderRepositoryManager && this._item) {
-					const isCurrentlyCheckedOut = this._item.equals(
-						this._folderRepositoryManager.activeIssue,
-					);
+					const isCurrentlyCheckedOut = this._item.equals(this._folderRepositoryManager.activeIssue);
 					this._postMessage({
-						command: "pr.update-checkout-status",
+						command: 'pr.update-checkout-status',
 						isCurrentlyCheckedOut: isCurrentlyCheckedOut,
 					});
 				}
@@ -143,11 +135,9 @@ export class IssueOverviewPanel<
 				issueModel.number,
 			),
 			issueModel.getIssueTimelineEvents(),
-			this._folderRepositoryManager.getPullRequestRepositoryDefaultBranch(
-				issueModel,
-			),
+			this._folderRepositoryManager.getPullRequestRepositoryDefaultBranch(issueModel),
 		])
-			.then((result) => {
+			.then(result => {
 				const [issue, timelineEvents, defaultBranch] = result;
 				if (!issue) {
 					throw new Error(
@@ -158,9 +148,9 @@ export class IssueOverviewPanel<
 				this._item = issue as TItem;
 				this.setPanelTitle(`Issue #${issueModel.number.toString()}`);
 
-				Logger.debug("pr.initialize", IssueOverviewPanel.ID);
+				Logger.debug('pr.initialize', IssueOverviewPanel.ID);
 				this._postMessage({
-					command: "pr.initialize",
+					command: 'pr.initialize',
 					pullrequest: {
 						number: this._item.number,
 						title: this._item.title,
@@ -183,24 +173,19 @@ export class IssueOverviewPanel<
 						// TODO@eamodio What is status?
 						status: /*status ? status :*/ { statuses: [] },
 						isIssue: true,
-						isDarkTheme:
-							vscode.window.activeColorTheme.kind ===
-							vscode.ColorThemeKind.Dark,
+						isDarkTheme: vscode.window.activeColorTheme.kind === vscode.ColorThemeKind.Dark
 					},
 				});
 			})
-			.catch((e) => {
+			.catch(e => {
 				vscode.window.showErrorMessage(formatError(e));
 			});
 	}
 
-	public async update(
-		foldersManager: FolderRepositoryManager,
-		issueModel: IssueModel,
-	): Promise<void> {
+	public async update(foldersManager: FolderRepositoryManager, issueModel: IssueModel): Promise<void> {
 		this._folderRepositoryManager = foldersManager;
 		this._postMessage({
-			command: "set-scroll",
+			command: 'set-scroll',
 			scrollPosition: this._scrollPosition,
 		});
 
@@ -215,32 +200,32 @@ export class IssueOverviewPanel<
 		}
 
 		switch (message.command) {
-			case "alert":
+			case 'alert':
 				vscode.window.showErrorMessage(message.args);
 				return;
-			case "pr.close":
+			case 'pr.close':
 				return this.close(message);
-			case "pr.comment":
+			case 'pr.comment':
 				return this.createComment(message);
-			case "scroll":
+			case 'scroll':
 				this._scrollPosition = message.args.scrollPosition;
 				return;
-			case "pr.edit-comment":
+			case 'pr.edit-comment':
 				return this.editComment(message);
-			case "pr.delete-comment":
+			case 'pr.delete-comment':
 				return this.deleteComment(message);
-			case "pr.edit-description":
+			case 'pr.edit-description':
 				return this.editDescription(message);
-			case "pr.edit-title":
+			case 'pr.edit-title':
 				return this.editTitle(message);
-			case "pr.refresh":
+			case 'pr.refresh':
 				this.refreshPanel();
 				return;
-			case "pr.add-labels":
+			case 'pr.add-labels':
 				return this.addLabels(message);
-			case "pr.remove-label":
+			case 'pr.remove-label':
 				return this.removeLabel(message);
-			case "pr.debug":
+			case 'pr.debug':
 				return this.webviewDebug(message);
 			default:
 				return this.MESSAGE_UNHANDLED;
@@ -255,36 +240,23 @@ export class IssueOverviewPanel<
 			quickPick.busy = true;
 			quickPick.canSelectMany = true;
 			quickPick.show();
-			quickPick.items = await getLabelOptions(
-				this._folderRepositoryManager,
-				this._item.item.labels,
-				this._item.remote.owner,
-				this._item.remote.repositoryName,
-			).then((options) => {
+			quickPick.items = await (getLabelOptions(this._folderRepositoryManager, this._item.item.labels, this._item.remote.owner, this._item.remote.repositoryName).then(options => {
 				newLabels = options.newLabels;
 				return options.labelPicks;
-			});
-			quickPick.selectedItems = quickPick.items.filter(
-				(item) => item.picked,
-			);
+			}));
+			quickPick.selectedItems = quickPick.items.filter(item => item.picked);
 
 			quickPick.busy = false;
-			const acceptPromise = asPromise<void>(quickPick.onDidAccept).then(
-				() => {
-					return quickPick.selectedItems;
-				},
-			);
+			const acceptPromise = asPromise<void>(quickPick.onDidAccept).then(() => {
+				return quickPick.selectedItems;
+			});
 			const hidePromise = asPromise<void>(quickPick.onDidHide);
-			const labelsToAdd = await Promise.race<
-				readonly vscode.QuickPickItem[] | void
-			>([acceptPromise, hidePromise]);
+			const labelsToAdd = await Promise.race<readonly vscode.QuickPickItem[] | void>([acceptPromise, hidePromise]);
 			quickPick.busy = true;
 
 			if (labelsToAdd) {
-				await this._item.setLabels(labelsToAdd.map((r) => r.label));
-				const addedLabels: ILabel[] = labelsToAdd.map(
-					(label) => newLabels.find((l) => l.name === label.label)!,
-				);
+				await this._item.setLabels(labelsToAdd.map(r => r.label));
+				const addedLabels: ILabel[] = labelsToAdd.map(label => newLabels.find(l => l.name === label.label)!);
 
 				this._item.item.labels = addedLabels;
 
@@ -304,9 +276,7 @@ export class IssueOverviewPanel<
 		try {
 			await this._item.removeLabel(message.args);
 
-			const index = this._item.item.labels.findIndex(
-				(label) => label.name === message.args,
-			);
+			const index = this._item.item.labels.findIndex(label => label.name === message.args);
 			this._item.item.labels.splice(index, 1);
 
 			this._replyMessage(message, {});
@@ -322,53 +292,39 @@ export class IssueOverviewPanel<
 	private editDescription(message: IRequestMessage<{ text: string }>) {
 		this._item
 			.edit({ body: message.args.text })
-			.then((result) => {
-				this._replyMessage(message, {
-					body: result.body,
-					bodyHTML: result.bodyHTML,
-				});
+			.then(result => {
+				this._replyMessage(message, { body: result.body, bodyHTML: result.bodyHTML });
 			})
-			.catch((e) => {
+			.catch(e => {
 				this._throwError(message, e);
-				vscode.window.showErrorMessage(
-					`Editing description failed: ${formatError(e)}`,
-				);
+				vscode.window.showErrorMessage(`Editing description failed: ${formatError(e)}`);
 			});
 	}
 	private editTitle(message: IRequestMessage<{ text: string }>) {
 		return this._item
 			.edit({ title: message.args.text })
-			.then((result) => {
-				return this._replyMessage(message, {
-					titleHTML: result.titleHTML,
-				});
+			.then(result => {
+				return this._replyMessage(message, { titleHTML: result.titleHTML });
 			})
-			.catch((e) => {
+			.catch(e => {
 				this._throwError(message, e);
-				vscode.window.showErrorMessage(
-					`Editing title failed: ${formatError(e)}`,
-				);
+				vscode.window.showErrorMessage(`Editing title failed: ${formatError(e)}`);
 			});
 	}
 
-	protected editCommentPromise(
-		comment: IComment,
-		text: string,
-	): Promise<IComment> {
+	protected editCommentPromise(comment: IComment, text: string): Promise<IComment> {
 		return this._item.editIssueComment(comment, text);
 	}
 
-	private editComment(
-		message: IRequestMessage<{ comment: IComment; text: string }>,
-	) {
+	private editComment(message: IRequestMessage<{ comment: IComment; text: string }>) {
 		this.editCommentPromise(message.args.comment, message.args.text)
-			.then((result) => {
+			.then(result => {
 				this._replyMessage(message, {
 					body: result.body,
 					bodyHTML: result.bodyHTML,
 				});
 			})
-			.catch((e) => {
+			.catch(e => {
 				this._throwError(message, e);
 				vscode.window.showErrorMessage(formatError(e));
 			});
@@ -380,18 +336,14 @@ export class IssueOverviewPanel<
 
 	private deleteComment(message: IRequestMessage<IComment>) {
 		vscode.window
-			.showWarningMessage(
-				vscode.l10n.t("Are you sure you want to delete this comment?"),
-				{ modal: true },
-				"Delete",
-			)
-			.then((value) => {
-				if (value === "Delete") {
+			.showWarningMessage(vscode.l10n.t('Are you sure you want to delete this comment?'), { modal: true }, 'Delete')
+			.then(value => {
+				if (value === 'Delete') {
 					this.deleteCommentPromise(message.args)
-						.then((_) => {
+						.then(_ => {
 							this._replyMessage(message, {});
 						})
-						.catch((e) => {
+						.catch(e => {
 							this._throwError(message, e);
 							vscode.window.showErrorMessage(formatError(e));
 						});
@@ -401,20 +353,20 @@ export class IssueOverviewPanel<
 
 	private close(message: IRequestMessage<string>) {
 		vscode.commands
-			.executeCommand<IComment>("pr.close", this._item, message.args)
-			.then((comment) => {
+			.executeCommand<IComment>('pr.close', this._item, message.args)
+			.then(comment => {
 				if (comment) {
 					this._replyMessage(message, {
 						value: comment,
 					});
 				} else {
-					this._throwError(message, "Close cancelled");
+					this._throwError(message, 'Close cancelled');
 				}
 			});
 	}
 
 	private createComment(message: IRequestMessage<string>) {
-		this._item.createIssueComment(message.args).then((comment) => {
+		this._item.createIssueComment(message.args).then(comment => {
 			this._replyMessage(message, {
 				value: comment,
 			});
@@ -443,11 +395,7 @@ export class IssueOverviewPanel<
 	protected getHtmlForWebview() {
 		const nonce = getNonce();
 
-		const uri = vscode.Uri.joinPath(
-			this._extensionUri,
-			"dist",
-			"webview-pr-description.js",
-		);
+		const uri = vscode.Uri.joinPath(this._extensionUri, 'dist', 'webview-pr-description.js');
 
 		return `<!DOCTYPE html>
 <html lang="en">

@@ -1,8 +1,7 @@
-"use strict";
+'use strict';
+import { Disposable } from 'vscode';
 
-import { Disposable } from "vscode";
-
-export { Disposable } from "vscode";
+export { Disposable } from 'vscode';
 
 export interface RemoteProvider {
 	readonly id: string;
@@ -11,7 +10,7 @@ export interface RemoteProvider {
 }
 
 export interface CreatePullRequestActionContext {
-	readonly type: "createPullRequest";
+	readonly type: 'createPullRequest';
 
 	readonly repoPath: string;
 	readonly branch: {
@@ -24,12 +23,12 @@ export interface CreatePullRequestActionContext {
 				readonly name: string;
 				readonly provider?: RemoteProvider;
 				readonly url?: string;
-		  }
+			}
 		| undefined;
 }
 
 export interface OpenPullRequestActionContext {
-	readonly type: "openPullRequest";
+	readonly type: 'openPullRequest';
 
 	readonly repoPath: string;
 	readonly provider: RemoteProvider | undefined;
@@ -39,10 +38,8 @@ export interface OpenPullRequestActionContext {
 	};
 }
 
-export type ActionContext =
-	| CreatePullRequestActionContext
-	| OpenPullRequestActionContext;
-export type Action<T extends ActionContext> = T["type"];
+export type ActionContext = CreatePullRequestActionContext | OpenPullRequestActionContext;
+export type Action<T extends ActionContext> = T['type'];
 
 export interface ActionRunner {
 	/*
@@ -64,8 +61,5 @@ export interface ActionRunner {
 }
 
 export interface GitLensApi {
-	registerActionRunner<T extends ActionContext>(
-		action: Action<T>,
-		runner: ActionRunner,
-	): Disposable;
+	registerActionRunner<T extends ActionContext>(action: Action<T>, runner: ActionRunner): Disposable;
 }

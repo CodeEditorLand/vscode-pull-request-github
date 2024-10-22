@@ -5,34 +5,40 @@
 'use strict';
 
 import * as vscode from 'vscode';
+import { CredentialStore } from '../../github/credentials';
 import { RepositoriesManager } from '../../github/repositoriesManager';
 import { ChatParticipantState } from '../participants';
 import { DisplayIssuesTool } from './displayIssuesTool';
-import { FetchTool } from './fetchTool';
+import { FetchIssueTool } from './fetchIssueTool';
+import { FetchNotificationTool } from './fetchNotificationTool';
 import { ConvertToSearchSyntaxTool, SearchTool } from './searchTools';
 import { SuggestFixTool } from './suggestFixTool';
-import { SummarizationTool } from './summarizeTool';
+import { IssueSummarizationTool } from './summarizeIssueTool';
+import { NotificationSummarizationTool } from './summarizeNotificationsTool';
 
-export function registerTools(context: vscode.ExtensionContext, repositoriesManager: RepositoriesManager, chatParticipantState: ChatParticipantState) {
-	registerFetchTool(context, repositoriesManager, chatParticipantState);
-	registerSummarizationTool(context);
+export function registerTools(context: vscode.ExtensionContext, credentialStore: CredentialStore, repositoriesManager: RepositoriesManager, chatParticipantState: ChatParticipantState) {
+	registerFetchingTools(context, credentialStore, repositoriesManager, chatParticipantState);
+	registerSummarizationTools(context);
 	registerSuggestFixTool(context, repositoriesManager);
-	registerSearchTools(context, repositoriesManager, chatParticipantState);
+	registerSearchTools(context, credentialStore, repositoriesManager, chatParticipantState);
 }
 
-function registerFetchTool(context: vscode.ExtensionContext, repositoriesManager: RepositoriesManager, chatParticipantState: ChatParticipantState) {
-	context.subscriptions.push(vscode.lm.registerTool('github-pull-request_fetch', new FetchTool(repositoriesManager, chatParticipantState)));
+function registerFetchingTools(context: vscode.ExtensionContext, credentialStore: CredentialStore, repositoriesManager: RepositoriesManager, chatParticipantState: ChatParticipantState) {
+	context.subscriptions.push(vscode.lm.registerTool(FetchIssueTool.toolId, new FetchIssueTool(credentialStore, repositoriesManager, chatParticipantState)));
+	context.subscriptions.push(vscode.lm.registerTool(FetchNotificationTool.toolId, new FetchNotificationTool(credentialStore, repositoriesManager, chatParticipantState)));
 }
-function registerSummarizationTool(context: vscode.ExtensionContext) {
-	context.subscriptions.push(vscode.lm.registerTool('github-pull-request_summarize', new SummarizationTool()));
+
+function registerSummarizationTools(context: vscode.ExtensionContext) {
+	context.subscriptions.push(vscode.lm.registerTool(IssueSummarizationTool.toolId, new IssueSummarizationTool()));
+	context.subscriptions.push(vscode.lm.registerTool(NotificationSummarizationTool.toolId, new NotificationSummarizationTool()));
 }
 
 function registerSuggestFixTool(context: vscode.ExtensionContext, repositoriesManager: RepositoriesManager) {
-	context.subscriptions.push(vscode.lm.registerTool('github-pull-request_suggest-fix', new SuggestFixTool(repositoriesManager)));
+	context.subscriptions.push(vscode.lm.registerTool(SuggestFixTool.toolId, new SuggestFixTool(repositoriesManager)));
 }
 
-function registerSearchTools(context: vscode.ExtensionContext, repositoriesManager: RepositoriesManager, chatParticipantState: ChatParticipantState) {
-	context.subscriptions.push(vscode.lm.registerTool('github-pull-request_formSearchQuery', new ConvertToSearchSyntaxTool(repositoriesManager, chatParticipantState)));
-	context.subscriptions.push(vscode.lm.registerTool('github-pull-request_doSearch', new SearchTool(repositoriesManager, chatParticipantState)));
-	context.subscriptions.push(vscode.lm.registerTool('github-pull-request_renderIssues', new DisplayIssuesTool(chatParticipantState)));
+function registerSearchTools(context: vscode.ExtensionContext, credentialStore: CredentialStore, repositoriesManager: RepositoriesManager, chatParticipantState: ChatParticipantState) {
+	context.subscriptions.push(vscode.lm.registerTool(ConvertToSearchSyntaxTool.toolId, new ConvertToSearchSyntaxTool(credentialStore, repositoriesManager, chatParticipantState)));
+	context.subscriptions.push(vscode.lm.registerTool(SearchTool.toolId, new SearchTool(credentialStore, repositoriesManager, chatParticipantState)));
+	context.subscriptions.push(vscode.lm.registerTool(DisplayIssuesTool.toolId, new DisplayIssuesTool(chatParticipantState)));
 }

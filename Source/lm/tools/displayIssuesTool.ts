@@ -6,35 +6,38 @@
 
 import * as vscode from 'vscode';
 import Logger from '../../common/logger';
-import { IAccount, Issue, ITeam, reviewerLabel } from '../../github/interface';
+import { reviewerLabel } from '../../github/interface';
+import { makeLabel } from '../../github/utils';
 import { ChatParticipantState } from '../participants';
-import { SearchToolResult } from './searchTools';
-import { concatAsyncIterable, MimeTypes, ToolBase } from './toolsUtils';
+import { IssueSearchResultAccount, IssueSearchResultItem, SearchToolResult } from './searchTools';
+import { concatAsyncIterable, TOOL_MARKDOWN_RESULT, ToolBase } from './toolsUtils';
 
 export type DisplayIssuesParameters = SearchToolResult;
 
-type IssueColumn = keyof Issue;
+type IssueColumn = keyof IssueSearchResultItem;
 
 const LLM_FIND_IMPORTANT_COLUMNS_INSTRUCTIONS = `Instructions:
 You are an expert on GitHub issues. You can help the user identify the most important columns for rendering issues based on a query for issues. Include a column related to the sort value, if given. Output a newline separated list of columns only, max 4 columns. List the columns in the order they should be displayed. Don't change the casing. Here are the possible columns:
 `;
 
 export class DisplayIssuesTool extends ToolBase<DisplayIssuesParameters> {
-	static ID = 'DisplayIssuesTool';
+	public static readonly toolId = 'github-pull-request_renderIssues';
+	private static ID = 'DisplayIssuesTool';
 	constructor(chatParticipantState: ChatParticipantState) {
 		super(chatParticipantState);
 	}
 
-	private assistantPrompt(issues: Issue[]): string {
+	private assistantPrompt(issues: IssueSearchResultItem[]): string {
 		const possibleColumns = Object.keys(issues[0]);
 		return `${LLM_FIND_IMPORTANT_COLUMNS_INSTRUCTIONS}\n${possibleColumns.map(column => `- ${column}`).join('\n')}\nHere's the data you have about the issues:\n`;
 	}
 
-	private postProcess(proposedColumns: string, issues: Issue[]): IssueColumn[] {
+	private postProcess(proposedColumns: string, issues: IssueSearchResultItem[]): IssueColumn[] {
 		const lines = proposedColumns.split('\n');
 		const possibleColumns = Object.keys(issues[0]);
 		const finalColumns: IssueColumn[] = [];
-		for (const line of lines) {
+		for (let line of lines) {
+			line = line.trim();
 			if (line === '') {
 				continue;
 			}
@@ -51,14 +54,10 @@ export class DisplayIssuesTool extends ToolBase<DisplayIssuesParameters> {
 				finalColumns.push(line as IssueColumn);
 			}
 		}
-		const indexOfId = finalColumns.indexOf('id');
-		if (indexOfId !== -1) {
-			finalColumns[indexOfId] = 'number';
-		}
 		return finalColumns;
 	}
 
-	private async getImportantColumns(issueItemsInfo: string, issues: Issue[], token: vscode.CancellationToken): Promise<IssueColumn[]> {
+	private async getImportantColumns(issueItemsInfo: string, issues: IssueSearchResultItem[], token: vscode.CancellationToken): Promise<IssueColumn[]> {
 		// Try to get the llm to tell us which columns are important based on information it has about the issues
 		const models = await vscode.lm.selectChatModels({
 			vendor: 'copilot',
@@ -72,71 +71,58 @@ export class DisplayIssuesTool extends ToolBase<DisplayIssuesParameters> {
 		messages.push(vscode.LanguageModelChatMessage.User(issueItemsInfo));
 		const response = await model.sendRequest(messages, chatOptions, token);
 		const result = this.postProcess(await concatAsyncIterable(response.text), issues);
+		const indexOfUrl = result.indexOf('url');
 		if (result.length === 0) {
 			return ['number', 'title', 'state'];
+		} else if (indexOfUrl >= 0) {
+			// Never include the url column
+			if (result.indexOf('number') >= 0) {
+				result.splice(indexOfUrl, 1);
+			} else {
+				result[indexOfUrl] = 'number';
+			}
 		}
 
 		return result;
 	}
 
-	private renderUser(account: ITeam | IAccount) {
+	private renderUser(account: IssueSearchResultAccount) {
 		return `[@${reviewerLabel(account)}](${account.url})`;
 	}
 
-	private issueToRow(issue: Issue, importantColumns: IssueColumn[]): string {
+	private issueToRow(issue: IssueSearchResultItem, importantColumns: IssueColumn[]): string {
 		return `| ${importantColumns.map(column => {
 			switch (column) {
 				case 'number':
 					return `[${issue[column]}](${issue.url})`;
 				case 'labels':
-					return issue[column].map((label) => label.name).join(', ');
+					return issue[column].map((label) => makeLabel(label)).join(', ');
 				case 'assignees':
 					return issue[column]?.map((assignee) => this.renderUser(assignee)).join(', ');
-				case 'user':
+				case 'author':
 					return this.renderUser(issue[column]);
 				case 'createdAt':
 				case 'updatedAt':
 					return new Date(issue[column]).toLocaleDateString();
 				case 'milestone':
-					return issue[column]?.title;
+					return issue[column];
 				default:
 					return issue[column];
 			}
 		}).join(' | ')} |`;
 	}
 
-	async prepareToolInvocation(_options: vscode.LanguageModelToolInvocationPrepareOptions<DisplayIssuesParameters>): Promise<vscode.PreparedToolInvocation> {
+	async prepareInvocation(options: vscode.LanguageModelToolInvocationPrepareOptions<DisplayIssuesParameters>): Promise<vscode.PreparedToolInvocation> {
 		return {
-			invocationMessage: vscode.l10n.t('Generating markdown table of issues...'),
+			invocationMessage: vscode.l10n.t('Found {0} issues. Generating a markdown table of the first 10', options.parameters.totalIssues)
 		};
 	}
 
-	async invoke(_options: vscode.LanguageModelToolInvocationOptions<DisplayIssuesParameters>, token: vscode.CancellationToken): Promise<vscode.LanguageModelToolResult | undefined> {
-		// The llm won't actually pass the output of the search tool to this tool, so we need to get the issues from the last message
-		let issueItems: Issue[] = [];
+	async invoke(options: vscode.LanguageModelToolInvocationOptions<DisplayIssuesParameters>, token: vscode.CancellationToken): Promise<vscode.LanguageModelToolResult | undefined> {
 		let issueItemsInfo: string = this.chatParticipantState.firstUserMessage ?? '';
-		const lastMessage = this.chatParticipantState.lastToolResult;
-		if (lastMessage) {
-			try {
-				for (const part of lastMessage) {
-					if (part instanceof vscode.LanguageModelToolResultPart) {
-						const issues = JSON.parse(part.content) as SearchToolResult;
-						if (Array.isArray(issues.arrayOfIssues)) {
-							issueItems = issues.arrayOfIssues;
-						}
-					} else if (typeof part === 'string') {
-						issueItemsInfo += part;
-					}
-				}
-			} catch {
-				// ignore, the data doesn't exist
-			}
-		}
+		const issueItems: IssueSearchResultItem[] = options.parameters.arrayOfIssues;
 		if (issueItems.length === 0) {
-			return {
-				'text/plain': 'No issues found. Please try another query.',
-				'text/markdown': vscode.l10n.t('No issues found. Please try another query.')
-			};
+			return new vscode.LanguageModelToolResult([new vscode.LanguageModelTextPart(vscode.l10n.t('No issues found. Please try another query.'))]);
 		}
 		Logger.debug(`Displaying ${issueItems.length} issues, first issue ${issueItems[0].number}`, DisplayIssuesTool.ID);
 		const importantColumns = await this.getImportantColumns(issueItemsInfo, issueItems, token);
@@ -145,17 +131,16 @@ export class DisplayIssuesTool extends ToolBase<DisplayIssuesParameters> {
 		Logger.debug(`Columns ${titleRow} issues`, DisplayIssuesTool.ID);
 		const separatorRow = `| ${importantColumns.map(() => '---').join(' | ')} |\n`;
 		const issues = new vscode.MarkdownString(titleRow);
+		issues.supportHtml = true;
 		issues.appendMarkdown('\n');
 		issues.appendMarkdown(separatorRow);
 		issues.appendMarkdown(issueItems.slice(0, 10).map(issue => {
 			return this.issueToRow(issue, importantColumns);
 		}).join('\n'));
 
-		return {
-			[MimeTypes.textPlain]: `Here is a markdown table of the first 10 issues.`,
-			[MimeTypes.textMarkdown]: issues.value,
-			[MimeTypes.textDisplay]: vscode.l10n.t('Here\'s a markdown table of the first 10 issues.\n\n{0}\n\n', issues.value)
-		};
+		return new vscode.LanguageModelToolResult([new vscode.LanguageModelTextPart(TOOL_MARKDOWN_RESULT),
+		new vscode.LanguageModelTextPart(issues.value),
+		new vscode.LanguageModelTextPart(`The issues have been shown to the user. Simply say that you've already displayed the issue or first 10 issues.`)]);
 	}
 
 }

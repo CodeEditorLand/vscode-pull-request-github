@@ -2,45 +2,25 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-"use strict";
+'use strict';
 
-import * as vscode from "vscode";
-
-import { GitApiImpl } from "../api/api1";
-import {
-	DiffChangeType,
-	getModifiedContentFromDiffHunk,
-} from "../common/diffHunk";
-import { GitChangeType, InMemFileChange, SlimFileChange } from "../common/file";
-import Logger from "../common/logger";
-import { fromPRUri, PRUriParams } from "../common/uri";
-import { CredentialStore } from "../github/credentials";
-import {
-	FolderRepositoryManager,
-	ReposManagerState,
-} from "../github/folderRepositoryManager";
-import {
-	IResolvedPullRequestModel,
-	PullRequestModel,
-} from "../github/pullRequestModel";
-import { RepositoriesManager } from "../github/repositoriesManager";
-import {
-	FileChangeModel,
-	InMemFileChangeModel,
-	RemoteFileChangeModel,
-} from "./fileChangeModel";
-import { RepositoryFileSystemProvider } from "./repositoryFileSystemProvider";
+import * as vscode from 'vscode';
+import { GitApiImpl } from '../api/api1';
+import { DiffChangeType, getModifiedContentFromDiffHunk } from '../common/diffHunk';
+import { GitChangeType, InMemFileChange, SlimFileChange } from '../common/file';
+import Logger from '../common/logger';
+import { fromPRUri, PRUriParams } from '../common/uri';
+import { CredentialStore } from '../github/credentials';
+import { FolderRepositoryManager, ReposManagerState } from '../github/folderRepositoryManager';
+import { IResolvedPullRequestModel, PullRequestModel } from '../github/pullRequestModel';
+import { RepositoriesManager } from '../github/repositoriesManager';
+import { FileChangeModel, InMemFileChangeModel, RemoteFileChangeModel } from './fileChangeModel';
+import { RepositoryFileSystemProvider } from './repositoryFileSystemProvider';
 
 export class InMemPRFileSystemProvider extends RepositoryFileSystemProvider {
-	private _prFileChangeContentProviders: {
-		[key: number]: (uri: vscode.Uri) => Promise<string | Uint8Array>;
-	} = {};
+	private _prFileChangeContentProviders: { [key: number]: (uri: vscode.Uri) => Promise<string | Uint8Array> } = {};
 
-	constructor(
-		private reposManagers: RepositoriesManager,
-		gitAPI: GitApiImpl,
-		credentialStore: CredentialStore,
-	) {
+	constructor(private reposManagers: RepositoriesManager, gitAPI: GitApiImpl, credentialStore: CredentialStore) {
 		super(gitAPI, credentialStore);
 	}
 
@@ -57,90 +37,57 @@ export class InMemPRFileSystemProvider extends RepositoryFileSystemProvider {
 		};
 	}
 
-	private resolveChanges(
-		rawChanges: (SlimFileChange | InMemFileChange)[],
-		pr: PullRequestModel,
+	private resolveChanges(rawChanges: (SlimFileChange | InMemFileChange)[], pr: PullRequestModel,
 		folderRepositoryManager: FolderRepositoryManager,
-		mergeBase: string,
-	): (RemoteFileChangeModel | InMemFileChangeModel)[] {
-		const isCurrentPR = pr.equals(
-			folderRepositoryManager.activePullRequest,
-		);
+		mergeBase: string): (RemoteFileChangeModel | InMemFileChangeModel)[] {
+		const isCurrentPR = pr.equals(folderRepositoryManager.activePullRequest);
 
-		return rawChanges.map((change) => {
+		return rawChanges.map(change => {
 			if (change instanceof SlimFileChange) {
-				return new RemoteFileChangeModel(
-					folderRepositoryManager,
-					change,
-					pr,
-				);
+				return new RemoteFileChangeModel(folderRepositoryManager, change, pr);
 			}
-			return new InMemFileChangeModel(
-				folderRepositoryManager,
-				pr as PullRequestModel & IResolvedPullRequestModel,
-				change,
-				isCurrentPR,
-				mergeBase,
-			);
+			return new InMemFileChangeModel(folderRepositoryManager,
+				pr as (PullRequestModel & IResolvedPullRequestModel),
+				change, isCurrentPR, mergeBase);
 		});
 	}
 
-	private waitForGitHubRepos(
-		folderRepositoryManager: FolderRepositoryManager,
-		milliseconds: number,
-	) {
-		return new Promise<void>((resolve) => {
+	private waitForGitHubRepos(folderRepositoryManager: FolderRepositoryManager, milliseconds: number) {
+		return new Promise<void>(resolve => {
 			const timeout = setTimeout(() => {
 				disposable.dispose();
 				resolve();
 			}, milliseconds);
-			const disposable = folderRepositoryManager.onDidLoadRepositories(
-				(e) => {
-					if (e === ReposManagerState.RepositoriesLoaded) {
-						clearTimeout(timeout);
-						disposable.dispose();
-						resolve();
-					}
-				},
-			);
+			const disposable = folderRepositoryManager.onDidLoadRepositories(e => {
+				if (e === ReposManagerState.RepositoriesLoaded) {
+					clearTimeout(timeout);
+					disposable.dispose();
+					resolve();
+				}
+			});
 		});
 	}
 
-	private async tryRegisterNewProvider(
-		uri: vscode.Uri,
-		prUriParams: PRUriParams,
-	) {
+	private async tryRegisterNewProvider(uri: vscode.Uri, prUriParams: PRUriParams) {
 		await this.waitForAuth();
-		if (
-			this.gitAPI.state !== "initialized" ||
-			this.gitAPI.repositories.length === 0
-		) {
+		if ((this.gitAPI.state !== 'initialized') || (this.gitAPI.repositories.length === 0)) {
 			await this.waitForRepos(4000);
 		}
-		const folderRepositoryManager =
-			this.reposManagers.getManagerForFile(uri);
+		const folderRepositoryManager = this.reposManagers.getManagerForFile(uri);
 		if (!folderRepositoryManager) {
 			return;
 		}
-		let repo = folderRepositoryManager.findRepo(
-			(repo) => repo.remote.remoteName === prUriParams.remoteName,
-		);
+		let repo = folderRepositoryManager.findRepo(repo => repo.remote.remoteName === prUriParams.remoteName);
 		if (!repo) {
 			// Depending on the git provider, we might not have a GitHub repo right away, even if we already have git repos.
 			// This can take a long time.
 			await this.waitForGitHubRepos(folderRepositoryManager, 10000);
-			repo = folderRepositoryManager.findRepo(
-				(repo) => repo.remote.remoteName === prUriParams.remoteName,
-			);
+			repo = folderRepositoryManager.findRepo(repo => repo.remote.remoteName === prUriParams.remoteName);
 		}
 		if (!repo) {
 			return;
 		}
-		const pr = await folderRepositoryManager.resolvePullRequest(
-			repo.remote.owner,
-			repo.remote.repositoryName,
-			prUriParams.prNumber,
-		);
+		const pr = await folderRepositoryManager.resolvePullRequest(repo.remote.owner, repo.remote.repositoryName, prUriParams.prNumber);
 		if (!pr) {
 			return;
 		}
@@ -149,50 +96,30 @@ export class InMemPRFileSystemProvider extends RepositoryFileSystemProvider {
 		if (!mergeBase) {
 			return;
 		}
-		const changes = this.resolveChanges(
-			rawChanges,
-			pr,
-			folderRepositoryManager,
-			mergeBase,
-		);
-		this.registerTextDocumentContentProvider(
-			pr.number,
-			async (uri: vscode.Uri) => {
-				const params = fromPRUri(uri);
-				if (!params) {
-					return "";
-				}
-				const fileChange = changes.find(
-					(contentChange) =>
-						contentChange.fileName === params.fileName,
-				);
+		const changes = this.resolveChanges(rawChanges, pr, folderRepositoryManager, mergeBase);
+		this.registerTextDocumentContentProvider(pr.number, async (uri: vscode.Uri) => {
+			const params = fromPRUri(uri);
+			if (!params) {
+				return '';
+			}
+			const fileChange = changes.find(
+				contentChange => contentChange.fileName === params.fileName,
+			);
 
-				if (!fileChange) {
-					Logger.error(
-						`Cannot find content for document ${uri.toString()}`,
-						"PR",
-					);
-					return "";
-				}
+			if (!fileChange) {
+				Logger.error(`Cannot find content for document ${uri.toString()}`, 'PR');
+				return '';
+			}
 
-				return provideDocumentContentForChangeModel(
-					folderRepositoryManager,
-					pr,
-					params,
-					fileChange,
-				);
-			},
-		);
+			return provideDocumentContentForChangeModel(folderRepositoryManager, pr, params, fileChange);
+		});
 	}
 
-	private async readFileWithProvider(
-		uri: vscode.Uri,
-		prNumber: number,
-	): Promise<Uint8Array | undefined> {
+	private async readFileWithProvider(uri: vscode.Uri, prNumber: number): Promise<Uint8Array | undefined> {
 		const provider = this._prFileChangeContentProviders[prNumber];
 		if (provider) {
 			const content = await provider(uri);
-			if (typeof content === "string") {
+			if (typeof content === 'string') {
 				return new TextEncoder().encode(content);
 			} else {
 				return content;
@@ -202,53 +129,34 @@ export class InMemPRFileSystemProvider extends RepositoryFileSystemProvider {
 
 	async readFile(uri: vscode.Uri): Promise<Uint8Array> {
 		const prUriParams = fromPRUri(uri);
-		if (!prUriParams || prUriParams.prNumber === undefined) {
-			return new TextEncoder().encode("");
+		if (!prUriParams || (prUriParams.prNumber === undefined)) {
+			return new TextEncoder().encode('');
 		}
-		const providerResult = await this.readFileWithProvider(
-			uri,
-			prUriParams.prNumber,
-		);
+		const providerResult = await this.readFileWithProvider(uri, prUriParams.prNumber);
 		if (providerResult) {
 			return providerResult;
 		}
 
 		await this.tryRegisterNewProvider(uri, prUriParams);
-		return (
-			(await this.readFileWithProvider(uri, prUriParams.prNumber)) ??
-			new TextEncoder().encode("")
-		);
+		return (await this.readFileWithProvider(uri, prUriParams.prNumber)) ?? new TextEncoder().encode('');
 	}
 }
 
 let inMemPRFileSystemProvider: InMemPRFileSystemProvider | undefined;
 
-export function getInMemPRFileSystemProvider(initialize?: {
-	reposManager: RepositoriesManager;
-	gitAPI: GitApiImpl;
-	credentialStore: CredentialStore;
-}): InMemPRFileSystemProvider | undefined {
+export function getInMemPRFileSystemProvider(initialize?: { reposManager: RepositoriesManager, gitAPI: GitApiImpl, credentialStore: CredentialStore }): InMemPRFileSystemProvider | undefined {
 	if (!inMemPRFileSystemProvider && initialize) {
-		inMemPRFileSystemProvider = new InMemPRFileSystemProvider(
-			initialize.reposManager,
-			initialize.gitAPI,
-			initialize.credentialStore,
-		);
+		inMemPRFileSystemProvider = new InMemPRFileSystemProvider(initialize.reposManager, initialize.gitAPI, initialize.credentialStore);
 	}
 	return inMemPRFileSystemProvider;
 }
 
-export async function provideDocumentContentForChangeModel(
-	folderRepoManager: FolderRepositoryManager,
-	pullRequestModel: PullRequestModel,
-	params: PRUriParams,
-	fileChange: FileChangeModel,
-): Promise<string | Uint8Array> {
+export async function provideDocumentContentForChangeModel(folderRepoManager: FolderRepositoryManager, pullRequestModel: PullRequestModel, params: PRUriParams, fileChange: FileChangeModel): Promise<string | Uint8Array> {
 	if (
 		(params.isBase && fileChange.status === GitChangeType.ADD) ||
 		(!params.isBase && fileChange.status === GitChangeType.DELETE)
 	) {
-		return "";
+		return '';
 	}
 
 	const diffHunks = await fileChange.diffHunks();
@@ -258,10 +166,7 @@ export async function provideDocumentContentForChangeModel(
 		inMemNeedsFullFile = await fileChange.isPartial();
 	}
 
-	if (
-		fileChange instanceof RemoteFileChangeModel ||
-		(fileChange instanceof InMemFileChangeModel && inMemNeedsFullFile)
-	) {
+	if ((fileChange instanceof RemoteFileChangeModel) || ((fileChange instanceof InMemFileChangeModel) && inMemNeedsFullFile)) {
 		try {
 			if (params.isBase) {
 				return pullRequestModel.githubRepository.getFile(
@@ -269,34 +174,27 @@ export async function provideDocumentContentForChangeModel(
 					params.baseCommit,
 				);
 			} else {
-				return pullRequestModel.githubRepository.getFile(
-					fileChange.fileName,
-					params.headCommit,
-				);
+				return pullRequestModel.githubRepository.getFile(fileChange.fileName, params.headCommit);
 			}
 		} catch (e) {
-			Logger.error(`Fetching file content failed: ${e}`, "PR");
+			Logger.error(`Fetching file content failed: ${e}`, 'PR');
 			vscode.window
 				.showWarningMessage(
-					"Opening this file locally failed. Would you like to view it on GitHub?",
-					"Open on GitHub",
+					'Opening this file locally failed. Would you like to view it on GitHub?',
+					'Open on GitHub',
 				)
-				.then((result) => {
-					if (result === "Open on GitHub" && fileChange.blobUrl) {
-						vscode.commands.executeCommand(
-							"vscode.open",
-							vscode.Uri.parse(fileChange.blobUrl),
-						);
+				.then(result => {
+					if ((result === 'Open on GitHub') && fileChange.blobUrl) {
+						vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(fileChange.blobUrl));
 					}
 				});
-			return "";
+			return '';
 		}
 	}
 
 	if (fileChange instanceof InMemFileChangeModel) {
 		const readContentFromDiffHunk =
-			fileChange.status === GitChangeType.ADD ||
-			fileChange.status === GitChangeType.DELETE;
+			fileChange.status === GitChangeType.ADD || fileChange.status === GitChangeType.DELETE;
 
 		if (readContentFromDiffHunk) {
 			if (params.isBase) {
@@ -317,7 +215,7 @@ export async function provideDocumentContentForChangeModel(
 					}
 				}
 
-				return left.join("\n");
+				return left.join('\n');
 			} else {
 				const right: string[] = [];
 				for (let i = 0; i < diffHunks.length; i++) {
@@ -335,13 +233,11 @@ export async function provideDocumentContentForChangeModel(
 					}
 				}
 
-				return right.join("\n");
+				return right.join('\n');
 			}
 		} else {
 			const originalFileName =
-				fileChange.status === GitChangeType.RENAME
-					? fileChange.previousFileName
-					: fileChange.fileName;
+				fileChange.status === GitChangeType.RENAME ? fileChange.previousFileName : fileChange.fileName;
 			const originalFilePath = vscode.Uri.joinPath(
 				folderRepoManager.repository.rootUri,
 				originalFileName!,
@@ -354,13 +250,10 @@ export async function provideDocumentContentForChangeModel(
 			if (params.isBase) {
 				return originalContent;
 			} else {
-				return getModifiedContentFromDiffHunk(
-					originalContent,
-					fileChange.patch,
-				);
+				return getModifiedContentFromDiffHunk(originalContent, fileChange.patch);
 			}
 		}
 	}
 
-	return "";
+	return '';
 }

@@ -10,9 +10,9 @@ export enum PRType {
 }
 
 export enum ReviewEvent {
-	Approve = "APPROVE",
-	RequestChanges = "REQUEST_CHANGES",
-	Comment = "COMMENT",
+	Approve = 'APPROVE',
+	RequestChanges = 'REQUEST_CHANGES',
+	Comment = 'COMMENT',
 }
 
 export enum GithubItemStateEnum {
@@ -34,7 +34,7 @@ export enum MergeQueueState {
 	Locked,
 	Mergeable,
 	Queued,
-	Unmergeable,
+	Unmergeable
 }
 
 export interface ReviewState {
@@ -61,6 +61,7 @@ export interface IAccount extends IActor {
 	avatarUrl?: string;
 	url: string;
 	email?: string;
+	specialDisplayName?: string
 }
 
 export interface ITeam {
@@ -82,12 +83,12 @@ export function reviewerId(reviewer: ITeam | IAccount): string {
 	return isTeam(reviewer) ? reviewer.id : reviewer.login;
 }
 
-export function reviewerLabel(reviewer: ITeam | IAccount | IActor): string {
-	return isTeam(reviewer) ? (reviewer.name ?? reviewer.slug) : reviewer.login;
+export function reviewerLabel(reviewer: ITeam | IAccount | IActor | any): string {
+	return isTeam(reviewer) ? (reviewer.name ?? reviewer.slug) : (reviewer.specialDisplayName ?? reviewer.login);
 }
 
-export function isTeam(reviewer: ITeam | IAccount | IActor): reviewer is ITeam {
-	return "org" in reviewer;
+export function isTeam(reviewer: ITeam | IAccount | IActor | any): reviewer is ITeam {
+	return 'org' in reviewer;
 }
 
 export interface ISuggestedReviewer extends IAccount {
@@ -96,9 +97,9 @@ export interface ISuggestedReviewer extends IAccount {
 }
 
 export function isSuggestedReviewer(
-	reviewer: IAccount | ISuggestedReviewer | ITeam,
+	reviewer: IAccount | ISuggestedReviewer | ITeam
 ): reviewer is ISuggestedReviewer {
-	return "isAuthor" in reviewer && "isCommenter" in reviewer;
+	return 'isAuthor' in reviewer && 'isCommenter' in reviewer;
 }
 
 export interface IProject {
@@ -151,6 +152,7 @@ export interface IIssueComment {
 	body: string;
 	databaseId: number;
 	reactionCount: number;
+	createdAt: string;
 }
 
 export interface Issue {
@@ -194,8 +196,8 @@ export interface PullRequest extends Issue {
 	autoMerge?: boolean;
 	autoMergeMethod?: MergeMethod;
 	allowAutoMerge?: boolean;
-	mergeCommitMeta?: { title: string; description: string };
-	squashCommitMeta?: { title: string; description: string };
+	mergeCommitMeta?: { title: string, description: string };
+	squashCommitMeta?: { title: string, description: string };
 	suggestedReviewers?: ISuggestedReviewer[];
 	hasComments?: boolean;
 }
@@ -209,7 +211,8 @@ export interface Notification {
 	owner: string;
 	name: string;
 	key: string;
-	id: string;
+	id: string,
+	itemID: string;
 	subject: {
 		title: string;
 		type: NotificationSubjectType;
@@ -228,14 +231,7 @@ export interface IRawFileChange {
 	additions: number;
 	deletions: number;
 	changes: number;
-	status:
-		| "added"
-		| "removed"
-		| "modified"
-		| "renamed"
-		| "copied"
-		| "changed"
-		| "unchanged";
+	status: 'added' | 'removed' | 'modified' | 'renamed' | 'copied' | 'changed' | 'unchanged';
 	raw_url: string;
 	blob_url: string;
 	contents_url: string;
@@ -257,7 +253,7 @@ export interface IRawFileContent {
 
 export interface IGitTreeItem {
 	path: string;
-	mode: "100644" | "100755" | "120000";
+	mode: '100644' | '100755' | '120000';
 	// Must contain a content or a sha.
 	content?: string;
 	sha?: string | null;
@@ -273,7 +269,7 @@ export interface IPullRequestEditData {
 	title?: string;
 }
 
-export type MergeMethod = "merge" | "squash" | "rebase";
+export type MergeMethod = 'merge' | 'squash' | 'rebase';
 
 export type MergeMethodsAvailability = {
 	[method in MergeMethod]: boolean;
@@ -296,11 +292,11 @@ export interface User extends IAccount {
 }
 
 export enum CheckState {
-	Success = "success",
-	Failure = "failure",
-	Neutral = "neutral",
-	Pending = "pending",
-	Unknown = "unknown",
+	Success = 'success',
+	Failure = 'failure',
+	Neutral = 'neutral',
+	Pending = 'pending',
+	Unknown = 'unknown'
 }
 
 export interface PullRequestCheckStatus {

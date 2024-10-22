@@ -16,20 +16,12 @@ import {
 	EditIssueCommentResponse,
 	TimelineEventsResponse,
 	UpdatePullRequestResponse,
-} from "./graphql";
-import {
-	GithubItemStateEnum,
-	IAccount,
-	IMilestone,
-	IProject,
-	IProjectItem,
-	IPullRequestEditData,
-	Issue,
-} from "./interface";
-import { parseGraphQlIssueComment, parseGraphQLTimelineEvents } from "./utils";
+} from './graphql';
+import { GithubItemStateEnum, IAccount, IMilestone, IProject, IProjectItem, IPullRequestEditData, Issue } from './interface';
+import { parseGraphQlIssueComment, parseGraphQLTimelineEvents } from './utils';
 
 export class IssueModel<TItem extends Issue = Issue> {
-	static ID = "IssueModel";
+	static ID = 'IssueModel';
 	public id: number;
 	public graphNodeId: string;
 	public number: number;
@@ -50,12 +42,7 @@ export class IssueModel<TItem extends Issue = Issue> {
 	private _onDidInvalidate = new vscode.EventEmitter<void>();
 	public onDidInvalidate = this._onDidInvalidate.event;
 
-	constructor(
-		githubRepository: GitHubRepository,
-		remote: Remote,
-		item: TItem,
-		skipUpdate: boolean = false,
-	) {
+	constructor(githubRepository: GitHubRepository, remote: Remote, item: TItem, skipUpdate: boolean = false) {
 		this.githubRepository = githubRepository;
 		this.remote = remote;
 		this.item = item;
@@ -113,11 +100,11 @@ export class IssueModel<TItem extends Issue = Issue> {
 		if (this.item) {
 			return this.item.body;
 		}
-		return "";
+		return '';
 	}
 
 	protected updateState(state: string) {
-		if (state.toLowerCase() === "open") {
+		if (state.toLowerCase() === 'open') {
 			this.state = GithubItemStateEnum.Open;
 		} else {
 			this.state = GithubItemStateEnum.Closed;
@@ -132,7 +119,7 @@ export class IssueModel<TItem extends Issue = Issue> {
 		if (issue.titleHTML) {
 			this.titleHTML = issue.titleHTML;
 		}
-		if (!this.bodyHTML || issue.body !== this.body) {
+		if (!this.bodyHTML || (issue.body !== this.body)) {
 			this.bodyHTML = issue.bodyHTML;
 		}
 		this.html_url = issue.url;
@@ -166,12 +153,7 @@ export class IssueModel<TItem extends Issue = Issue> {
 		return true;
 	}
 
-	async edit(toEdit: IPullRequestEditData): Promise<{
-		body: string;
-		bodyHTML: string;
-		title: string;
-		titleHTML: string;
-	}> {
+	async edit(toEdit: IPullRequestEditData): Promise<{ body: string; bodyHTML: string; title: string; titleHTML: string }> {
 		try {
 			const { mutate, schema } = await this.githubRepository.ensure();
 
@@ -215,10 +197,7 @@ export class IssueModel<TItem extends Issue = Issue> {
 			},
 		});
 
-		return parseGraphQlIssueComment(
-			data!.addComment.commentEdge.node,
-			this.githubRepository,
-		);
+		return parseGraphQlIssueComment(data!.addComment.commentEdge.node, this.githubRepository);
 	}
 
 	async editIssueComment(comment: IComment, text: string): Promise<IComment> {
@@ -235,10 +214,7 @@ export class IssueModel<TItem extends Issue = Issue> {
 				},
 			});
 
-			return parseGraphQlIssueComment(
-				data!.updateIssueComment.issueComment,
-				this.githubRepository,
-			);
+			return parseGraphQlIssueComment(data!.updateIssueComment.issueComment, this.githubRepository);
 		} catch (e) {
 			throw new Error(formatError(e));
 		}
@@ -270,15 +246,8 @@ export class IssueModel<TItem extends Issue = Issue> {
 		} catch (e) {
 			// We don't get a nice error message from the API when setting labels fails.
 			// Since adding labels isn't a critical part of the PR creation path it's safe to catch all errors that come from setting labels.
-			Logger.error(
-				`Failed to add labels to PR #${this.number}`,
-				IssueModel.ID,
-			);
-			vscode.window.showWarningMessage(
-				vscode.l10n.t(
-					"Some, or all, labels could not be added to the pull request.",
-				),
-			);
+			Logger.error(`Failed to add labels to PR #${this.number}`, IssueModel.ID);
+			vscode.window.showWarningMessage(vscode.l10n.t('Some, or all, labels could not be added to the pull request.'));
 		}
 	}
 
@@ -296,25 +265,17 @@ export class IssueModel<TItem extends Issue = Issue> {
 		const { mutate, schema } = await this.githubRepository.ensure();
 
 		try {
-			await Promise.all(
-				projectItems.map((project) =>
-					mutate<void>({
-						mutation: schema.RemovePullRequestFromProject,
-						variables: {
-							input: {
-								itemId: project.id,
-								projectId: project.project.id,
-							},
+			await Promise.all(projectItems.map(project =>
+				mutate<void>({
+					mutation: schema.RemovePullRequestFromProject,
+					variables: {
+						input: {
+							itemId: project.id,
+							projectId: project.project.id
 						},
-					}),
-				),
-			);
-			this.item.projectItems = this.item.projectItems?.filter(
-				(project) =>
-					!projectItems.find(
-						(p) => p.project.id === project.project.id,
-					),
-			);
+					},
+				})));
+			this.item.projectItems = this.item.projectItems?.filter(project => !projectItems.find(p => p.project.id === project.project.id));
 		} catch (err) {
 			Logger.error(err, IssueModel.ID);
 		}
@@ -324,58 +285,35 @@ export class IssueModel<TItem extends Issue = Issue> {
 		const { mutate, schema } = await this.githubRepository.ensure();
 
 		try {
-			const itemIds = await Promise.all(
-				projects.map((project) =>
-					mutate<AddPullRequestToProjectResponse>({
-						mutation: schema.AddPullRequestToProject,
-						variables: {
-							input: {
-								contentId: this.item.graphNodeId,
-								projectId: project.id,
-							},
+			const itemIds = await Promise.all(projects.map(project =>
+				mutate<AddPullRequestToProjectResponse>({
+					mutation: schema.AddPullRequestToProject,
+					variables: {
+						input: {
+							contentId: this.item.graphNodeId,
+							projectId: project.id
 						},
-					}),
-				),
-			);
+					},
+				})));
 			if (!this.item.projectItems) {
 				this.item.projectItems = [];
 			}
-			this.item.projectItems.push(
-				...projects.map((project, index) => {
-					return {
-						project,
-						id: itemIds[index].data!.addProjectV2ItemById.item.id,
-					};
-				}),
-			);
+			this.item.projectItems.push(...projects.map((project, index) => { return { project, id: itemIds[index].data!.addProjectV2ItemById.item.id }; }));
 		} catch (err) {
 			Logger.error(err, IssueModel.ID);
 		}
 	}
 
-	async updateProjects(
-		projects: IProject[],
-	): Promise<IProjectItem[] | undefined> {
-		const projectsToAdd: IProject[] = projects.filter(
-			(project) =>
-				!this.item.projectItems?.find(
-					(p) => p.project.id === project.id,
-				),
-		);
-		const projectsToRemove: IProjectItem[] =
-			this.item.projectItems?.filter(
-				(project) => !projects.find((p) => p.id === project.project.id),
-			) ?? [];
+	async updateProjects(projects: IProject[]): Promise<IProjectItem[] | undefined> {
+		const projectsToAdd: IProject[] = projects.filter(project => !this.item.projectItems?.find(p => p.project.id === project.id));
+		const projectsToRemove: IProjectItem[] = this.item.projectItems?.filter(project => !projects.find(p => p.id === project.project.id)) ?? [];
 		await this.removeProjects(projectsToRemove);
 		await this.addProjects(projectsToAdd);
 		return this.item.projectItems;
 	}
 
 	async getIssueTimelineEvents(): Promise<TimelineEvent[]> {
-		Logger.debug(
-			`Fetch timeline events of issue #${this.number} - enter`,
-			IssueModel.ID,
-		);
+		Logger.debug(`Fetch timeline events of issue #${this.number} - enter`, IssueModel.ID);
 		const githubRepository = this.githubRepository;
 		const { query, remote, schema } = await githubRepository.ensure();
 
@@ -390,10 +328,7 @@ export class IssueModel<TItem extends Issue = Issue> {
 			});
 
 			if (data.repository === null) {
-				Logger.error(
-					"Unexpected null repository when getting issue timeline events",
-					IssueModel.ID,
-				);
+				Logger.error('Unexpected null repository when getting issue timeline events', IssueModel.ID);
 				return [];
 			}
 			const ret = data.repository.pullRequest.timelineItems.nodes;

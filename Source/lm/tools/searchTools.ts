@@ -7,8 +7,8 @@
 import * as vscode from 'vscode';
 import Logger from '../../common/logger';
 import { FolderRepositoryManager } from '../../github/folderRepositoryManager';
-import { ILabel, Issue } from '../../github/interface';
-import { concatAsyncIterable, MimeTypes, RepoToolBase } from './toolsUtils';
+import { ILabel } from '../../github/interface';
+import { concatAsyncIterable, RepoToolBase } from './toolsUtils';
 
 interface ConvertToQuerySyntaxParameters {
 	naturalLanguageString: string;
@@ -78,6 +78,7 @@ const githubSearchSyntax = {
 const MATCH_UNQUOTED_SPACES = /(?!\B"[^"]*)\s+(?![^"]*"\B)/;
 
 export class ConvertToSearchSyntaxTool extends RepoToolBase<ConvertToQuerySyntaxParameters> {
+	public static readonly toolId = 'github-pull-request_formSearchQuery';
 	static ID = 'ConvertToSearchSyntaxTool';
 
 	private async fullQueryAssistantPrompt(folderRepoManager: FolderRepositoryManager): Promise<string> {
@@ -112,6 +113,7 @@ You are an expert on GitHub issue search syntax. GitHub issues are always softwa
 		return `Instructions:
 You are an expert on choosing search keywords based on a natural language search query. Here are some rules to follow:
 - Choose labels based on what the user wants to search for, not based on the actual words in the query.
+- The user might include info on how they want their search results to be displayed. Ignore all of that.
 - Labels will be and-ed together, so don't pick a bunch of super specific labels.
 - Try to pick just one label.
 - Respond with a space-separated list of labels: Examples: 'bug polish', 'accessibility "feature accessibility"'
@@ -128,7 +130,7 @@ You are getting ready to make a GitHub search query. Given a natural language qu
 - Only include a max of 1 key word that is relevant to the search query.
 - Don't refer to issue numbers.
 - Don't refer to product names.
-- Don't include any key words that might be related to sorting.
+- Don't include any key words that might be related to display or rendering.
 - Respond with only your chosen key word.
 - It's better to return no keywords than to return irrelevant keywords.
 - If an issue is provided, choose a keyword that names the feature or bug that the issue is about.
@@ -214,6 +216,10 @@ You are getting ready to make a GitHub search query. Given a natural language qu
 	private validateFreeForm(baseQuery: string, labels: string[], freeForm: string) {
 		// Currently, we only allow the free form to return one keyword
 		freeForm = freeForm.trim();
+		// useless strings to search for
+		if (freeForm.includes('issue') || freeForm.match(MATCH_UNQUOTED_SPACES)) {
+			return '';
+		}
 		if (baseQuery.includes(freeForm)) {
 			return '';
 		}
@@ -221,10 +227,6 @@ You are getting ready to make a GitHub search query. Given a natural language qu
 			return '';
 		}
 		if (labels.some(label => freeForm.includes(label))) {
-			return '';
-		}
-		// useless strings to search for
-		if (freeForm.includes('issue')) {
 			return '';
 		}
 		return freeForm;
@@ -344,18 +346,14 @@ You are getting ready to make a GitHub search query. Given a natural language qu
 		return concatAsyncIterable(response.text);
 	}
 
-	private toGitHubUrl(query: string) {
-		return `https://github.com/issues/?q=${encodeURIComponent(query)}`;
-	}
-
-	async prepareToolInvocation(_options: vscode.LanguageModelToolInvocationPrepareOptions<ConvertToQuerySyntaxParameters>): Promise<vscode.PreparedToolInvocation> {
+	async prepareInvocation(_options: vscode.LanguageModelToolInvocationPrepareOptions<ConvertToQuerySyntaxParameters>): Promise<vscode.PreparedToolInvocation> {
 		return {
-			invocationMessage: vscode.l10n.t('Converting to search syntax...')
+			invocationMessage: vscode.l10n.t('Converting to search syntax')
 		};
 	}
 
 	async invoke(options: vscode.LanguageModelToolInvocationOptions<ConvertToQuerySyntaxParameters>, token: vscode.CancellationToken): Promise<vscode.LanguageModelToolResult | undefined> {
-		const { owner, name, folderManager } = await this.getRepoInfo(options);
+		const { owner, name, folderManager } = this.getRepoInfo({ owner: options.parameters.repo?.owner, name: options.parameters.repo?.name });
 		const firstUserMessage = `${this.chatParticipantState.firstUserMessage}, ${options.parameters.naturalLanguageString}`;
 
 		const labels = await folderManager.getLabels(undefined, { owner, repo: name });
@@ -375,30 +373,69 @@ You are getting ready to make a GitHub search query. Given a natural language qu
 			throw new Error('Unable to form a query.');
 		}
 		Logger.debug(`Query \`${result.query}\``, ConvertToSearchSyntaxTool.ID);
-		return {
-			[MimeTypes.textPlain]: result.query,
-			[MimeTypes.textDisplay]: vscode.l10n.t('Query \`{0}\`. [Open on GitHub.com]({1})\n\n', result.query, this.toGitHubUrl(result.query))
+		const json: ConvertToQuerySyntaxResult = {
+			query: result.query,
+			repo: {
+				owner,
+				name
+			}
 		};
+		return new vscode.LanguageModelToolResult([new vscode.LanguageModelTextPart(JSON.stringify(json)),
+		new vscode.LanguageModelTextPart('Above is the query in stringified json format. You can pass this VERBATIM to a tool that knows how to search.')]);
 	}
 }
 
 type SearchToolParameters = ConvertToQuerySyntaxResult;
 
+export interface IssueSearchResultAccount {
+	login: string;
+	url: string;
+}
+
+interface IssueSearchResultLabel {
+	name: string;
+	color: string;
+}
+
+export interface IssueSearchResultItem {
+	title: string;
+	url: string;
+	number: number;
+	labels: IssueSearchResultLabel[];
+	state: string;
+	assignees: IssueSearchResultAccount[] | undefined;
+	createdAt: string;
+	updatedAt: string;
+	author: IssueSearchResultAccount;
+	milestone: string | undefined;
+	commentCount: number;
+	reactionCount: number;
+}
+
 export interface SearchToolResult {
-	arrayOfIssues: Issue[];
+	arrayOfIssues: IssueSearchResultItem[];
+	totalIssues: number;
 }
 
 export class SearchTool extends RepoToolBase<SearchToolParameters> {
+	public static readonly toolId = 'github-pull-request_doSearch';
 	static ID = 'SearchTool';
 
-	async prepareToolInvocation(_options: vscode.LanguageModelToolInvocationPrepareOptions<SearchToolParameters>): Promise<vscode.PreparedToolInvocation> {
+
+	private toGitHubUrl(query: string) {
+		return `https://github.com/issues/?q=${encodeURIComponent(query)}`;
+	}
+
+	async prepareInvocation(options: vscode.LanguageModelToolInvocationPrepareOptions<SearchToolParameters>): Promise<vscode.PreparedToolInvocation> {
+		const parameterQuery = options.parameters.query;
+
 		return {
-			invocationMessage: vscode.l10n.t('Searching for issues...')
+			invocationMessage: vscode.l10n.t('Searching for issues with "{0}". [Open on GitHub.com]({1})', parameterQuery, this.toGitHubUrl(parameterQuery))
 		};
 	}
 
 	async invoke(options: vscode.LanguageModelToolInvocationOptions<SearchToolParameters>, _token: vscode.CancellationToken): Promise<vscode.LanguageModelToolResult | undefined> {
-		const { folderManager } = await this.getRepoInfo(options);
+		const { folderManager } = this.getRepoInfo({ owner: options.parameters.repo?.owner, name: options.parameters.repo?.name });
 
 		const parameterQuery = options.parameters.query;
 		Logger.debug(`Searching with query \`${parameterQuery}\``, SearchTool.ID);
@@ -407,13 +444,30 @@ export class SearchTool extends RepoToolBase<SearchToolParameters> {
 		if (!searchResult) {
 			throw new Error(`No issues found for ${parameterQuery}. Make sure the query is valid.`);
 		}
+		const cutoff = 20;
 		const result: SearchToolResult = {
-			arrayOfIssues: searchResult.items.map(i => i.item)
+			arrayOfIssues: searchResult.items.slice(0, cutoff).map(i => {
+				const item = i.item;
+				return {
+					title: item.title,
+					url: item.url,
+					number: item.number,
+					labels: item.labels.map(l => ({ name: l.name, color: l.color })),
+					state: item.state,
+					assignees: item.assignees?.map(a => ({ login: a.login, url: a.url })),
+					createdAt: item.createdAt,
+					updatedAt: item.updatedAt,
+					author: { login: item.user.login, url: item.user.url },
+					milestone: item.milestone?.title,
+					commentCount: item.commentCount,
+					reactionCount: item.reactionCount
+				};
+			}),
+			totalIssues: searchResult.totalCount ?? searchResult.items.length
 		};
 		Logger.debug(`Found ${result.arrayOfIssues.length} issues, first issue ${result.arrayOfIssues[0]?.number}.`, SearchTool.ID);
-		return {
-			[MimeTypes.textPlain]: `Here are the issues I found for the query ${parameterQuery} in json format. You can pass these to a tool that can display them.`,
-			[MimeTypes.textJson]: result
-		};
+
+		return new vscode.LanguageModelToolResult([new vscode.LanguageModelTextPart(JSON.stringify(result)),
+		new vscode.LanguageModelTextPart(`Above are the issues I found for the query ${parameterQuery} in json format. You can pass these to a tool that can display them.`)]);
 	}
 }

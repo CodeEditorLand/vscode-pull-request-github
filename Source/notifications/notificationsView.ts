@@ -9,32 +9,35 @@ import { dispose } from '../common/utils';
 import { NotificationSubjectType } from '../github/interface';
 import { IssueModel } from '../github/issueModel';
 import { PullRequestModel } from '../github/pullRequestModel';
-import { INotificationItem, LoadMoreNotificationsTreeItem, NotificationsSortMethod, NotificationTreeDataItem } from './notificationItem';
-import { NotificationItem, NotificationsManager } from './notificationsManager';
-import { NotificationsProvider } from './notificationsProvider';
+import { isNotificationTreeItem, NotificationTreeDataItem, NotificationTreeItem } from './notificationItem';
+import { NotificationsManager } from './notificationsManager';
 
 export class NotificationsTreeData implements vscode.TreeDataProvider<NotificationTreeDataItem>, vscode.Disposable {
 	private readonly _disposables: vscode.Disposable[] = [];
 	private _onDidChangeTreeData: vscode.EventEmitter<NotificationTreeDataItem | undefined | void> = new vscode.EventEmitter<NotificationTreeDataItem | undefined | void>();
 	readonly onDidChangeTreeData: vscode.Event<NotificationTreeDataItem | undefined | void> = this._onDidChangeTreeData.event;
 
-	private _sortingMethod: NotificationsSortMethod = NotificationsSortMethod.Timestamp;
+	private _pageCount: number = 1;
+	private _computeNotifications: boolean = false;
 
-	constructor(private readonly _notificationsProvider: NotificationsProvider, private readonly _notificationsManager: NotificationsManager) {
+	constructor(private readonly _notificationsManager: NotificationsManager) {
 		this._disposables.push(this._onDidChangeTreeData);
-		this._disposables.push(this._notificationsManager.onDidChangeNotifications(updates => {
-			this._onDidChangeTreeData.fire(updates);
+		this._disposables.push(this._notificationsManager.onDidChangeNotifications(() => {
+			this._onDidChangeTreeData.fire();
+		}));
+		this._disposables.push(this._notificationsManager.onDidChangeSortingMethod(() => {
+			this.refresh(true);
 		}));
 	}
 
 	async getTreeItem(element: NotificationTreeDataItem): Promise<vscode.TreeItem> {
-		if (element instanceof NotificationItem) {
+		if (isNotificationTreeItem(element)) {
 			return this._resolveNotificationTreeItem(element);
 		}
 		return this._resolveLoadMoreNotificationsTreeItem();
 	}
 
-	private _resolveNotificationTreeItem(element: INotificationItem): vscode.TreeItem {
+	private _resolveNotificationTreeItem(element: NotificationTreeItem): vscode.TreeItem {
 		const label = element.notification.subject.title;
 		const item = new vscode.TreeItem(label, vscode.TreeItemCollapsibleState.None);
 		const notification = element.notification;
@@ -53,13 +56,11 @@ export class NotificationsTreeData implements vscode.TreeDataProvider<Notificati
 		item.description = `${notification.owner}/${notification.name}`;
 		item.contextValue = notification.subject.type;
 		item.resourceUri = toNotificationUri({ key: element.notification.key });
-
-		// TODO: Issue webview needs polish before we do this
-		// item.command = {
-		// 	command: 'pr.openDescription',
-		// 	title: 'Open Description',
-		// 	arguments: [element.model]
-		// };
+		item.command = {
+			command: 'notification.chatSummarizeNotification',
+			title: 'Summarize Notification',
+			arguments: [element]
+		};
 		return item;
 	}
 
@@ -77,34 +78,35 @@ export class NotificationsTreeData implements vscode.TreeDataProvider<Notificati
 		if (element !== undefined) {
 			return undefined;
 		}
-		const result = await this._notificationsProvider.getNotifications(this._sortingMethod);
-		if (!result) {
+
+		const notificationsData = await this._notificationsManager
+			.getNotifications(this._computeNotifications, this._pageCount);
+		this._computeNotifications = false;
+
+		if (notificationsData === undefined) {
 			return undefined;
 		}
-		const canLoadMoreNotifications = this._notificationsProvider.canLoadMoreNotifications;
-		if (canLoadMoreNotifications) {
-			return [...result, new LoadMoreNotificationsTreeItem()];
+
+		if (notificationsData.hasNextPage) {
+			return [...notificationsData.notifications, { kind: 'loadMoreNotifications' }];
 		}
-		return result;
-	}
 
-	sortByTimestamp(): void {
-		this._sortingMethod = NotificationsSortMethod.Timestamp;
-		this.refresh();
-	}
-
-	sortByPriority(): void {
-		this._sortingMethod = NotificationsSortMethod.Priority;
-		this.refresh();
-	}
-
-	refresh(): void {
-		this._onDidChangeTreeData.fire();
+		return notificationsData.notifications;
 	}
 
 	loadMore(): void {
-		this._notificationsProvider.loadMore();
+		this._pageCount++;
+		this.refresh(true);
+	}
+
+	refresh(compute: boolean): void {
+		this._computeNotifications = compute;
 		this._onDidChangeTreeData.fire();
+	}
+
+	async markAsRead(notificationIdentifier: { threadId: string, notificationKey: string }): Promise<void> {
+		await this._notificationsManager.markAsRead(notificationIdentifier);
+		this.refresh(false);
 	}
 
 	dispose() {
