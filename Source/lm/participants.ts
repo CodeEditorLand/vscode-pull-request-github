@@ -25,11 +25,15 @@ export class ChatParticipantState {
 		return [];
 	}
 
-	get firstUserMessage(): string | undefined {
+	get firstUserMessage(): vscode.LanguageModelTextPart | undefined {
 		for (let i = 0; i < this._messages.length; i++) {
 			const message = this._messages[i];
 			if (message.role === vscode.LanguageModelChatMessageRole.User && message.content) {
-				return message.content;
+				for (const part of message.content) {
+					if (part instanceof vscode.LanguageModelTextPart) {
+						return part;
+					}
+				}
 			}
 		}
 	}
@@ -147,7 +151,7 @@ export class ChatParticipant implements vscode.Disposable {
 
 			if (toolCalls.length) {
 				const assistantMsg = vscode.LanguageModelChatMessage.Assistant('');
-				assistantMsg.content2 = toolCalls.map(toolCall => new vscode.LanguageModelToolCallPart(toolCall.tool.name, toolCall.call.callId, toolCall.call.parameters));
+				assistantMsg.content2 = toolCalls.map(toolCall => new vscode.LanguageModelToolCallPart(toolCall.call.callId, toolCall.tool.name, toolCall.call.parameters));
 				this.state.addMessage(assistantMsg);
 
 				let shownToUser = false;
@@ -161,6 +165,7 @@ export class ChatParticipant implements vscode.Disposable {
 						const part = toolCallResult.content[i];
 						if (!(part instanceof vscode.LanguageModelTextPart)) {
 							// We only support text results for now, will change when we finish adopting prompt-tsx
+							result = new vscode.LanguageModelToolResultPart(toolCall.call.callId, toolCallResult.content);
 							continue;
 						}
 

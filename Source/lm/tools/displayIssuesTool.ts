@@ -57,7 +57,11 @@ export class DisplayIssuesTool extends ToolBase<DisplayIssuesParameters> {
 		return finalColumns;
 	}
 
-	private async getImportantColumns(issueItemsInfo: string, issues: IssueSearchResultItem[], token: vscode.CancellationToken): Promise<IssueColumn[]> {
+	private async getImportantColumns(issueItemsInfo: vscode.LanguageModelTextPart | undefined, issues: IssueSearchResultItem[], token: vscode.CancellationToken): Promise<IssueColumn[]> {
+		if (!issueItemsInfo) {
+			return ['number', 'title', 'state'];
+		}
+
 		// Try to get the llm to tell us which columns are important based on information it has about the issues
 		const models = await vscode.lm.selectChatModels({
 			vendor: 'copilot',
@@ -68,7 +72,7 @@ export class DisplayIssuesTool extends ToolBase<DisplayIssuesParameters> {
 			justification: 'Answering user questions pertaining to GitHub.'
 		};
 		const messages = [vscode.LanguageModelChatMessage.Assistant(this.assistantPrompt(issues))];
-		messages.push(vscode.LanguageModelChatMessage.User(issueItemsInfo));
+		messages.push(new vscode.LanguageModelChatMessage(vscode.LanguageModelChatMessageRole.User, issueItemsInfo?.value));
 		const response = await model.sendRequest(messages, chatOptions, token);
 		const result = this.postProcess(await concatAsyncIterable(response.text), issues);
 		const indexOfUrl = result.indexOf('url');
@@ -76,11 +80,7 @@ export class DisplayIssuesTool extends ToolBase<DisplayIssuesParameters> {
 			return ['number', 'title', 'state'];
 		} else if (indexOfUrl >= 0) {
 			// Never include the url column
-			if (result.indexOf('number') >= 0) {
-				result.splice(indexOfUrl, 1);
-			} else {
-				result[indexOfUrl] = 'number';
-			}
+			result.splice(indexOfUrl, 1);
 		}
 
 		return result;
@@ -112,19 +112,36 @@ export class DisplayIssuesTool extends ToolBase<DisplayIssuesParameters> {
 		}).join(' | ')} |`;
 	}
 
+	private foundIssuesCount(params: DisplayIssuesParameters): number {
+		return params.totalIssues !== undefined ? params.totalIssues : params.arrayOfIssues.length;
+	}
+
 	async prepareInvocation(options: vscode.LanguageModelToolInvocationPrepareOptions<DisplayIssuesParameters>): Promise<vscode.PreparedToolInvocation> {
-		return {
-			invocationMessage: vscode.l10n.t('Found {0} issues. Generating a markdown table of the first 10', options.parameters.totalIssues)
-		};
+		const maxDisplay = 10;
+		const foundIssuesCount = this.foundIssuesCount(options.parameters);
+		const actualDisplay = Math.min(maxDisplay, foundIssuesCount);
+		if (actualDisplay === 0) {
+			return {
+				invocationMessage: vscode.l10n.t('No issues found')
+			};
+		} else if (actualDisplay < foundIssuesCount) {
+			return {
+				invocationMessage: vscode.l10n.t('Found {0} issues. Generating a markdown table of the first {1}', foundIssuesCount, actualDisplay)
+			};
+		} else {
+			return {
+				invocationMessage: vscode.l10n.t('Found {0} issues. Generating a markdown table', foundIssuesCount)
+			};
+		}
 	}
 
 	async invoke(options: vscode.LanguageModelToolInvocationOptions<DisplayIssuesParameters>, token: vscode.CancellationToken): Promise<vscode.LanguageModelToolResult | undefined> {
-		let issueItemsInfo: string = this.chatParticipantState.firstUserMessage ?? '';
+		const issueItemsInfo: vscode.LanguageModelTextPart | undefined = this.chatParticipantState.firstUserMessage;
 		const issueItems: IssueSearchResultItem[] = options.parameters.arrayOfIssues;
 		if (issueItems.length === 0) {
 			return new vscode.LanguageModelToolResult([new vscode.LanguageModelTextPart(vscode.l10n.t('No issues found. Please try another query.'))]);
 		}
-		Logger.debug(`Displaying ${issueItems.length} issues, first issue ${issueItems[0].number}`, DisplayIssuesTool.ID);
+		Logger.debug(`Displaying ${this.foundIssuesCount(options.parameters)} issues, first issue ${issueItems[0].number}`, DisplayIssuesTool.ID);
 		const importantColumns = await this.getImportantColumns(issueItemsInfo, issueItems, token);
 
 		const titleRow = `| ${importantColumns.join(' | ')} |`;
