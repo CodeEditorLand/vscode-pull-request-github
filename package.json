@@ -3542,100 +3542,94 @@
 				"when": "ReposManagerStateContext == NeedsAuthentication && !github:hasGitHubRemotes && gitOpenRepositoryCount"
 			},
 			{
-				"name": "github-pull-request_notification_summarize",
-				"tags": [
-					"github",
-					"notification"
-				],
-				"toolReferenceName": "notification_summarize",
-				"displayName": "%languageModelTools.github-pull-request_notification_summarize.displayName%",
-				"modelDescription": "Summarizes a GitHub notification. A summary is a great way to describe a notification.",
-				"icon": "$(info)",
 				"canBeReferencedInPrompt": true,
+				"displayName": "%languageModelTools.github-pull-request_notification_summarize.displayName%",
+				"icon": "$(info)",
+				"modelDescription": "Summarizes a GitHub notification. A summary is a great way to describe a notification.",
+				"name": "github-pull-request_notification_summarize",
 				"parametersSchema": {
-					"type": "object",
 					"properties": {
-						"lastReadAt": {
-							"type": "string",
-							"description": "The last read time of the notification."
-						},
-						"lastUpdatedAt": {
-							"type": "string",
-							"description": "The last updated time of the notification."
-						},
-						"unread": {
-							"type": "boolean",
-							"description": "Whether the notification is unread."
-						},
-						"title": {
-							"type": "string",
-							"description": "The title of the notification issue/PR"
-						},
 						"body": {
-							"type": "string",
-							"description": "The body of the notification issue/PR"
-						},
-						"owner": {
-							"type": "string",
-							"description": "The owner of the repo in which the issue/PR is located"
-						},
-						"repo": {
-							"type": "string",
-							"description": "The repo in which the issue/PR is located"
+							"description": "The body of the notification issue/PR",
+							"type": "string"
 						},
 						"comments": {
-							"type": "array",
+							"description": "The array of unread comments under the issue/PR of the notification",
 							"items": {
-								"type": "object",
 								"properties": {
-									"body": {
-										"type": "string",
-										"description": "The comment body"
-									},
 									"author": {
-										"type": "string",
-										"description": "The author of the comment"
+										"description": "The author of the comment",
+										"type": "string"
+									},
+									"body": {
+										"description": "The comment body",
+										"type": "string"
 									}
-								}
+								},
+								"type": "object"
 							},
-							"description": "The array of unread comments under the issue/PR of the notification"
-						},
-						"threadId": {
-							"type": "number",
-							"description": "The thread id of the notification"
-						},
-						"notificationKey": {
-							"type": "string",
-							"description": "The key of the notification"
-						},
-						"itemNumber": {
-							"type": "string",
-							"description": "The number of the issue/PR in the notification"
-						},
-						"itemType": {
-							"type": "string",
-							"description": "The type of the item in the notification - whether it is an issue or a PR"
+							"type": "array"
 						},
 						"fileChanges": {
-							"type": "array",
+							"description": "For a notification about a PR, the array of associated file changes",
 							"items": {
-								"type": "object",
 								"properties": {
 									"fileName": {
-										"type": "string",
-										"description": "The name of the file of the change"
+										"description": "The name of the file of the change",
+										"type": "string"
 									},
 									"patch": {
-										"type": "string",
-										"description": "The patch of the change"
+										"description": "The patch of the change",
+										"type": "string"
 									}
 								},
 								"required": [
 									"fileName",
 									"patch"
-								]
+								],
+								"type": "object"
 							},
-							"description": "For a notification about a PR, the array of associated file changes"
+							"type": "array"
+						},
+						"itemNumber": {
+							"description": "The number of the issue/PR in the notification",
+							"type": "string"
+						},
+						"itemType": {
+							"description": "The type of the item in the notification - whether it is an issue or a PR",
+							"type": "string"
+						},
+						"lastReadAt": {
+							"description": "The last read time of the notification.",
+							"type": "string"
+						},
+						"lastUpdatedAt": {
+							"description": "The last updated time of the notification.",
+							"type": "string"
+						},
+						"notificationKey": {
+							"description": "The key of the notification",
+							"type": "string"
+						},
+						"owner": {
+							"description": "The owner of the repo in which the issue/PR is located",
+							"type": "string"
+						},
+						"repo": {
+							"description": "The repo in which the issue/PR is located",
+							"type": "string"
+						},
+						"threadId": {
+							"description": "The thread id of the notification",
+							"type": "number"
+						},
+						"title": {
+							"description": "The title of the notification issue/PR",
+							"type": "string"
+						},
+						"unread": {
+							"description": "Whether the notification is unread.",
+							"type": "boolean"
 						}
 					},
 					"required": [
@@ -3649,8 +3643,14 @@
 						"repo",
 						"itemNumber",
 						"itemType"
-					]
+					],
+					"type": "object"
 				},
+				"tags": [
+					"github",
+					"notification"
+				],
+				"toolReferenceName": "notification_summarize",
 				"when": "config.githubPullRequests.experimental.chat"
 			},
 			{
