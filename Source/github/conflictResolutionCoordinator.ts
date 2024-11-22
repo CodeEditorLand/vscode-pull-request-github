@@ -27,6 +27,7 @@ class MergeOutputProvider extends Disposable implements vscode.FileSystemProvide
 	private _createTime: number = 0;
 	private _modifiedTimes: Map<string, number> = new Map();
 	private _mergedFiles: Map<string, Uint8Array> = new Map();
+
 	get mergeResults(): Map<string, Uint8Array> {
 		return this._mergedFiles;
 	}
@@ -81,6 +82,7 @@ class MergeOutputProvider extends Disposable implements vscode.FileSystemProvide
 
 	clear(): void {
 		const fileEvents: vscode.FileChangeEvent[] = [];
+
 		for (const file of this._mergedFiles.keys()) {
 			fileEvents.push({ uri: vscode.Uri.from({ scheme: this._conflictResolutionModel.mergeScheme, path: file }), type: vscode.FileChangeType.Changed });
 			this.updateFile(file, buffer.Buffer.from(ORIGINAL_FILE));
@@ -104,13 +106,17 @@ export class ConflictResolutionCoordinator extends Disposable {
 
 	private async openConflict(conflict: Conflict) {
 		const prHeadUri = this._conflictResolutionModel.prHeadUri(conflict);
+
 		const baseUri = this._conflictResolutionModel.baseUri(conflict);
 
 		const prHead: MergeEditorInputData = { uri: prHeadUri, title: vscode.l10n.t('Pull Request Head') };
+
 		const base: MergeEditorInputData = { uri: baseUri, title: vscode.l10n.t('{0} Branch', this._conflictResolutionModel.prBaseBranchName) };
 
 		const mergeBaseUri: vscode.Uri = this._conflictResolutionModel.mergeBaseUri(conflict);
+
 		const mergeOutput = this._conflictResolutionModel.mergeOutputUri(conflict);
+
 		const options = {
 			base: mergeBaseUri,
 			input1: prHead,
@@ -134,7 +140,9 @@ export class ConflictResolutionCoordinator extends Disposable {
 		}));
 		this._register(vscode.commands.registerCommand('pr.exitConflictResolutionMode', async () => {
 			const exit = vscode.l10n.t('Exit and lose changes');
+
 			const result = await vscode.window.showWarningMessage(vscode.l10n.t('Are you sure you want to exit conflict resolution mode? All changes will be lost.'), { modal: true }, exit);
+
 			if (result === exit) {
 				return this.exitConflictResolutionMode(false);
 			}
@@ -150,11 +158,13 @@ export class ConflictResolutionCoordinator extends Disposable {
 			return;
 		}
 		const { activeTab } = vscode.window.tabGroups.activeTabGroup;
+
 		if (!activeTab || !(activeTab.input instanceof vscode.TabInputTextMerge)) {
 			return;
 		}
 
 		const result = await commands.executeCommand('mergeEditor.acceptMerge') as { successful: boolean };
+
 		if (result.successful) {
 			const contents = new TextDecoder().decode(this._mergeOutputProvider.mergeResults.get(uri.path)!);
 			this._conflictResolutionModel.addResolution(uri.path.substring(1), contents);
@@ -172,6 +182,7 @@ export class ConflictResolutionCoordinator extends Disposable {
 	}
 
 	private _onExitConflictResolutionMode = new vscode.EventEmitter<boolean>();
+
 	async exitConflictResolutionMode(allConflictsResolved: boolean): Promise<void> {
 		/* __GDPR__
 			"pr.conflictResolution.exit" : {
@@ -182,7 +193,9 @@ export class ConflictResolutionCoordinator extends Disposable {
 
 		this._mergeOutputProvider.clear();
 		await commands.setContext(contexts.RESOLVING_CONFLICTS, false);
+
 		const tabsToClose: vscode.Tab[] = [];
+
 		for (const group of vscode.window.tabGroups.all) {
 			for (const tab of group.tabs) {
 				if ((tab.input instanceof vscode.TabInputTextMerge) && (tab.input.result.scheme === this._conflictResolutionModel.mergeScheme)) {
@@ -197,6 +210,7 @@ export class ConflictResolutionCoordinator extends Disposable {
 
 	async enterConflictResolutionAndWaitForExit(): Promise<boolean> {
 		await this.enterConflictResolutionMode();
+
 		return asPromise(this._onExitConflictResolutionMode.event);
 	}
 }

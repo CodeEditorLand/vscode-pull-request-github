@@ -174,14 +174,18 @@ export interface Repository {
 	readonly ui: RepositoryUIState;
 
 	getConfigs(): Promise<{ key: string; value: string; }[]>;
+
 	getConfig(key: string): Promise<string>;
+
 	setConfig(key: string, value: string): Promise<string>;
+
 	getGlobalConfig(key: string): Promise<string>;
 
 	getObjectDetails(treeish: string, path: string): Promise<{ mode: string, object: string, size: number }>;
 	detectObjectType(object: string): Promise<{ mimetype: string, encoding?: string }>;
 	buffer(ref: string, path: string): Promise<Buffer>;
 	show(ref: string, path: string): Promise<string>;
+
 	getCommit(ref: string): Promise<Commit>;
 
 	add(paths: string[]): Promise<void>;
@@ -206,9 +210,13 @@ export interface Repository {
 
 	createBranch(name: string, checkout: boolean, ref?: string): Promise<void>;
 	deleteBranch(name: string, force?: boolean): Promise<void>;
+
 	getBranch(name: string): Promise<Branch>;
+
 	getBranches(query: BranchQuery, cancellationToken?: CancellationToken): Promise<Ref[]>;
+
 	getBranchBase(name: string): Promise<Branch | undefined>;
+
 	setBranchUpstream(name: string, upstream: string): Promise<void>;
 
 	getRefs(query: RefQuery, cancellationToken?: CancellationToken): Promise<Ref[]>;
@@ -248,7 +256,9 @@ export interface RemoteSourceProvider {
 	readonly name: string;
 	readonly icon?: string; // codicon name
 	readonly supportsQuery?: boolean;
+
 	getRemoteSources(query?: string): ProviderResult<RemoteSource[]>;
+
 	getBranches?(url: string): ProviderResult<string[]>;
 	publishRepository?(repository: Repository): Promise<void>;
 }
@@ -293,6 +303,7 @@ export interface GitAPI {
 	readonly onDidCloseRepository: Event<Repository>;
 
 	toGitUri(uri: Uri, ref: string): Uri;
+
 	getRepository(uri: Uri): Repository | null;
 	init(root: Uri): Promise<Repository | null>;
 	openRepository(root: Uri): Promise<Repository | null>

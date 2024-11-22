@@ -50,6 +50,7 @@ export class CommitNode extends TreeNode implements vscode.TreeItem {
 
 	override async getChildren(): Promise<TreeNode[]> {
 		super.getChildren();
+
 		const fileChanges = (await this.pullRequest.getCommitChangedFiles(this.commit)) ?? [];
 
 		if (fileChanges.length === 0) {
@@ -58,7 +59,9 @@ export class CommitNode extends TreeNode implements vscode.TreeItem {
 
 		const fileChangeNodes = fileChanges.map(change => {
 			const fileName = change.filename!;
+
 			const uri = vscode.Uri.parse(path.posix.join(`commit~${this.commit.sha.substr(0, 8)}`, fileName));
+
 			const changeModel = new GitFileChangeModel(
 				this.pullRequestManager,
 				this.pullRequest,
@@ -86,6 +89,7 @@ export class CommitNode extends TreeNode implements vscode.TreeItem {
 					this.pullRequestManager.repository.rootUri,
 				),
 				this.commit.sha);
+
 			const fileChangeNode = new GitFileChangeNode(
 				this,
 				this.pullRequestManager,
@@ -100,12 +104,15 @@ export class CommitNode extends TreeNode implements vscode.TreeItem {
 		});
 
 		let result: TreeNode[] = [];
+
 		const layout = vscode.workspace.getConfiguration(PR_SETTINGS_NAMESPACE).get<string>(FILE_LIST_LAYOUT);
+
 		if (layout === 'tree') {
 			// tree view
 			const dirNode = new DirectoryTreeNode(this, '');
 			fileChangeNodes.forEach(f => dirNode.addFile(f));
 			dirNode.finalize();
+
 			if (dirNode.label === '') {
 				// nothing on the root changed, pull children to parent
 				result.push(...dirNode.children);
@@ -117,6 +124,7 @@ export class CommitNode extends TreeNode implements vscode.TreeItem {
 			result = fileChangeNodes;
 		}
 		this.children = result;
+
 		return result;
 	}
 }

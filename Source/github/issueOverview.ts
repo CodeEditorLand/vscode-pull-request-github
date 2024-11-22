@@ -99,6 +99,7 @@ export class IssueOverviewPanel<TItem extends IssueModel = IssueModel> extends W
 		}));
 
 		this._webview = this._panel.webview;
+
 		super.initialize();
 
 		// Listen for when the panel is disposed
@@ -135,6 +136,7 @@ export class IssueOverviewPanel<TItem extends IssueModel = IssueModel> extends W
 		])
 			.then(result => {
 				const [issue, timelineEvents, defaultBranch] = result;
+
 				if (!issue) {
 					throw new Error(
 						`Fail to resolve issue #${issueModel.number} in ${issueModel.remote.owner}/${issueModel.remote.repositoryName}`,
@@ -186,11 +188,13 @@ export class IssueOverviewPanel<TItem extends IssueModel = IssueModel> extends W
 		});
 
 		this._panel.webview.html = this.getHtmlForWebview();
+
 		return this.updateIssue(issueModel);
 	}
 
 	protected override async _onDidReceiveMessage(message: IRequestMessage<any>) {
 		const result = await super._onDidReceiveMessage(message);
+
 		if (result !== this.MESSAGE_UNHANDLED) {
 			return;
 		}
@@ -198,31 +202,46 @@ export class IssueOverviewPanel<TItem extends IssueModel = IssueModel> extends W
 		switch (message.command) {
 			case 'alert':
 				vscode.window.showErrorMessage(message.args);
+
 				return;
+
 			case 'pr.close':
 				return this.close(message);
+
 			case 'pr.comment':
 				return this.createComment(message);
+
 			case 'scroll':
 				this._scrollPosition = message.args.scrollPosition;
+
 				return;
+
 			case 'pr.edit-comment':
 				return this.editComment(message);
+
 			case 'pr.delete-comment':
 				return this.deleteComment(message);
+
 			case 'pr.edit-description':
 				return this.editDescription(message);
+
 			case 'pr.edit-title':
 				return this.editTitle(message);
+
 			case 'pr.refresh':
 				this.refreshPanel();
+
 				return;
+
 			case 'pr.add-labels':
 				return this.addLabels(message);
+
 			case 'pr.remove-label':
 				return this.removeLabel(message);
+
 			case 'pr.debug':
 				return this.webviewDebug(message);
+
 			default:
 				return this.MESSAGE_UNHANDLED;
 		}
@@ -230,6 +249,7 @@ export class IssueOverviewPanel<TItem extends IssueModel = IssueModel> extends W
 
 	private async addLabels(message: IRequestMessage<void>): Promise<void> {
 		const quickPick = vscode.window.createQuickPick<vscode.QuickPickItem>();
+
 		try {
 			let newLabels: ILabel[] = [];
 
@@ -238,20 +258,25 @@ export class IssueOverviewPanel<TItem extends IssueModel = IssueModel> extends W
 			quickPick.show();
 			quickPick.items = await (getLabelOptions(this._folderRepositoryManager, this._item.item.labels, this._item.remote.owner, this._item.remote.repositoryName).then(options => {
 				newLabels = options.newLabels;
+
 				return options.labelPicks;
 			}));
 			quickPick.selectedItems = quickPick.items.filter(item => item.picked);
 
 			quickPick.busy = false;
+
 			const acceptPromise = asPromise<void>(quickPick.onDidAccept).then(() => {
 				return quickPick.selectedItems;
 			});
+
 			const hidePromise = asPromise<void>(quickPick.onDidHide);
+
 			const labelsToAdd = await Promise.race<readonly vscode.QuickPickItem[] | void>([acceptPromise, hidePromise]);
 			quickPick.busy = true;
 
 			if (labelsToAdd) {
 				await this._item.setLabels(labelsToAdd.map(r => r.label));
+
 				const addedLabels: ILabel[] = labelsToAdd.map(label => newLabels.find(l => l.name === label.label)!);
 
 				this._item.item.labels = addedLabels;

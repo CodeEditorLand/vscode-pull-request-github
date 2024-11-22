@@ -67,6 +67,7 @@ export class IssuesTreeData
 	private getQueryItem(element: QueryNode): vscode.TreeItem {
 		const item = new vscode.TreeItem(element.queryLabel, getQueryExpandState(this.context, element, element.isFirst ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.Collapsed));
 		item.contextValue = 'query';
+
 		return item;
 	}
 
@@ -79,11 +80,13 @@ export class IssuesTreeData
 		treeItem.iconPath = element.isOpen
 			? new vscode.ThemeIcon('issues', new vscode.ThemeColor('issues.open'))
 			: new vscode.ThemeIcon('issue-closed', new vscode.ThemeColor('issues.closed'));
+
 		if (this.stateManager.currentIssue(element.uri)?.issue.number === element.number) {
 			treeItem.label = `✓ ${treeItem.label as string}`;
 			treeItem.contextValue = 'currentissue';
 		} else {
 			const savedState = this.stateManager.getSavedIssueState(element.number);
+
 			if (savedState.branch) {
 				treeItem.contextValue = 'continueissue';
 			} else {
@@ -134,6 +137,7 @@ export class IssuesTreeData
 			return [];
 		} else {
 			commands.setContext(contexts.LOADING_ISSUES_TREE, true);
+
 			return [];
 		}
 	}
@@ -151,19 +155,24 @@ export class IssuesTreeData
 
 	private getRepoChildren(folderManager: FolderRepositoryManager): QueryNode[] | Promise<IssueItem[] | IssueGroupNode[]> {
 		const issueCollection = this.stateManager.getIssueCollection(folderManager.repository.rootUri);
+
 		const queryLabels = Array.from(issueCollection.keys());
+
 		if (queryLabels.length === 1) {
 			return this.getQueryNodeChildren(new QueryNode(folderManager.repository.rootUri, queryLabels[0], true));
 		}
 		return queryLabels.map((label, index) => {
 			const item = new QueryNode(folderManager.repository.rootUri, label, index === 0);
+
 			return item;
 		});
 	}
 
 	private async getQueryNodeChildren(queryNode: QueryNode): Promise<IssueItem[] | IssueGroupNode[]> {
 		const issueCollection = this.stateManager.getIssueCollection(queryNode.repoRootUri);
+
 		const issueQueryResult = await issueCollection.get(queryNode.queryLabel);
+
 		if (!issueQueryResult) {
 			return [];
 		}
@@ -175,6 +184,7 @@ export class IssuesTreeData
 			return issues;
 		}
 		const groupByValue = groupByOrder[indexInGroupByOrder];
+
 		if ((groupByValue !== 'milestone' && groupByValue !== 'repository') || groupByOrder.findIndex(groupBy => groupBy === groupByValue) !== indexInGroupByOrder) {
 			return this.getIssueGroupsForGroupIndex(repoRootUri, queryLabel, isFirst, groupByOrder, indexInGroupByOrder + 1, issues);
 		}
@@ -186,7 +196,9 @@ export class IssuesTreeData
 				return issue.milestone?.title ?? 'No Milestone';
 			}
 		});
+
 		const nodes: IssueGroupNode[] = [];
+
 		for (const group in groups) {
 			nodes.push(new IssueGroupNode(repoRootUri, queryLabel, isFirst, indexInGroupByOrder, group, groupByOrder, groups[group]));
 		}
@@ -218,6 +230,7 @@ const EXPANDED_ISSUES_STATE = 'expandedIssuesState';
 
 function expandStateId(element: FolderRepositoryManager | QueryNode | IssueGroupNode | IssueItem) {
 	let id: string | undefined;
+
 	if (element instanceof FolderRepositoryManager) {
 		id = element.repository.rootUri.toString();
 	} else if (element instanceof QueryNode) {
@@ -233,6 +246,7 @@ export function updateExpandedQueries(context: vscode.ExtensionContext, element:
 
 	if (id) {
 		const expandedQueries = new Set<string>(context.workspaceState.get(EXPANDED_ISSUES_STATE, []) as string[]);
+
 		if (isExpanded) {
 			expandedQueries.add(id);
 		} else {
@@ -244,12 +258,15 @@ export function updateExpandedQueries(context: vscode.ExtensionContext, element:
 
 function getQueryExpandState(context: vscode.ExtensionContext, element: FolderRepositoryManager | QueryNode | IssueGroupNode, defaultState: vscode.TreeItemCollapsibleState = vscode.TreeItemCollapsibleState.Expanded): vscode.TreeItemCollapsibleState {
 	const id = expandStateId(element);
+
 	if (id) {
 		const savedValue = context.workspaceState.get(EXPANDED_ISSUES_STATE);
+
 		if (!savedValue) {
 			return defaultState;
 		}
 		const expandedQueries = new Set<string>(savedValue as string[]);
+
 		return expandedQueries.has(id) ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.Collapsed;
 	}
 	return vscode.TreeItemCollapsibleState.None;

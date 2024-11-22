@@ -47,6 +47,7 @@ export class FilesCategoryNode extends TreeNode implements vscode.TreeItem {
 		super.getChildren(false);
 
 		Logger.appendLine(`Getting children for Files node`, PR_TREE);
+
 		if (!this._reviewModel.hasLocalFileChanges) {
 			// Provide loading feedback until we get the files.
 			return new Promise<TreeNode[]>(resolve => {
@@ -62,11 +63,13 @@ export class FilesCategoryNode extends TreeNode implements vscode.TreeItem {
 		}
 
 		let nodes: TreeNode[];
+
 		const layout = vscode.workspace.getConfiguration(PR_SETTINGS_NAMESPACE).get<string>(FILE_LIST_LAYOUT);
 
 		const dirNode = new DirectoryTreeNode(this, '');
 		this._reviewModel.localFileChanges.forEach(f => dirNode.addFile(f));
 		dirNode.finalize();
+
 		if (dirNode.label === '') {
 			// nothing on the root changed, pull children to parent
 			this.directories = dirNode.children;
@@ -83,6 +86,7 @@ export class FilesCategoryNode extends TreeNode implements vscode.TreeItem {
 		}
 		Logger.appendLine(`Got all children for Files node`, PR_TREE);
 		this.children = nodes;
+
 		return nodes;
 	}
 }

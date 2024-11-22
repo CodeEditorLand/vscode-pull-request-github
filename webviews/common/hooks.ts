@@ -19,5 +19,6 @@ export function useStateProp<S>(prop: S): [S, Dispatch<SetStateAction<S>>] {
 			setState(prop);
 		}
 	}, [prop]);
+
 	return [state, setState];
 }

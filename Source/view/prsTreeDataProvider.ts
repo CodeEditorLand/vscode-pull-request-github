@@ -30,10 +30,12 @@ export class PullRequestsTreeDataProvider extends Disposable implements vscode.T
 	private _onDidChangeTreeData = new vscode.EventEmitter<TreeNode | void>();
 	readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 	private _onDidChange = new vscode.EventEmitter<vscode.Uri>();
+
 	get onDidChange(): vscode.Event<vscode.Uri> {
 		return this._onDidChange.event;
 	}
 	private _children: WorkspaceFolderNode[] | CategoryTreeNode[];
+
 	get children() {
 		return this._children;
 	}
@@ -79,11 +81,13 @@ export class PullRequestsTreeDataProvider extends Disposable implements vscode.T
 						'workbench.action.openSettings',
 						`@ext:${EXTENSION_ID} queries`,
 					);
+
 				case 'Configure Remotes...':
 					return vscode.commands.executeCommand(
 						'workbench.action.openSettings',
 						`@ext:${EXTENSION_ID} remotes`,
 					);
+
 				default:
 					return;
 			}
@@ -169,9 +173,12 @@ export class PullRequestsTreeDataProvider extends Disposable implements vscode.T
 		}
 		if (this._children[0] instanceof WorkspaceFolderNode) {
 			const children: WorkspaceFolderNode[] = this._children as WorkspaceFolderNode[];
+
 			const node = children.find(node => node.folderManager === manager);
+
 			if (node) {
 				this._onDidChangeTreeData.fire(node);
+
 				return;
 			}
 		}
@@ -194,7 +201,9 @@ export class PullRequestsTreeDataProvider extends Disposable implements vscode.T
 		}
 
 		const remotesSetting = vscode.workspace.getConfiguration(PR_SETTINGS_NAMESPACE).get<string[]>(REMOTES);
+
 		let actions: PRCategoryActionNode[];
+
 		if (remotesSetting) {
 			actions = [
 				new PRCategoryActionNode(this, PRCategoryActionType.NoMatchingRemotes),
@@ -206,6 +215,7 @@ export class PullRequestsTreeDataProvider extends Disposable implements vscode.T
 		}
 
 		const { enterpriseRemotes } = this._reposManager ? await findDotComAndEnterpriseRemotes(this._reposManager?.folderManagers) : { enterpriseRemotes: [] };
+
 		if ((enterpriseRemotes.length > 0) && !this._reposManager?.credentialStore.isAuthenticated(AuthProvider.githubEnterprise)) {
 			actions.push(new PRCategoryActionNode(this, PRCategoryActionType.LoginEnterprise));
 		}
@@ -227,10 +237,12 @@ export class PullRequestsTreeDataProvider extends Disposable implements vscode.T
 
 		if (this._reposManager.state === ReposManagerState.Initializing) {
 			commands.setContext(contexts.LOADING_PRS_TREE, true);
+
 			return [];
 		}
 
 		const remotes = await Promise.all(this._reposManager.folderManagers.map(manager => manager.getGitHubRemotes()));
+
 		if ((this._reposManager.folderManagers.filter((_manager, index) => remotes[index].length > 0).length === 0)) {
 			return this.needsRemotes();
 		}
@@ -241,6 +253,7 @@ export class PullRequestsTreeDataProvider extends Disposable implements vscode.T
 			}
 
 			let result: WorkspaceFolderNode[] | CategoryTreeNode[];
+
 			if (this._reposManager.folderManagers.length === 1) {
 				result = WorkspaceFolderNode.getCategoryTreeNodes(
 					this._reposManager.folderManagers[0],
@@ -266,6 +279,7 @@ export class PullRequestsTreeDataProvider extends Disposable implements vscode.T
 			}
 
 			this._children = result;
+
 			return result;
 		}
 

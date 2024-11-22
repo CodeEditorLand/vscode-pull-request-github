@@ -31,6 +31,7 @@ export class ReviewsManager extends Disposable {
 		private _gitApi: GitApiImpl,
 	) {
 		super();
+
 		const gitContentProvider = new GitContentFileSystemProvider(_gitApi, _credentialStore, () => this._reviewManagers);
 		gitContentProvider.registerTextDocumentContentFallback(this.provideTextDocumentContent.bind(this));
 		this._register(vscode.workspace.registerFileSystemProvider(Schemes.Review, gitContentProvider, { isReadonly: true }));
@@ -73,15 +74,18 @@ export class ReviewsManager extends Disposable {
 	public addReviewManager(reviewManager: ReviewManager) {
 		// Try to insert in workspace folder order
 		const workspaceFolders = vscode.workspace.workspaceFolders;
+
 		if (workspaceFolders) {
 			const index = workspaceFolders.findIndex(
 				folder => folder.uri.toString() === reviewManager.repository.rootUri.toString(),
 			);
+
 			if (index > -1) {
 				const arrayEnd = this._reviewManagers.slice(index, this._reviewManagers.length);
 				this._reviewManagers = this._reviewManagers.slice(0, index);
 				this._reviewManagers.push(reviewManager);
 				this._reviewManagers.push(...arrayEnd);
+
 				return;
 			}
 		}
@@ -92,6 +96,7 @@ export class ReviewsManager extends Disposable {
 		const reviewManagerIndex = this._reviewManagers.findIndex(
 			manager => manager.repository.rootUri.toString() === repo.rootUri.toString(),
 		);
+
 		if (reviewManagerIndex >= 0) {
 			const manager = this._reviewManagers[reviewManagerIndex];
 			this._reviewManagers.splice(reviewManagerIndex);

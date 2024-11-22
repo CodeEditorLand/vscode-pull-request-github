@@ -85,10 +85,12 @@ export class StateManager {
 
 	getIssueCollection(uri: vscode.Uri): Map<string, Promise<IssueQueryResult>> {
 		let collection = this._singleRepoStates.get(uri.path)?.issueCollection;
+
 		if (collection) {
 			return collection;
 		} else {
 			collection = new Map();
+
 			return collection;
 		}
 	}
@@ -101,6 +103,7 @@ export class StateManager {
 
 	private getOrCreateSingleRepoState(uri: vscode.Uri, folderManager?: FolderRepositoryManager): SingleRepoState {
 		let state = this._singleRepoStates.get(uri.path);
+
 		if (state) {
 			return state;
 		}
@@ -113,6 +116,7 @@ export class StateManager {
 			folderManager,
 		};
 		this._singleRepoStates.set(uri.path, state);
+
 		return state;
 	}
 
@@ -149,13 +153,17 @@ export class StateManager {
 			const state = that.getOrCreateSingleRepoState(repository.rootUri);
 			// setIssueData can cause the last head and branch state to change. Capture them before that can happen.
 			const oldHead = state.lastHead;
+
 			const oldBranch = state.lastBranch;
+
 			const newHead = repository.state.HEAD ? repository.state.HEAD.commit : undefined;
+
 			if ((repository.state.HEAD ? repository.state.HEAD.commit : undefined) !== oldHead) {
 				await that.setIssueData(state.folderManager);
 			}
 
 			const newBranch = repository.state.HEAD?.name;
+
 			if (
 				(oldHead !== newHead || oldBranch !== newBranch) &&
 				(!state.currentIssue || newBranch !== state.currentIssue.branchName)
@@ -206,6 +214,7 @@ export class StateManager {
 		this._queries = vscode.workspace
 			.getConfiguration(ISSUES_SETTINGS_NAMESPACE, null)
 			.get(QUERIES, DEFAULT_QUERY_CONFIGURATION_VALUE);
+
 		if (this._queries.length === 0) {
 			this._queries = DEFAULT_QUERY_CONFIGURATION_VALUE;
 		}
@@ -233,6 +242,7 @@ export class StateManager {
 			this.context.subscriptions.push(folderManager.onDidChangeRepositories(async (e) => {
 				if (e.added) {
 					const state = this.getOrCreateSingleRepoState(folderManager.repository.rootUri);
+
 					if ((state.issueCollection.size === 0) || (await Promise.all(state.issueCollection.values())).some(collection => collection.issues === undefined)) {
 						this.refresh(folderManager);
 					}
@@ -247,7 +257,9 @@ export class StateManager {
 				? folderManager.repository.state.HEAD.commit
 				: undefined;
 			this._singleRepoStates.set(folderManager.repository.rootUri.path, singleRepoState);
+
 			const branch = folderManager.repository.state.HEAD?.name;
+
 			if (!singleRepoState.currentIssue && branch) {
 				await this.setCurrentIssueFromBranch(singleRepoState, branch, true);
 			}
@@ -256,8 +268,11 @@ export class StateManager {
 
 	private cleanIssueState() {
 		const stateString: string | undefined = this.context.workspaceState.get(ISSUES_KEY);
+
 		const state: IssuesState = stateString ? JSON.parse(stateString) : { issues: [], branches: [] };
+
 		const deleteDate: number = new Date().valueOf() - 30 /*days*/ * 86400000 /*milliseconds in a day*/;
+
 		for (const issueState in state.issues) {
 			if (state.issues[issueState].stateModifiedTime < deleteDate) {
 				if (state.branches && state.branches[issueState]) {
@@ -270,8 +285,11 @@ export class StateManager {
 
 	private async getUsers(uri: vscode.Uri): Promise<Map<string, IAccount>> {
 		await this.initializePromise;
+
 		const assignableUsers = await this.manager.getManagerForFile(uri)?.getAssignableUsers();
+
 		const userMap: Map<string, IAccount> = new Map();
+
 		for (const remote in assignableUsers) {
 			assignableUsers[remote].forEach(account => {
 				userMap.set(account.login, account);
@@ -285,6 +303,7 @@ export class StateManager {
 			return Promise.resolve(new Map());
 		}
 		const state = this.getOrCreateSingleRepoState(uri);
+
 		if (!state.userMap || (await state.userMap).size === 0) {
 			state.userMap = this.getUsers(uri);
 		}
@@ -302,13 +321,16 @@ export class StateManager {
 	private async setIssueData(folderManager: FolderRepositoryManager) {
 		const singleRepoState = this.getOrCreateSingleRepoState(folderManager.repository.rootUri, folderManager);
 		singleRepoState.issueCollection.clear();
+
 		const enterpriseRemotes = parseRepositoryRemotes(folderManager.repository).filter(
 			remote => remote.isEnterprise
 		);
+
 		const user = await this.getCurrentUser(enterpriseRemotes.length ? AuthProvider.githubEnterprise : AuthProvider.github);
 
 		for (let query of this._queries) {
 			let items: Promise<IssueQueryResult> | undefined;
+
 			if (query.query === DEFAULT) {
 				query = DEFAULT_QUERY_CONFIGURATION_VALUE[0];
 			}
@@ -336,6 +358,7 @@ export class StateManager {
 				issues?.items.map(item => {
 					const issueItem: IssueItem = item as IssueItem;
 					issueItem.uri = folderManager.repository.rootUri;
+
 					return issueItem;
 				}),
 			);
@@ -346,11 +369,13 @@ export class StateManager {
 		const createBranchConfig = vscode.workspace
 			.getConfiguration(ISSUES_SETTINGS_NAMESPACE)
 			.get<string>(USE_BRANCH_FOR_ISSUES);
+
 		if (createBranchConfig === 'off') {
 			return;
 		}
 
 		let defaults: PullRequestDefaults | undefined;
+
 		try {
 			defaults = await singleRepoState.folderManager.getPullRequestDefaults();
 		} catch (e) {
@@ -359,6 +384,7 @@ export class StateManager {
 		}
 		if (branchName === defaults.base) {
 			await this.setCurrentIssue(singleRepoState, undefined, false);
+
 			return;
 		}
 
@@ -367,6 +393,7 @@ export class StateManager {
 		}
 
 		const state: IssuesState = this.getSavedState();
+
 		for (const branch in state.branches) {
 			if (branch === branchName) {
 				const issueModel = await singleRepoState.folderManager.resolveIssue(
@@ -374,6 +401,7 @@ export class StateManager {
 					state.branches[branch].repositoryName,
 					state.branches[branch].number,
 				);
+
 				if (issueModel) {
 					await this.setCurrentIssue(
 						singleRepoState,
@@ -402,13 +430,16 @@ export class StateManager {
 	}
 
 	private isSettingIssue: boolean = false;
+
 	async setCurrentIssue(repoState: SingleRepoState | FolderRepositoryManager, issue: CurrentIssue | undefined, checkoutDefaultBranch: boolean, silent: boolean = false) {
 		if (this.isSettingIssue && issue === undefined) {
 			return;
 		}
 		this.isSettingIssue = true;
+
 		if (repoState instanceof FolderRepositoryManager) {
 			const state = this._singleRepoStates.get(repoState.repository.rootUri.path);
+
 			if (!state) {
 				return;
 			}
@@ -425,6 +456,7 @@ export class StateManager {
 				this.context.subscriptions.push(issue.onDidChangeCurrentIssueState(() => this.updateStatusBar()));
 			}
 			this.context.workspaceState.update(CURRENT_ISSUE_KEY, issue?.issue.number);
+
 			if (!issue || (await issue.startWorking(silent))) {
 				repoState.currentIssue = issue;
 				this.updateStatusBar();
@@ -439,7 +471,9 @@ export class StateManager {
 
 	private updateStatusBar() {
 		const currentIssues = this.currentIssues();
+
 		const shouldShowStatusBarItem = currentIssues.length > 0;
+
 		if (!shouldShowStatusBarItem) {
 			if (this.statusBarItem) {
 				this.statusBarItem.hide();
@@ -463,17 +497,20 @@ export class StateManager {
 
 	private getSavedState(): IssuesState {
 		const stateString: string | undefined = this.context.workspaceState.get(ISSUES_KEY);
+
 		return stateString ? JSON.parse(stateString) : { issues: Object.create(null), branches: Object.create(null) };
 	}
 
 	getSavedIssueState(issueNumber: number): IssueState {
 		const state: IssuesState = this.getSavedState();
+
 		return state.issues[`${issueNumber}`] ?? {};
 	}
 
 	async setSavedIssueState(issue: IssueModel, issueState: IssueState) {
 		const state: IssuesState = this.getSavedState();
 		state.issues[`${issue.number}`] = { ...issueState, stateModifiedTime: new Date().valueOf() };
+
 		if (issueState.branch) {
 			if (!state.branches) {
 				state.branches = Object.create(null);

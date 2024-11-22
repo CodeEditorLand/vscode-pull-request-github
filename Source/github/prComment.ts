@@ -204,6 +204,7 @@ export class TemporaryComment extends CommentBase {
 }
 
 const SUGGESTION_EXPRESSION = /```suggestion(\u0020*(\r\n|\n))((?<suggestion>[\s\S]*?)(\r\n|\n))?```/;
+
 const IMG_EXPRESSION = /<img .*src=['"](?<src>.+?)['"].*?>/g;
 
 export class GHPRComment extends CommentBase {
@@ -230,6 +231,7 @@ export class GHPRComment extends CommentBase {
 		const avatarUrisPromise = comment.user ? DataUri.avatarCirclesAsImageDataUris(context, [comment.user], 28, 28) : Promise.resolve([]);
 		this.doSetBody(comment.body, !comment.user).then(async () => { // only refresh if there's no user. If there's a user, we'll refresh in the then.
 			const avatarUris = await avatarUrisPromise;
+
 			if (avatarUris.length > 0) {
 				this.author.iconPath = avatarUris[0];
 			}
@@ -242,6 +244,7 @@ export class GHPRComment extends CommentBase {
 		this.label = comment.isDraft ? vscode.l10n.t('Pending') : undefined;
 
 		const contextValues: string[] = [];
+
 		if (comment.canEdit) {
 			contextValues.push('canEdit');
 		}
@@ -271,6 +274,7 @@ export class GHPRComment extends CommentBase {
 	update(comment: IComment) {
 		const oldRawComment = this.rawComment;
 		this.rawComment = comment;
+
 		let refresh: boolean = false;
 
 		if (updateCommentReactions(this, comment.reactions)) {
@@ -279,11 +283,13 @@ export class GHPRComment extends CommentBase {
 
 		const oldLabel = this.label;
 		this.label = comment.isDraft ? vscode.l10n.t('Pending') : undefined;
+
 		if (this.label !== oldLabel) {
 			refresh = true;
 		}
 
 		const contextValues: string[] = [];
+
 		if (comment.canEdit) {
 			contextValues.push('canEdit');
 		}
@@ -298,6 +304,7 @@ export class GHPRComment extends CommentBase {
 
 		const oldContextValue = this.contextValue;
 		this.contextValue = contextValues.join(',');
+
 		if (oldContextValue !== this.contextValue) {
 			refresh = true;
 		}
@@ -321,7 +328,9 @@ export class GHPRComment extends CommentBase {
 
 	get suggestion(): string | undefined {
 		const match = this.rawComment.body.match(SUGGESTION_EXPRESSION);
+
 		const suggestionBody = match?.groups?.suggestion;
+
 		if (match) {
 			return suggestionBody ? suggestionBody : '';
 		}
@@ -350,8 +359,10 @@ ${args[3] ?? ''}
 
 	private async createLocalFilePath(rootUri: vscode.Uri, fileSubPath: string, startLine: number, endLine: number): Promise<string | undefined> {
 		const localFile = vscode.Uri.joinPath(rootUri, fileSubPath);
+
 		try {
 			const stat = await vscode.workspace.fs.stat(localFile);
+
 			if (stat.type === vscode.FileType.File) {
 				return `${localFile.with({ fragment: `${startLine}-${endLine}` }).toString()}`;
 			}
@@ -362,27 +373,35 @@ ${args[3] ?? ''}
 
 	private async replacePermalink(body: string): Promise<string> {
 		const githubRepositories = this.githubRepositories;
+
 		if (!githubRepositories || githubRepositories.length === 0) {
 			return body;
 		}
 
 		const expression = new RegExp(`https://github.com/(.+)/${githubRepositories[0].remote.repositoryName}/blob/([0-9a-f]{40})/(.*)#L([0-9]+)(-L([0-9]+))?`, 'g');
+
 		return stringReplaceAsync(body, expression, async (match: string, owner: string, sha: string, file: string, start: string, _endGroup?: string, end?: string, index?: number) => {
 			if (index && (index > 0) && (body.charAt(index - 1) === '(')) {
 				return match;
 			}
 			const githubRepository = githubRepositories.find(repository => repository.remote.owner.toLocaleLowerCase() === owner.toLocaleLowerCase());
+
 			if (!githubRepository) {
 				return match;
 			}
 			const startLine = parseInt(start);
+
 			const endLine = end ? parseInt(end) : startLine + 1;
+
 			const lineContents = await githubRepository.getLines(sha, file, startLine, endLine);
+
 			if (!lineContents) {
 				return match;
 			}
 			const localFile = await this.createLocalFilePath(githubRepository.rootUri, file, startLine, endLine);
+
 			const lineMessage = end ? `Lines ${startLine} to ${endLine} in \`${sha.substring(0, 7)}\`` : `Line ${startLine} in \`${sha.substring(0, 7)}\``;
+
 			return `
 ***
 [${file}](${localFile ?? match})${localFile ? ` ([view on GitHub](${match}))` : ''}
@@ -408,12 +427,16 @@ ${lineContents}
 
 	private async replaceBody(body: string | vscode.MarkdownString): Promise<string> {
 		Logger.trace('Replace comment body', GHPRComment.ID);
+
 		if (body instanceof vscode.MarkdownString) {
 			const permalinkReplaced = await this.replacePermalink(body.value);
+
 			return this.replaceImg(this.replaceSuggestion(permalinkReplaced));
 		}
 		const newLinesReplaced = this.replaceNewlines(body);
+
 		const documentLanguage = (await vscode.workspace.openTextDocument(this.parent.uri)).languageId;
+
 		const replacerRegex = new RegExp(`([^/\[\`]|^)@(${ALLOWED_USERS})`, 'g');
 		// Replace user
 		const linkified = newLinesReplaced.replace(replacerRegex, (substring, _1, _2, offset) => {
@@ -427,6 +450,7 @@ ${lineContents}
 			}
 
 			const username = substring.substring(substring.startsWith('@') ? 1 : 2);
+
 			if ((((documentLanguage === 'javascript') || (documentLanguage === 'typescript')) && JSDOC_NON_USERS.includes(username))
 				|| ((documentLanguage === 'php') && PHPDOC_NON_USERS.includes(username))) {
 				return substring;
@@ -435,15 +459,18 @@ ${lineContents}
 		});
 
 		const permalinkReplaced = await this.replacePermalink(linkified);
+
 		return this.postpendSpecialAuthorComment(this.replaceImg(this.replaceSuggestion(permalinkReplaced)));
 	}
 
 	protected async doSetBody(body: string | vscode.MarkdownString, refresh: boolean) {
 		this._rawBody = body;
+
 		const replacedBody = await this.replaceBody(body);
 
 		if (replacedBody !== this.replacedBody) {
 			this.replacedBody = replacedBody;
+
 			if (refresh) {
 				this.refresh();
 			}

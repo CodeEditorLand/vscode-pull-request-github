@@ -25,10 +25,12 @@ export class SuggestFixTool extends RepoToolBase<IssueToolParameters> {
 
 	async invoke(options: vscode.LanguageModelToolInvocationOptions<IssueToolParameters>, token: vscode.CancellationToken): Promise<vscode.LanguageModelToolResult | undefined> {
 		const { folderManager } = await this.getRepoInfo(options.input.repo);
+
 		if (!folderManager) {
 			throw new Error(`No folder manager found for ${options.input.repo.owner}/${options.input.repo.name}. Make sure to have the repository open.`);
 		}
 		const issue = await folderManager.resolveIssue(options.input.repo.owner, options.input.repo.name, options.input.issueNumber, true);
+
 		if (!issue) {
 			throw new Error(`No issue found for ${options.input.repo.owner}/${options.input.repo.name}/${options.input.issueNumber}. Make sure the issue exists.`);
 		}
@@ -59,8 +61,10 @@ export class SuggestFixTool extends RepoToolBase<IssueToolParameters> {
 		}, token);
 
 		const plainTextResult = copilotCodebaseResult.content[0];
+
 		if (plainTextResult instanceof vscode.LanguageModelTextPart) {
 			messages.push(vscode.LanguageModelChatMessage.User(`Below is some potential relevant workspace context to the issue. The user cannot see this result, so you should explain it to the user if referencing it in your answer.`));
+
 			const toolMessage = vscode.LanguageModelChatMessage.User('');
 			toolMessage.content = [plainTextResult];
 			messages.push(toolMessage);
@@ -70,10 +74,13 @@ export class SuggestFixTool extends RepoToolBase<IssueToolParameters> {
 			vendor: 'copilot',
 			family: 'gpt-4o'
 		});
+
 		const model = models[0];
+
 		const response = await model.sendRequest(messages, {}, token);
 
 		let responseResult = '';
+
 		for await (const chunk of response.text) {
 			responseResult += chunk;
 		}

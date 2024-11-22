@@ -152,14 +152,18 @@ export const EMPTY_IMAGE_URI = vscode.Uri.parse(
 export async function asTempStorageURI(uri: vscode.Uri, repository: Repository): Promise<vscode.Uri | undefined> {
 	try {
 		const { commit, baseCommit, headCommit, isBase, path }: { commit: string, baseCommit: string, headCommit: string, isBase: string, path: string } = JSON.parse(uri.query);
+
 		const ext = pathUtils.extname(path);
+
 		if (!KnownMediaExtensions.includes(ext)) {
 			return;
 		}
 		const ref = uri.scheme === Schemes.Review ? commit : isBase ? baseCommit : headCommit;
 
 		const absolutePath = pathUtils.join(repository.rootUri.fsPath, path).replace(/\\/g, '/');
+
 		const { object } = await repository.getObjectDetails(ref, absolutePath);
+
 		const { mimetype } = await repository.detectObjectType(object);
 
 		if (mimetype === 'text/plain') {
@@ -168,6 +172,7 @@ export async function asTempStorageURI(uri: vscode.Uri, repository: Repository):
 
 		if (ImageMimetypes.indexOf(mimetype) > -1) {
 			const contents = await repository.buffer(ref, absolutePath);
+
 			return TemporaryState.write(pathUtils.dirname(path), pathUtils.basename(path), contents);
 		}
 	} catch (err) {
@@ -196,14 +201,17 @@ export namespace DataUri {
 
 	async function writeAvatarToCache(context: vscode.ExtensionContext, user: IAccount | ITeam, contents: Uint8Array): Promise<vscode.Uri> {
 		await vscode.workspace.fs.createDirectory(cacheLocation(context));
+
 		const file = fileCacheUri(context, user);
 		await vscode.workspace.fs.writeFile(file, contents);
+
 		return file;
 	}
 
 	async function readAvatarFromCache(context: vscode.ExtensionContext, user: IAccount | ITeam): Promise<Uint8Array | undefined> {
 		try {
 			const file = fileCacheUri(context, user);
+
 			return vscode.workspace.fs.readFile(file);
 		} catch (e) {
 			return;
@@ -218,7 +226,9 @@ export namespace DataUri {
 
 	export async function avatarCirclesAsImageDataUris(context: vscode.ExtensionContext, users: (IAccount | ITeam)[], height: number, width: number, localOnly?: boolean): Promise<(vscode.Uri | undefined)[]> {
 		let cacheLogOrder: string[];
+
 		const cacheLog = cacheLogUri(context);
+
 		try {
 			const log = await vscode.workspace.fs.readFile(cacheLog);
 			cacheLogOrder = JSON.parse(log.toString());
@@ -230,13 +240,17 @@ export namespace DataUri {
 		const results = await Promise.all(users.map(async (user) => {
 
 			const imageSourceUrl = user.avatarUrl;
+
 			if (imageSourceUrl === undefined) {
 				return undefined;
 			}
 			let innerImageContents: Buffer | undefined;
+
 			let cacheMiss: boolean = false;
+
 			try {
 				const fileContents = await readAvatarFromCache(context, user);
+
 				if (!fileContents) {
 					throw new Error('Temporary state not initialized');
 				}
@@ -246,12 +260,15 @@ export namespace DataUri {
 					return;
 				}
 				cacheMiss = true;
+
 				const doFetch = async () => {
 					const response = await fetch(imageSourceUrl.toString());
+
 					const buffer = await response.arrayBuffer();
 					await writeAvatarToCache(context, user, new Uint8Array(buffer));
 					innerImageContents = Buffer.from(buffer);
 				};
+
 				try {
 					await doFetch();
 				} catch (e) {
@@ -267,15 +284,20 @@ export namespace DataUri {
 				cacheLogOrder.push(icon);
 			}
 			const innerImageEncoded = `data:image/jpeg;size:${innerImageContents.byteLength};base64,${innerImageContents.toString('base64')}`;
+
 			const contentsString = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
 		<image href="${innerImageEncoded}" width="${width}" height="${height}" style="clip-path: inset(0 0 0 0 round 50%);"/>
 		</svg>`;
+
 			const contents = Buffer.from(contentsString);
+
 			const finalDataUri = asImageDataURI(contents);
+
 			return finalDataUri;
 		}));
 
 		const maxCacheSize = Math.max(users.length, 200);
+
 		if (cacheLogOrder.length > startingCacheSize && startingCacheSize > 0 && cacheLogOrder.length > maxCacheSize) {
 			// The cache is getting big, we should clean it up.
 			const toDelete = cacheLogOrder.splice(0, 50);
@@ -387,6 +409,7 @@ export function toPRUri(
 
 export function createPRNodeIdentifier(pullRequest: PullRequestModel | { remote: string, prNumber: number } | string) {
 	let identifier: string;
+
 	if (pullRequest instanceof PullRequestModel) {
 		identifier = `${pullRequest.remote.url}:${pullRequest.number}`;
 	} else if (typeof pullRequest === 'string') {
@@ -401,6 +424,7 @@ export function createPRNodeUri(
 	pullRequest: PullRequestModel | { remote: string, prNumber: number } | string
 ): vscode.Uri {
 	const identifier = createPRNodeIdentifier(pullRequest);
+
 	const params: PRNodeUriParams = {
 		prIdentifier: identifier,
 	};

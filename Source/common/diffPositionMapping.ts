@@ -21,6 +21,7 @@ export function getZeroBased(line: number): number {
 export function getDiffLineByPosition(diffHunks: DiffHunk[], diffLineNumber: number): DiffLine | undefined {
 	for (let i = 0; i < diffHunks.length; i++) {
 		const diffHunk = diffHunks[i];
+
 		for (let j = 0; j < diffHunk.diffLines.length; j++) {
 			if (diffHunk.diffLines[j].positionInHunk === diffLineNumber) {
 				return diffHunk.diffLines[j];
@@ -33,9 +34,11 @@ export function getDiffLineByPosition(diffHunks: DiffHunk[], diffLineNumber: num
 
 export function mapOldPositionToNew(patch: string, line: number, documentLineCount?: number): number {
 	const diffReader = parseDiffHunk(patch);
+
 	let diffIter = diffReader.next();
 
 	let delta = 0;
+
 	while (!diffIter.done) {
 		const diffHunk: DiffHunk = diffIter.value;
 
@@ -46,6 +49,7 @@ export function mapOldPositionToNew(patch: string, line: number, documentLineCou
 		} else if (documentLineCount === diffHunk.newLength) {
 			// The diff doesn't give us enough information to do a good calculation as entire document was added or removed
 			delta += diffHunk.newLength - diffHunk.oldLength;
+
 			return line + delta;
 		} else {
 			// Part of the hunk is before line, part is after.
@@ -70,9 +74,11 @@ export function mapOldPositionToNew(patch: string, line: number, documentLineCou
 
 export function mapNewPositionToOld(patch: string, line: number): number {
 	const diffReader = parseDiffHunk(patch);
+
 	let diffIter = diffReader.next();
 
 	let delta = 0;
+
 	while (!diffIter.done) {
 		const diffHunk: DiffHunk = diffIter.value;
 

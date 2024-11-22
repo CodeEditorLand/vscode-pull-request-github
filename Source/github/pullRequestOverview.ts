@@ -223,6 +223,7 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 					mergeability,
 					isEmu
 				] = result;
+
 				if (!pullRequest) {
 					throw new Error(
 						`Fail to resolve Pull Request #${pullRequestModel.number} in ${pullRequestModel.remote.owner}/${pullRequestModel.remote.repositoryName}`,
@@ -236,8 +237,11 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 				this.setPanelTitle(`Pull Request #${pullRequestModel.number.toString()}`);
 
 				const isCurrentlyCheckedOut = pullRequestModel.equals(this._folderRepositoryManager.activePullRequest);
+
 				const hasWritePermission = repositoryAccess!.hasWritePermission;
+
 				const mergeMethodsAvailability = repositoryAccess!.mergeMethodsAvailability;
+
 				const canEdit = hasWritePermission || viewerCanEdit;
 
 				const defaultMergeMethod = getDefaultMergeMethod(mergeMethodsAvailability);
@@ -249,9 +253,12 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 					!pullRequest.base.repositoryCloneUrl.equals(pullRequest.head.repositoryCloneUrl);
 
 				const isUpdateBranchWithGitHubEnabled: boolean = this.isUpdateBranchWithGitHubEnabled();
+
 				const continueOnGitHub = isCrossRepository && isInCodespaces();
+
 				const reviewState = this.getCurrentUserReviewState(this._existingReviewers, currentUser);
 				Logger.debug('pr.initialize', PullRequestOverviewPanel.ID);
+
 				const context: Partial<PullRequest> = {
 					number: pullRequest.number,
 					title: pullRequest.title,
@@ -310,6 +317,7 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 					command: 'pr.initialize',
 					pullrequest: context
 				});
+
 				if (pullRequest.isResolved()) {
 					this._folderRepositoryManager.checkBranchUpToDate(pullRequest, true);
 				}
@@ -342,68 +350,98 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 
 	protected override async _onDidReceiveMessage(message: IRequestMessage<any>) {
 		const result = await super._onDidReceiveMessage(message);
+
 		if (result !== this.MESSAGE_UNHANDLED) {
 			return;
 		}
 		switch (message.command) {
 			case 'pr.checkout':
 				return this.checkoutPullRequest(message);
+
 			case 'pr.merge':
 				return this.mergePullRequest(message);
+
 			case 'pr.change-email':
 				return this.changeEmail(message);
+
 			case 'pr.deleteBranch':
 				return this.deleteBranch(message);
+
 			case 'pr.readyForReview':
 				return this.setReadyForReview(message);
+
 			case 'pr.approve':
 				return this.approvePullRequestMessage(message);
+
 			case 'pr.request-changes':
 				return this.requestChangesMessage(message);
+
 			case 'pr.submit':
 				return this.submitReviewMessage(message);
+
 			case 'pr.checkout-default-branch':
 				return this.checkoutDefaultBranch(message);
+
 			case 'pr.apply-patch':
 				return this.applyPatch(message);
+
 			case 'pr.open-diff':
 				return this.openDiff(message);
+
 			case 'pr.resolve-comment-thread':
 				return this.resolveCommentThread(message);
+
 			case 'pr.checkMergeability':
 				return this._replyMessage(message, await this._item.getMergeability());
+
 			case 'pr.change-reviewers':
 				return this.changeReviewers(message);
+
 			case 'pr.remove-milestone':
 				return this.removeMilestone(message);
+
 			case 'pr.add-milestone':
 				return this.addMilestone(message);
+
 			case 'pr.change-projects':
 				return this.changeProjects(message);
+
 			case 'pr.remove-project':
 				return this.removeProject(message);
+
 			case 'pr.change-assignees':
 				return this.changeAssignees(message);
+
 			case 'pr.add-assignee-yourself':
 				return this.addAssigneeYourself(message);
+
 			case 'pr.copy-prlink':
 				return this.copyPrLink();
+
 			case 'pr.copy-vscodedevlink':
 				return this.copyVscodeDevLink();
+
 			case 'pr.openOnGitHub':
 				return openPullRequestOnGitHub(this._item, (this._item as any)._telemetry);
+
 			case 'pr.update-automerge':
 				return this.updateAutoMerge(message);
+
 			case 'pr.dequeue':
 				return this.dequeue(message);
+
 			case 'pr.enqueue':
 				return this.enqueue(message);
+
 			case 'pr.update-branch':
 				return this.updateBranch(message);
+
 			case 'pr.gotoChangesSinceReview':
 				return this.gotoChangesSinceReview();
+
 			case 'pr.re-request-review':
 				return this.reRequestReview(message);
+
 			case 'pr.revert':
 				return this.revert(message);
 		}
@@ -421,15 +459,19 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 		try {
 			quickPick = await reviewersQuickPick(this._folderRepositoryManager, this._item.remote.remoteName, this._item.base.isInOrganization, this._teamsCount, this._item.author, this._existingReviewers, this._item.suggestedReviewers);
 			quickPick.busy = false;
+
 			const acceptPromise = asPromise<void>(quickPick.onDidAccept).then(() => {
 				return quickPick!.selectedItems.filter(item => item.user) as (vscode.QuickPickItem & { user: IAccount | ITeam })[] | undefined;
 			});
+
 			const hidePromise = asPromise<void>(quickPick.onDidHide);
+
 			const allReviewers = await Promise.race<(vscode.QuickPickItem & { user: IAccount | ITeam })[] | void>([acceptPromise, hidePromise]);
 			quickPick.busy = true;
 
 			if (allReviewers) {
 				const newUserReviewers: string[] = [];
+
 				const newTeamReviewers: string[] = [];
 				allReviewers.forEach(reviewer => {
 					const newReviewers = isTeam(reviewer.user) ? newTeamReviewers : newUserReviewers;
@@ -437,10 +479,13 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 				});
 
 				const removedUserReviewers: string[] = [];
+
 				const removedTeamReviewers: string[] = [];
 				this._existingReviewers.forEach(existing => {
 					let newReviewers: string[] = isTeam(existing.reviewer) ? newTeamReviewers : newUserReviewers;
+
 					let removedReviewers: string[] = isTeam(existing.reviewer) ? removedTeamReviewers : removedUserReviewers;
+
 					if (!newReviewers.find(newTeamReviewer => newTeamReviewer === existing.reviewer.id)) {
 						removedReviewers.push(existing.reviewer.id);
 					}
@@ -448,6 +493,7 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 
 				await this._item.requestReview(newUserReviewers, newTeamReviewers);
 				await this._item.deleteReviewRequest(removedUserReviewers, removedTeamReviewers);
+
 				const addedReviewers: ReviewState[] = allReviewers.map(selected => {
 					return {
 						reviewer: selected.user,
@@ -499,15 +545,18 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 	private async updateProjects(projects: IProject[] | undefined, message: IRequestMessage<void>) {
 		if (projects) {
 			const newProjects = await this._item.updateProjects(projects);
+
 			const projectItemsReply: ProjectItemsReply = {
 				projectItems: newProjects,
 			};
+
 			return this._replyMessage(message, projectItemsReply);
 		}
 	}
 
 	private async removeProject(message: IRequestMessage<IProjectItem>): Promise<void> {
 		await this._item.removeProjects([message.args]);
+
 		return this._replyMessage(message, {});
 	}
 
@@ -523,15 +572,19 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 			quickPick.selectedItems = quickPick.items.filter(item => item.picked);
 
 			quickPick.busy = false;
+
 			const acceptPromise = asPromise<void>(quickPick.onDidAccept).then(() => {
 				return quickPick.selectedItems.filter(item => item.user) as (vscode.QuickPickItem & { user: IAccount })[] | undefined;
 			});
+
 			const hidePromise = asPromise<void>(quickPick.onDidHide);
+
 			const allAssignees = await Promise.race<(vscode.QuickPickItem & { user: IAccount })[] | void>([acceptPromise, hidePromise]);
 			quickPick.busy = true;
 
 			if (allAssignees) {
 				const newAssignees: IAccount[] = allAssignees.map(item => item.user);
+
 				const removeAssignees: IAccount[] = this._item.assignees?.filter(currentAssignee => !newAssignees.find(newAssignee => newAssignee.login === currentAssignee.login)) ?? [];
 				this._item.assignees = newAssignees;
 
@@ -552,7 +605,9 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 	private async addAssigneeYourself(message: IRequestMessage<void>): Promise<void> {
 		try {
 			const currentUser = await this._folderRepositoryManager.getCurrentUser();
+
 			const alreadyAssigned = this._item.assignees?.find(user => user.login === currentUser.login);
+
 			if (!alreadyAssigned) {
 				this._item.assignees = this._item.assignees?.concat(currentUser);
 				await this._item.addAssignees([currentUser.login]);
@@ -568,7 +623,9 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 	private async applyPatch(message: IRequestMessage<{ comment: IComment }>): Promise<void> {
 		try {
 			const comment = message.args.comment;
+
 			const regex = /```diff\n([\s\S]*)\n```/g;
+
 			const matches = regex.exec(comment.body);
 
 			const tempUri = vscode.Uri.joinPath(this._folderRepositoryManager.repository.rootUri, '.git', `${comment.id}.diff`);
@@ -588,6 +645,7 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 	private async openDiff(message: IRequestMessage<{ comment: IComment }>): Promise<void> {
 		try {
 			const comment = message.args.comment;
+
 			return PullRequestModel.openDiffFromComment(this._folderRepositoryManager, this._item, comment);
 		} catch (e) {
 			Logger.error(`Open diff view failed: ${formatError(e)}`, PullRequestOverviewPanel.ID);
@@ -651,11 +709,13 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 
 	private async changeEmail(message: IRequestMessage<string>): Promise<void> {
 		const email = await pickEmail(this._item.githubRepository, message.args);
+
 		return this._replyMessage(message, email ?? message.args);
 	}
 
 	private async deleteBranch(message: IRequestMessage<any>) {
 		const result = await PullRequestView.deleteBranch(this._folderRepositoryManager, this._item);
+
 		if (result.isReply) {
 			this._replyMessage(message, result.message);
 		} else {
@@ -682,6 +742,7 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 		try {
 			const prBranch = this._folderRepositoryManager.repository.state.HEAD?.name;
 			await this._folderRepositoryManager.checkoutDefaultBranch(message.args);
+
 			if (prBranch) {
 				await this._folderRepositoryManager.cleanupAfterPullRequest(prBranch, this._item);
 			}
@@ -696,6 +757,7 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 			const existingReviewer = this._existingReviewers.find(
 				reviewer => review.user.login === (reviewer.reviewer as IAccount).login,
 			);
+
 			if (existingReviewer) {
 				existingReviewer.state = review.state;
 			} else {
@@ -713,9 +775,11 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 			lastReviewType: reviewType
 		};
 		this._postMessage(submittingMessage);
+
 		try {
 			const review = await action(context.body);
 			this.updateReviewers(review);
+
 			const reviewMessage = {
 				command: 'pr.append-review',
 				review,
@@ -782,12 +846,16 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 
 	private reRequestReview(message: IRequestMessage<string>): void {
 		let targetReviewer: ReviewState | undefined;
+
 		const userReviewers: string[] = [];
+
 		const teamReviewers: string[] = [];
 
 		for (const reviewer of this._existingReviewers) {
 			let id: string | undefined;
+
 			let reviewerArray: string[] | undefined;
+
 			if (reviewer && isTeam(reviewer.reviewer)) {
 				id = reviewer.reviewer.id;
 				reviewerArray = teamReviewers;
@@ -797,6 +865,7 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 			}
 			if (reviewerArray && id && ((reviewer.state === 'REQUESTED') || (id === message.args))) {
 				reviewerArray.push(id);
+
 				if (id === message.args) {
 					targetReviewer = reviewer;
 				}
@@ -816,6 +885,7 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 	private async revert(message: IRequestMessage<string>): Promise<void> {
 		await this._folderRepositoryManager.createPullRequestHelper.revert(this._telemetry, this._extensionUri, this._folderRepositoryManager, this._item, async (pullRequest) => {
 			const result: Partial<PullRequest> = { revertable: !pullRequest };
+
 			return this._replyMessage(message, result);
 		});
 	}
@@ -830,6 +900,7 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 
 	private async updateAutoMerge(message: IRequestMessage<{ autoMerge?: boolean, autoMergeMethod: MergeMethod }>): Promise<void> {
 		let replyMessage: { autoMerge: boolean, autoMergeMethod?: MergeMethod };
+
 		if (!message.args.autoMerge && !this._item.autoMerge) {
 			replyMessage = { autoMerge: false };
 		} else if ((message.args.autoMerge === false) && this._item.autoMerge) {
@@ -858,20 +929,25 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 	private async updateBranch(message: IRequestMessage<string>): Promise<void> {
 		if (!this.isUpdateBranchWithGitHubEnabled()) {
 			await vscode.window.showErrorMessage(vscode.l10n.t('The pull request branch must be checked out to be updated.'), { modal: true });
+
 			return this._replyMessage(message, {});
 		}
 
 		if (this._folderRepositoryManager.repository.state.workingTreeChanges.length > 0 || this._folderRepositoryManager.repository.state.indexChanges.length > 0) {
 			await vscode.window.showErrorMessage(vscode.l10n.t('The pull request branch cannot be updated when the there changed files in the working tree or index. Stash or commit all change and then try again.'), { modal: true });
+
 			return this._replyMessage(message, {});
 		}
 		const mergeSucceeded = await this._folderRepositoryManager.tryMergeBaseIntoHead(this._item, true);
+
 		if (!mergeSucceeded) {
 			this._replyMessage(message, {});
 		}
 		// The mergability of the PR doesn't update immediately. Poll.
 		let mergability = PullRequestMergeability.Unknown;
+
 		let attemptsRemaining = 5;
+
 		do {
 			mergability = (await this._item.getMergeability()).mergeability;
 			attemptsRemaining--;

@@ -37,6 +37,7 @@ export class DescriptionNode extends TreeNode implements vscode.TreeItem {
 
 	async getTreeItem(): Promise<vscode.TreeItem> {
 		this.updateContextValue();
+
 		return this;
 	}
 

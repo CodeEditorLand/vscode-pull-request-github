@@ -30,21 +30,27 @@ export async function findCodeLinkLocally(
 	_silent: boolean = true,
 ): Promise<CodeLink | undefined> {
 	const owner = codeLink[2];
+
 	const repo = codeLink[3];
+
 	const repoSubPath = codeLink[5];
 	// subtract 1 because VS Code starts lines at 0, whereas GitHub starts at 1.
 	const startingLine = Number(codeLink[6]) - 1;
+
 	const endingLine = codeLink[8] ? Number(codeLink[8]) - 1 : startingLine;
+
 	let linkFolderManager: FolderRepositoryManager | undefined;
 
 	for (const folderManager of repositoriesManager.folderManagers) {
 		const remotes = await folderManager.getGitHubRemotes();
+
 		for (const remote of remotes) {
 			if (
 				owner.toLowerCase() === remote.owner.toLowerCase() &&
 				repo.toLowerCase() === remote.repositoryName.toLowerCase()
 			) {
 				linkFolderManager = folderManager;
+
 				break;
 			}
 		}
@@ -58,6 +64,7 @@ export async function findCodeLinkLocally(
 	}
 
 	const path = vscode.Uri.joinPath(linkFolderManager.repository.rootUri, repoSubPath);
+
 	try {
 		await vscode.workspace.fs.stat(path);
 	} catch (e) {
@@ -72,18 +79,24 @@ export async function findCodeLinkLocally(
 
 export async function openCodeLink(issueModel: IssueModel, repositoriesManager: RepositoriesManager) {
 	const issueLink = findCodeLink(issueModel.body);
+
 	if (!issueLink) {
 		vscode.window.showInformationMessage(vscode.l10n.t('Issue has no link.'));
+
 		return;
 	}
 	const codeLink = await findCodeLinkLocally(issueLink, repositoriesManager, false);
+
 	if (!codeLink) {
 		return vscode.env.openExternal(vscode.Uri.parse(issueLink[0]));
 	}
 	const textDocument = await vscode.workspace.openTextDocument(codeLink?.file);
+
 	const endingTextDocumentLine = textDocument.lineAt(
 		codeLink.end < textDocument.lineCount ? codeLink.end : textDocument.lineCount - 1,
 	);
+
 	const selection = new vscode.Range(codeLink.start, 0, codeLink.end, endingTextDocumentLine.text.length);
+
 	return vscode.window.showTextDocument(codeLink.file, { selection });
 }

@@ -21,6 +21,7 @@ export class Remote {
 
 	public get normalizedHost(): string {
 		const normalizedUri = this.gitProtocol.normalizeUri();
+
 		return `${normalizedUri!.scheme}://${normalizedUri!.authority}`;
 	}
 
@@ -61,6 +62,7 @@ export function parseRemote(remoteName: string, url: string, originalProtocol?: 
 		return null;
 	}
 	const gitProtocol = new Protocol(url);
+
 	if (originalProtocol) {
 		gitProtocol.update({
 			type: originalProtocol.type,
@@ -76,8 +78,10 @@ export function parseRemote(remoteName: string, url: string, originalProtocol?: 
 
 export function parseRepositoryRemotes(repository: Repository): Remote[] {
 	const remotes: Remote[] = [];
+
 	for (const r of repository.state.remotes) {
 		const urls: string[] = [];
+
 		if (r.fetchUrl) {
 			urls.push(r.fetchUrl);
 		}
@@ -86,6 +90,7 @@ export function parseRepositoryRemotes(repository: Repository): Remote[] {
 		}
 		urls.forEach(url => {
 			const remote = parseRemote(r.name, url);
+
 			if (remote) {
 				remotes.push(remote);
 			}

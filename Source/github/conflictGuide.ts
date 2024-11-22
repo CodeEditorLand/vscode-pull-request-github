@@ -43,6 +43,7 @@ export class ConflictModel extends Disposable {
 			return;
 		}
 		const remainingCount = this.remainingConflicts.length;
+
 		if (this._lastReportedRemainingCount !== remainingCount) {
 			this._onConflictCountChanged.fire(this._lastReportedRemainingCount - remainingCount);
 			this._lastReportedRemainingCount = remainingCount;
@@ -54,6 +55,7 @@ export class ConflictModel extends Disposable {
 
 	private async listenForCommit() {
 		let localDisposable: vscode.Disposable | undefined;
+
 		const result = await new Promise<boolean>(resolve => {
 			const startingCommit = this._repository.state.HEAD?.commit;
 			localDisposable = this._register(this._repository.state.onDidChange(() => {
@@ -64,6 +66,7 @@ export class ConflictModel extends Disposable {
 		});
 
 		localDisposable?.dispose();
+
 		if (result && this.push) {
 			this._repository.push();
 		}
@@ -111,11 +114,13 @@ export class ConflictModel extends Disposable {
 
 	public static async begin(repository: Repository, upstream: string, into: string, push: boolean): Promise<ConflictModel | undefined> {
 		const model = new ConflictModel(repository, upstream, into, push);
+
 		if (model.remainingConflicts.length === 0) {
 			return undefined;
 		}
 		model._register(new ConflictNotification(model, repository));
 		model.first();
+
 		return model;
 	}
 
@@ -133,10 +138,12 @@ class ConflictNotification extends Disposable {
 				progress.report({ message: vscode.l10n.t('Use the Source Control view to resolve conflicts, {0} of {0} remaining', this._conflictModel.remainingConflicts.length, this._conflictModel.startingConflictsCount), increment });
 			};
 			report(0);
+
 			return new Promise<boolean>((resolve) => {
 				this._register(this._conflictModel.onConflictCountChanged((conflictsChangedBy) => {
 					const increment = conflictsChangedBy * (100 / this._conflictModel.startingConflictsCount);
 					report(increment);
+
 					if (this._conflictModel.remainingConflicts.length === 0) {
 						resolve(true);
 					}
@@ -149,14 +156,18 @@ class ConflictNotification extends Disposable {
 		}).then(async (result) => {
 			if (result) {
 				const commit = vscode.l10n.t('Commit');
+
 				const cancel = vscode.l10n.t('Abort Merge');
+
 				let message: string;
+
 				if (this._conflictModel.push) {
 					message = vscode.l10n.t('All conflicts resolved. Commit and push the resolution to continue.');
 				} else {
 					message = vscode.l10n.t('All conflicts resolved. Commit the resolution to continue.');
 				}
 				const result = await vscode.window.showInformationMessage(message, commit, cancel);
+
 				if (result === commit) {
 					await this._repository.commit(this._conflictModel.message);
 				} else if (result === cancel) {

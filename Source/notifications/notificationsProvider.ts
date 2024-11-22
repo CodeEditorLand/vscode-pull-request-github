@@ -37,6 +37,7 @@ export class NotificationsProvider extends Disposable {
 		private readonly _repositoriesManager: RepositoriesManager
 	) {
 		super();
+
 		if (_credentialStore.isAuthenticated(AuthProvider.githubEnterprise) && hasEnterpriseUri()) {
 			this._authProvider = AuthProvider.githubEnterprise;
 		} else if (_credentialStore.isAuthenticated(AuthProvider.github)) {
@@ -62,6 +63,7 @@ export class NotificationsProvider extends Disposable {
 
 	public async markAsRead(notificationIdentifier: { threadId: string, notificationKey: string }): Promise<void> {
 		const gitHub = this._getGitHub();
+
 		if (gitHub === undefined) {
 			return undefined;
 		}
@@ -72,6 +74,7 @@ export class NotificationsProvider extends Disposable {
 
 	public async getNotifications(before: string, page: number): Promise<INotifications | undefined> {
 		const gitHub = this._getGitHub();
+
 		if (gitHub === undefined) {
 			return undefined;
 		}
@@ -80,6 +83,7 @@ export class NotificationsProvider extends Disposable {
 		}
 
 		const pageSize = vscode.workspace.getConfiguration(PR_SETTINGS_NAMESPACE).get<number>(EXPERIMENTAL_NOTIFICATIONS_PAGE_SIZE, 50);
+
 		const { data, headers } = await gitHub.octokit.call(gitHub.octokit.api.activity.listNotificationsForAuthenticatedUser, {
 			all: false,
 			before: before,
@@ -96,38 +100,49 @@ export class NotificationsProvider extends Disposable {
 
 	async getNotificationModel(notification: Notification): Promise<IssueModel<Issue> | undefined> {
 		const url = notification.subject.url;
+
 		if (!(typeof url === 'string')) {
 			return undefined;
 		}
 		const issueOrPrNumber = url.split('/').pop();
+
 		if (issueOrPrNumber === undefined) {
 			return undefined;
 		}
 		const folderManager = this._repositoriesManager.getManagerForRepository(notification.owner, notification.name) ?? this._repositoriesManager.folderManagers[0];
+
 		const model = notification.subject.type === NotificationSubjectType.Issue ?
 			await folderManager.resolveIssue(notification.owner, notification.name, parseInt(issueOrPrNumber), true) :
 			await folderManager.resolvePullRequest(notification.owner, notification.name, parseInt(issueOrPrNumber));
+
 		return model;
 	}
 
 	async getNotificationsPriority(notifications: NotificationTreeItem[]): Promise<INotificationPriority[]> {
 		const notificationBatchSize = 5;
+
 		const notificationBatches: NotificationTreeItem[][] = [];
+
 		for (let i = 0; i < notifications.length; i += notificationBatchSize) {
 			notificationBatches.push(notifications.slice(i, i + notificationBatchSize));
 		}
 
 		const models = await vscode.lm.selectChatModels({ vendor: 'copilot', family: 'gpt-4o' });
+
 		const prioritizedBatches = await Promise.all(notificationBatches.map(batch => this._prioritizeNotificationBatch(batch, models[0])));
+
 		return prioritizedBatches.flat();
 	}
 
 	private async _prioritizeNotificationBatch(notifications: NotificationTreeItem[], model: vscode.LanguageModelChat): Promise<INotificationPriority[]> {
 		try {
 			const userLogin = (await this._credentialStore.getCurrentUser(AuthProvider.github)).login;
+
 			const messages = [vscode.LanguageModelChatMessage.User(getPrioritizeNotificationsInstructions(userLogin))];
+
 			for (const [notificationIndex, notification] of notifications.entries()) {
 				const issueModel = notification.model;
+
 				if (!issueModel) {
 					continue;
 				}
@@ -137,18 +152,22 @@ export class NotificationsProvider extends Disposable {
 				messages.push(vscode.LanguageModelChatMessage.User(notificationMessage));
 			}
 			messages.push(vscode.LanguageModelChatMessage.User('Please provide the priority for each notification in a separate text code block. Remember to place the title and the reasoning outside of the text code block.'));
+
 			const response = await model.sendRequest(messages, {});
+
 			const responseText = await concatAsyncIterable(response.text);
 
 			return this._updateNotificationsWithPriorityFromLLM(notifications, responseText);
 		} catch (e) {
 			console.log(e);
+
 			return [];
 		}
 	}
 
 	private _getBasePrompt(model: IssueModel<Issue> | PullRequestModel, notificationIndex: number): string {
 		const assignees = model.assignees;
+
 		return `
 The following is the data for notification ${notificationIndex + 1}:
 • Title: ${model.title}
@@ -167,10 +186,12 @@ ${model.body}
 
 	private async _getLabelsPrompt(model: IssueModel<Issue> | PullRequestModel): Promise<string> {
 		const labels = model.item.labels;
+
 		if (!labels) {
 			return '';
 		}
 		let labelsMessage = '';
+
 		if (labels.length > 0) {
 			const labelListAsString = labels.map(label => label.name).join(', ');
 			labelsMessage = `
@@ -181,6 +202,7 @@ ${model.body}
 
 	private async _getCommentsPrompt(model: IssueModel<Issue> | PullRequestModel): Promise<string> {
 		const issueComments = model.item.comments;
+
 		if (!issueComments || issueComments.length === 0) {
 			return '';
 		}
@@ -189,7 +211,9 @@ ${model.body}
 The following is the data concerning the at most last 5 comments for the notification:`;
 
 		let index = 1;
+
 		const lowerCommentIndexBound = Math.max(0, issueComments.length - 5);
+
 		for (let i = lowerCommentIndexBound; i < issueComments.length; i++) {
 			const comment = issueComments.at(i)!;
 			commentsMessage += `
@@ -205,9 +229,11 @@ ${comment.body}
 
 	private _updateNotificationsWithPriorityFromLLM(notifications: NotificationTreeItem[], text: string): INotificationPriority[] {
 		const regexReasoning = /```text\s*[\s\S]+?\s*=\s*([\S]+?)\s*```/gm;
+
 		const regexPriorityReasoning = /```(?!text)([\s\S]+?)(###|$)/g;
 
 		const updates: INotificationPriority[] = [];
+
 		for (let i = 0; i < notifications.length; i++) {
 			const execResultForPriority = regexReasoning.exec(text);
 

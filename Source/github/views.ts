@@ -65,6 +65,7 @@ export interface PullRequest {
 	reviewRequirement: PullRequestReviewRequirement | null;
 	canUpdateBranch: boolean;
 	mergeable: PullRequestMergeability;
+
 	defaultMergeMethod: MergeMethod;
 	mergeMethodsAvailability: MergeMethodsAvailability;
 	autoMerge?: boolean;
@@ -82,6 +83,7 @@ export interface PullRequest {
 	isDraft?: boolean;
 	isIssue: boolean;
 	isAuthor?: boolean;
+
 	continueOnGitHub: boolean;
 	currentUserReviewState: string;
 	isDarkTheme: boolean;

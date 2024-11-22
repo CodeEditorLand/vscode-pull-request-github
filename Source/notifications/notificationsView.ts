@@ -39,8 +39,11 @@ export class NotificationsTreeData implements vscode.TreeDataProvider<Notificati
 
 	private _resolveNotificationTreeItem(element: NotificationTreeItem): vscode.TreeItem {
 		const label = element.notification.subject.title;
+
 		const item = new vscode.TreeItem(label, vscode.TreeItemCollapsibleState.None);
+
 		const notification = element.notification;
+
 		const model = element.model;
 
 		if (notification.subject.type === NotificationSubjectType.Issue && model instanceof IssueModel) {
@@ -61,6 +64,7 @@ export class NotificationsTreeData implements vscode.TreeDataProvider<Notificati
 			title: 'Summarize Notification',
 			arguments: [element]
 		};
+
 		return item;
 	}
 
@@ -71,6 +75,7 @@ export class NotificationsTreeData implements vscode.TreeDataProvider<Notificati
 			command: 'notifications.loadMore'
 		};
 		item.contextValue = 'loadMoreNotifications';
+
 		return item;
 	}
 

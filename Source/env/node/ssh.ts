@@ -47,12 +47,14 @@ export class Resolvers {
  */
 export const resolve = (url: string, resolveConfig = Resolvers.current) => {
 	const config = sshParse(url);
+
 	return config && resolveConfig(config);
 };
 
 function resolverFromConfigFile(configPath = join(homedir(), '.ssh', 'config')): ConfigResolver | undefined {
 	try {
 		const config = readFileSync(configPath).toString();
+
 		return resolverFromConfig(config);
 	} catch (error) {
 		Logger.warn(`${configPath}: ${error.message}`);

@@ -27,8 +27,11 @@ export abstract class TreeDecorationProvider extends Disposable implements vscod
 
 	protected _handlePullRequestPropertyChange(folderManager: FolderRepositoryManager, model: PullRequestModel, changed: { path: string }) {
 		const path = changed.path;
+
 		const uri = vscode.Uri.joinPath(folderManager.repository.rootUri, path);
+
 		const fileChange = model.fileChanges.get(path);
+
 		if (fileChange) {
 			const fileChangeUri = toResourceUri(uri, model.number, path, fileChange.status, fileChange.previousFileName);
 			this._onDidChangeFileDecorations.fire(fileChangeUri);
@@ -63,7 +66,9 @@ export class TreeDecorationProviders extends Disposable {
 			this._pullRequestListeners.push(gitHubRepo.onDidAddPullRequest(model => {
 				this._pullRequestPropertyChangeListeners.push(...this._registerPullRequestPropertyListeners(folderManager, model));
 			}));
+
 			const models = Array.from(gitHubRepo.pullRequestModels.values());
+
 			const listeners = models.map(model => {
 				return this._registerPullRequestPropertyListeners(folderManager, model);
 			}).flat();

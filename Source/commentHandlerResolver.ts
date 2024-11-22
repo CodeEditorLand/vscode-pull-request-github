@@ -47,6 +47,7 @@ export function unregisterCommentHandler(key: string) {
 
 export function resolveCommentHandler(commentThread: GHPRCommentThread): CommentHandler | undefined {
 	const possibleHandlers: { handler: CommentHandler, repoRootUri: string }[] = [];
+
 	for (const commentHandler of commentHandlers.values()) {
 		if (commentHandler.handler.hasCommentThread(commentThread)) {
 			possibleHandlers.push(commentHandler);
@@ -56,6 +57,7 @@ export function resolveCommentHandler(commentThread: GHPRCommentThread): Comment
 		possibleHandlers.sort((a, b) => {
 			return b.repoRootUri.length - a.repoRootUri.length;
 		});
+
 		return possibleHandlers[0].handler;
 	}
 	Logger.warn(`Unable to find handler for comment thread ${commentThread.gitHubThreadId}`);

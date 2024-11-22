@@ -36,6 +36,7 @@ export class NotificationsManager extends Disposable implements vscode.TreeDataP
 	private _notifications = new Map<string, NotificationTreeItem>();
 
 	private _sortingMethod: NotificationsSortMethod = NotificationsSortMethod.Timestamp;
+
 	get sortingMethod(): NotificationsSortMethod { return this._sortingMethod; }
 
 	constructor(private readonly _notificationProvider: NotificationsProvider) {
@@ -52,6 +53,7 @@ export class NotificationsManager extends Disposable implements vscode.TreeDataP
 		}
 
 		const notificationsData = await this.getNotifications();
+
 		if (notificationsData === undefined) {
 			return undefined;
 		}
@@ -72,8 +74,11 @@ export class NotificationsManager extends Disposable implements vscode.TreeDataP
 
 	private _resolveNotificationTreeItem(element: NotificationTreeItem): vscode.TreeItem {
 		const label = element.notification.subject.title;
+
 		const item = new vscode.TreeItem(label, vscode.TreeItemCollapsibleState.None);
+
 		const notification = element.notification;
+
 		const model = element.model;
 
 		if (notification.subject.type === NotificationSubjectType.Issue && model instanceof IssueModel) {
@@ -94,6 +99,7 @@ export class NotificationsManager extends Disposable implements vscode.TreeDataP
 			title: 'Summarize Notification',
 			arguments: [element]
 		};
+
 		return item;
 	}
 
@@ -104,6 +110,7 @@ export class NotificationsManager extends Disposable implements vscode.TreeDataP
 			command: 'notifications.loadMore'
 		};
 		item.contextValue = 'loadMoreNotifications';
+
 		return item;
 	}
 
@@ -113,6 +120,7 @@ export class NotificationsManager extends Disposable implements vscode.TreeDataP
 		if (this._fetchNotifications) {
 			// Get raw notifications
 			const notificationsData = await this._notificationProvider.getNotifications(this._dateTime.toISOString(), this._pageCount);
+
 			if (!notificationsData) {
 				return undefined;
 			}
@@ -121,6 +129,7 @@ export class NotificationsManager extends Disposable implements vscode.TreeDataP
 			const notificationTreeItems = new Map<string, NotificationTreeItem>();
 			await Promise.all(notificationsData.notifications.map(async notification => {
 				const model = await this._notificationProvider.getNotificationModel(notification);
+
 				if (!model) {
 					return;
 				}
@@ -148,6 +157,7 @@ export class NotificationsManager extends Disposable implements vscode.TreeDataP
 
 			for (const { key, priority, priorityReasoning } of notificationPriorities) {
 				const notification = this._notifications.get(key);
+
 				if (!notification) {
 					continue;
 				}
@@ -201,6 +211,7 @@ export class NotificationsManager extends Disposable implements vscode.TreeDataP
 
 	public async markAsRead(notificationIdentifier: { threadId: string, notificationKey: string }): Promise<void> {
 		const notification = this._notifications.get(notificationIdentifier.notificationKey);
+
 		if (notification) {
 			await this._notificationProvider.markAsRead(notificationIdentifier);
 

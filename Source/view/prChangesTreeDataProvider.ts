@@ -44,6 +44,7 @@ export class PullRequestChangesTreeDataProvider extends Disposable implements vs
 			vscode.workspace.onDidChangeConfiguration(async e => {
 				if (e.affectsConfiguration(`${PR_SETTINGS_NAMESPACE}.${FILE_LIST_LAYOUT}`)) {
 					this._onDidChangeTreeData.fire();
+
 					const layout = vscode.workspace
 						.getConfiguration(PR_SETTINGS_NAMESPACE)
 						.get<string>(FILE_LIST_LAYOUT);
@@ -63,8 +64,10 @@ export class PullRequestChangesTreeDataProvider extends Disposable implements vs
 
 	private updateViewTitle(): void {
 		let pullRequestNumber: number | undefined;
+
 		if (this._pullRequestManagerMap.size === 1) {
 			const pullRequestIterator = this._pullRequestManagerMap.values().next();
+
 			if (!pullRequestIterator.done) {
 				pullRequestNumber = pullRequestIterator.value.pullRequestModel.number;
 			}
@@ -83,10 +86,13 @@ export class PullRequestChangesTreeDataProvider extends Disposable implements vs
 		progress: ProgressHelper
 	) {
 		Logger.appendLine(`Adding PR #${pullRequestModel.number} to tree`, PR_TREE);
+
 		if (this._pullRequestManagerMap.has(pullRequestManager)) {
 			const existingNode = this._pullRequestManagerMap.get(pullRequestManager);
+
 			if (existingNode && (existingNode.pullRequestModel === pullRequestModel)) {
 				Logger.appendLine(`PR #${pullRequestModel.number} already exists in tree`, PR_TREE);
+
 				return;
 			} else {
 				existingNode?.dispose();
@@ -114,9 +120,11 @@ export class PullRequestChangesTreeDataProvider extends Disposable implements vs
 		await commands.setContext(contexts.IN_REVIEW_MODE, this._pullRequestManagerMap.size > 0);
 
 		const rootUrisNotInReviewMode: vscode.Uri[] = [];
+
 		const rootUrisInReviewMode: vscode.Uri[] = [];
 		this._git.repositories.forEach(repo => {
 			const folderManager = this._reposManager.getManagerForFile(repo.rootUri);
+
 			if (folderManager && !this._pullRequestManagerMap.has(folderManager)) {
 				rootUrisNotInReviewMode.push(repo.rootUri);
 			} else if (folderManager) {
@@ -129,6 +137,7 @@ export class PullRequestChangesTreeDataProvider extends Disposable implements vs
 
 	async removePrFromView(pullRequestManager: FolderRepositoryManager) {
 		const oldPR = this._pullRequestManagerMap.has(pullRequestManager) ? this._pullRequestManagerMap.get(pullRequestManager) : undefined;
+
 		if (oldPR) {
 			Logger.appendLine(`Removing PR #${oldPR.pullRequestModel.number} from tree`, PR_TREE);
 		}
@@ -165,8 +174,10 @@ export class PullRequestChangesTreeDataProvider extends Disposable implements vs
 
 	private sortMap() {
 		const workspaceFolders = vscode.workspace.workspaceFolders;
+
 		const compareFolders = (a: vscode.Uri, b: vscode.Uri) => {
 			const aFolder = a.fsPath.toLowerCase();
+
 			const bFolder = b.fsPath.toLowerCase();
 
 			return isDescendant(aFolder, bFolder) || isDescendant(bFolder, aFolder);
@@ -177,8 +188,11 @@ export class PullRequestChangesTreeDataProvider extends Disposable implements vs
 				return 0;
 			}
 			if (!workspaceFolders) return 0;
+
 			const aIndex = workspaceFolders.findIndex(folder => compareFolders(folder.uri, a[0].repository.rootUri));
+
 			const bIndex = workspaceFolders.findIndex(folder => compareFolders(folder.uri, b[0].repository.rootUri));
+
 			if (aIndex === -1) {
 				return 1;
 			}
@@ -192,8 +206,10 @@ export class PullRequestChangesTreeDataProvider extends Disposable implements vs
 	async getChildren(element?: TreeNode): Promise<TreeNode[]> {
 		if (!element) {
 			this._children = [];
+
 			if (this._pullRequestManagerMap.size >= 1) {
 				const sortedValues = this.sortMap();
+
 				for (const item of sortedValues) {
 					this._children.push(item);
 				}

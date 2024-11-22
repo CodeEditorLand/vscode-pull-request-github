@@ -23,7 +23,9 @@ export interface IReplyMessage {
 
 export function getNonce() {
 	let text = '';
+
 	const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+
 	for (let i = 0; i < 32; i++) {
 		text += possible.charAt(Math.floor(Math.random() * possible.length));
 	}
@@ -53,6 +55,7 @@ export class WebviewBase extends Disposable {
 			async message => {
 				await this._onDidReceiveMessage(message as IRequestMessage<any>);
 			});
+
 		if (disposable) {
 			this._register(disposable);
 		}
@@ -62,7 +65,9 @@ export class WebviewBase extends Disposable {
 		switch (message.command) {
 			case 'ready':
 				this._onIsReady.fire();
+
 				return;
+
 			default:
 				return this.MESSAGE_UNHANDLED;
 		}
@@ -109,6 +114,7 @@ export class WebviewViewBase extends WebviewBase {
 		_token: vscode.CancellationToken) {
 		this._view = webviewView;
 		this._webview = webviewView.webview;
+
 		super.initialize();
 		webviewView.webview.options = {
 			// Allow scripts in the webview

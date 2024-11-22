@@ -33,6 +33,7 @@ export class FileTypeDecorationProvider extends TreeDecorationProvider {
 		}
 
 		const fileChangeUriParams = fromFileChangeNodeUri(uri);
+
 		if (fileChangeUriParams && fileChangeUriParams.status !== undefined) {
 			return {
 				propagate: false,
@@ -60,14 +61,19 @@ export class FileTypeDecorationProvider extends TreeDecorationProvider {
 		switch (status) {
 			case GitChangeType.MODIFY:
 				return 'gitDecoration.modifiedResourceForeground';
+
 			case GitChangeType.ADD:
 				return 'gitDecoration.addedResourceForeground';
+
 			case GitChangeType.DELETE:
 				return 'gitDecoration.deletedResourceForeground';
+
 			case GitChangeType.RENAME:
 				return 'gitDecoration.renamedResourceForeground';
+
 			case GitChangeType.UNKNOWN:
 				return undefined;
+
 			case GitChangeType.UNMERGED:
 				return 'gitDecoration.conflictingResourceForeground';
 		}
@@ -77,14 +83,19 @@ export class FileTypeDecorationProvider extends TreeDecorationProvider {
 		switch (status) {
 			case GitChangeType.MODIFY:
 				return 'remoteHub.decorations.modifiedForegroundColor';
+
 			case GitChangeType.ADD:
 				return 'remoteHub.decorations.addedForegroundColor';
+
 			case GitChangeType.DELETE:
 				return 'remoteHub.decorations.deletedForegroundColor';
+
 			case GitChangeType.RENAME:
 				return 'remoteHub.decorations.incomingRenamedForegroundColor';
+
 			case GitChangeType.UNKNOWN:
 				return undefined;
+
 			case GitChangeType.UNMERGED:
 				return 'remoteHub.decorations.conflictForegroundColor';
 		}
@@ -92,6 +103,7 @@ export class FileTypeDecorationProvider extends TreeDecorationProvider {
 
 	color(status: GitChangeType): vscode.ThemeColor | undefined {
 		let color: string | undefined = vscode.extensions.getExtension('vscode.git') ? this.gitColors(status) : this.remoteReposColors(status);
+
 		return color ? new vscode.ThemeColor(color) : undefined;
 	}
 
@@ -100,14 +112,19 @@ export class FileTypeDecorationProvider extends TreeDecorationProvider {
 		switch (status) {
 			case GitChangeType.MODIFY:
 				return 'M';
+
 			case GitChangeType.ADD:
 				return 'A';
+
 			case GitChangeType.DELETE:
 				return 'D';
+
 			case GitChangeType.RENAME:
 				return 'R';
+
 			case GitChangeType.UNKNOWN:
 				return 'U';
+
 			case GitChangeType.UNMERGED:
 				return 'C';
 		}

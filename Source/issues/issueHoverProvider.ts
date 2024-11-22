@@ -33,16 +33,21 @@ export class IssueHoverProvider implements vscode.HoverProvider {
 		}
 
 		let wordPosition = document.getWordRangeAtPosition(position, ISSUE_OR_URL_EXPRESSION);
+
 		if (wordPosition && wordPosition.start.character > 0) {
 			wordPosition = new vscode.Range(
 				new vscode.Position(wordPosition.start.line, wordPosition.start.character),
 				wordPosition.end,
 			);
+
 			const word = document.getText(wordPosition);
+
 			const match = word.match(ISSUE_OR_URL_EXPRESSION);
+
 			const tryParsed = parseIssueExpressionOutput(match);
 
 			const folderManager = this.manager.getManagerForFile(document.uri) ?? this.manager.folderManagers[0];
+
 			if (!folderManager) {
 				return;
 			}
@@ -67,6 +72,7 @@ export class IssueHoverProvider implements vscode.HoverProvider {
 		range: vscode.Range,
 	): Promise<vscode.Hover | undefined> {
 		const issue = await getIssue(this.stateManager, folderManager, value, parsed);
+
 		if (!issue) {
 			return;
 		}
@@ -74,6 +80,7 @@ export class IssueHoverProvider implements vscode.HoverProvider {
 			"issue.issueHover" : {}
 		*/
 		this.telemetry.sendTelemetryEvent('issues.issueHover');
+
 		return new vscode.Hover(await issueMarkdown(issue, this.context, this.manager, parsed.commentNumber), range);
 	}
 }

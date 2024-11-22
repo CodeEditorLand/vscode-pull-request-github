@@ -90,18 +90,22 @@ export class PRNode extends TreeNode implements vscode.CommentingRangeProvider2 
 					this.pullRequestModel.number,
 					this.provideDocumentContent.bind(this),
 				);
+
 				if (this._inMemPRContentProvider) {
 					this._register(this._inMemPRContentProvider);
 				}
 			}
 
 			const result: TreeNode[] = [descriptionNode];
+
 			const layout = vscode.workspace.getConfiguration(PR_SETTINGS_NAMESPACE).get<string>(FILE_LIST_LAYOUT);
+
 			if (layout === 'tree') {
 				// tree view
 				const dirNode = new DirectoryTreeNode(this, '');
 				this._fileChanges.forEach(f => dirNode.addFile(f));
 				dirNode.finalize();
+
 				if (dirNode.label === '') {
 					// nothing on the root changed, pull children to parent
 					result.push(...dirNode.children);
@@ -126,6 +130,7 @@ export class PRNode extends TreeNode implements vscode.CommentingRangeProvider2 
 			return result;
 		} catch (e) {
 			Logger.error(e);
+
 			return [];
 		}
 	}
@@ -157,8 +162,11 @@ export class PRNode extends TreeNode implements vscode.CommentingRangeProvider2 
 					for (const localChange of this._fileChanges) {
 
 						const originalParams = fromPRUri(tab.input.original);
+
 						const modifiedParams = fromPRUri(tab.input.modified);
+
 						const newLocalChangeParams = fromPRUri(localChange.changeModel.filePath);
+
 						if (
 							originalParams?.prNumber === pullRequest.number &&
 							modifiedParams?.prNumber === pullRequest.number &&
@@ -167,12 +175,14 @@ export class PRNode extends TreeNode implements vscode.CommentingRangeProvider2 
 						) {
 							hasOpenDiff = true;
 							vscode.window.tabGroups.close(tab).then(_ => localChange.openDiff(this._folderReposManager, { preview: tab.isPreview }));
+
 							break;
 						}
 					}
 				}
 			});
 		});
+
 		if (pullRequest.showChangesSinceReview && !hasOpenDiff && this._fileChanges && this._fileChanges.length && !pullRequest.isActive) {
 			this._fileChanges[0].openDiff(this._folderReposManager, { preview: true });
 		}
@@ -229,7 +239,9 @@ export class PRNode extends TreeNode implements vscode.CommentingRangeProvider2 
 		// If this PR is the the current PR, then we should be careful to use
 		// URIs that will cause the review comment controller to be used.
 		const rawChanges: (SlimFileChange | InMemFileChange)[] = [];
+
 		const isCurrentPR = this.pullRequestModel.equals(this._folderReposManager.activePullRequest);
+
 		if (isCurrentPR && (this._folderReposManager.activePullRequest !== undefined) && (this._folderReposManager.activePullRequest.fileChanges.size > 0)) {
 			this.pullRequestModel = this._folderReposManager.activePullRequest;
 			rawChanges.push(...this._folderReposManager.activePullRequest.fileChanges.values());
@@ -239,6 +251,7 @@ export class PRNode extends TreeNode implements vscode.CommentingRangeProvider2 
 
 		// Merge base is set as part of getFileChangesInfo
 		const mergeBase = this.pullRequestModel.mergeBase;
+
 		if (!mergeBase) {
 			return [];
 		}
@@ -246,6 +259,7 @@ export class PRNode extends TreeNode implements vscode.CommentingRangeProvider2 
 		return rawChanges.map(change => {
 			if (change instanceof SlimFileChange) {
 				const changeModel = new RemoteFileChangeModel(this._folderReposManager, change, this.pullRequestModel);
+
 				return new RemoteFileChangeNode(
 					this,
 					this._folderReposManager,
@@ -257,6 +271,7 @@ export class PRNode extends TreeNode implements vscode.CommentingRangeProvider2 
 			const changeModel = new InMemFileChangeModel(this._folderReposManager,
 				this.pullRequestModel as (PullRequestModel & IResolvedPullRequestModel),
 				change, isCurrentPR, mergeBase);
+
 			const changedItem = new InMemFileChangeNode(
 				this._folderReposManager,
 				this,
@@ -272,13 +287,17 @@ export class PRNode extends TreeNode implements vscode.CommentingRangeProvider2 
 		const currentBranchIsForThisPR = this.pullRequestModel.equals(this._folderReposManager.activePullRequest);
 
 		const { title, number, author, isDraft, html_url } = this.pullRequestModel;
+
 		const labelTitle = this.pullRequestModel.title.length > 50 ? `${this.pullRequestModel.title.substring(0, 50)}...` : this.pullRequestModel.title;
+
 		const { login } = author;
 
 		const hasNotification = this._notificationProvider.hasNotification(this.pullRequestModel);
 
 		const formattedPRNumber = number.toString();
+
 		let labelPrefix = currentBranchIsForThisPR ? '✓ ' : '';
+
 		let tooltipPrefix = currentBranchIsForThisPR ? 'Current Branch * ' : '';
 
 		if (
@@ -291,7 +310,9 @@ export class PRNode extends TreeNode implements vscode.CommentingRangeProvider2 
 		}
 
 		const label = `${labelPrefix}${isDraft ? '[DRAFT] ' : ''}${labelTitle}`;
+
 		const tooltip = `${tooltipPrefix}${title} by @${login}`;
+
 		const description = `by @${login}`;
 
 		return {
@@ -338,6 +359,7 @@ export class PRNode extends TreeNode implements vscode.CommentingRangeProvider2 
 	// #region Document Content Provider
 	private async provideDocumentContent(uri: vscode.Uri): Promise<string | Uint8Array> {
 		const params = fromPRUri(uri);
+
 		if (!params) {
 			return '';
 		}
@@ -348,6 +370,7 @@ export class PRNode extends TreeNode implements vscode.CommentingRangeProvider2 
 
 		if (!fileChange) {
 			Logger.appendLine(`Can not find content for document ${uri.toString()}`, 'PR');
+
 			return '';
 		}
 

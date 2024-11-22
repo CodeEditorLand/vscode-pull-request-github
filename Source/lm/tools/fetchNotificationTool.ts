@@ -49,35 +49,51 @@ export class FetchNotificationTool extends RepoToolBase<FetchNotificationToolPar
 
 	async invoke(options: vscode.LanguageModelToolInvocationOptions<FetchNotificationToolParameters>, _token: vscode.CancellationToken): Promise<vscode.LanguageModelToolResult | undefined> {
 		const github = this.getGitHub();
+
 		if (!github) {
 			return undefined;
 		}
 		const threadId = options.input.thread_id;
+
 		if (threadId === undefined) {
 			return undefined;
 		}
 		const thread = await github.octokit.api.activity.getThread({
 			thread_id: threadId
 		});
+
 		const threadData = thread.data;
+
 		const itemNumber = threadData.subject.url.split('/').pop();
+
 		if (itemNumber === undefined) {
 			return undefined;
 		}
 		const lastUpdatedAt = threadData.updated_at;
+
 		const lastReadAt = threadData.last_read_at ?? undefined;
+
 		const unread = threadData.unread;
+
 		const owner = threadData.repository.owner.login;
+
 		const name = threadData.repository.name;
+
 		const { folderManager } = await this.getRepoInfo({ owner, name });
+
 		const issueOrPR = await folderManager.resolveIssueOrPullRequest(owner, name, Number(itemNumber));
+
 		if (!issueOrPR) {
 			throw new Error(`No notification found with thread ID #${threadId}.`);
 		}
 		const itemType = issueOrPR instanceof PullRequestModel ? 'pr' : 'issue';
+
 		const notificationKey = getNotificationKey(owner, name, String(issueOrPR.number));
+
 		const itemComments = issueOrPR.item.comments ?? [];
+
 		let comments: { body: string; author: string }[];
+
 		if (lastReadAt !== undefined && itemComments) {
 			comments = itemComments.filter(comment => {
 				return comment.createdAt > lastReadAt;
@@ -99,9 +115,12 @@ export class FetchNotificationTool extends RepoToolBase<FetchNotificationToolPar
 			itemNumber,
 			itemType
 		};
+
 		if (issueOrPR instanceof PullRequestModel) {
 			const fileChanges = await issueOrPR.getFileChangesInfo();
+
 			const fetchedFileChanges: FileChange[] = [];
+
 			for (const fileChange of fileChanges) {
 				if (fileChange instanceof InMemFileChange) {
 					fetchedFileChanges.push({

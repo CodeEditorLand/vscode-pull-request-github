@@ -153,12 +153,14 @@ export interface Repository {
 	 * The counterpart of `getConfig`
 	 */
 	setConfig(key: string, value: string): Promise<string>;
+
 	getGlobalConfig(key: string): Promise<string>;
 
 	getObjectDetails(treeish: string, path: string): Promise<{ mode: string; object: string; size: number }>;
 	detectObjectType(object: string): Promise<{ mimetype: string; encoding?: string }>;
 	buffer(ref: string, path: string): Promise<Buffer>;
 	show(ref: string, path: string): Promise<string>;
+
 	getCommit(ref: string): Promise<Commit>;
 
 	clean(paths: string[]): Promise<void>;
@@ -181,10 +183,15 @@ export interface Repository {
 
 	createBranch(name: string, checkout: boolean, ref?: string): Promise<void>;
 	deleteBranch(name: string, force?: boolean): Promise<void>;
+
 	getBranch(name: string): Promise<Branch>;
+
 	getBranches(query: BranchQuery): Promise<Ref[]>;
+
 	getBranchBase(name: string): Promise<Branch | undefined>;
+
 	setBranchUpstream(name: string, upstream: string): Promise<void>;
+
 	getRefs?(query: RefQuery, cancellationToken?: CancellationToken): Promise<Ref[]>; // Optional, because Remote Hub doesn't support this
 
 	getMergeBase(ref1: string, ref2: string): Promise<string>;

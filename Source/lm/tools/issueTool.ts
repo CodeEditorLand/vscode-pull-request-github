@@ -29,7 +29,9 @@ export class IssueTool implements vscode.LanguageModelTool<IssueToolParameters> 
 
 	async invoke(options: vscode.LanguageModelToolInvocationOptions<IssueToolParameters>, _token: vscode.CancellationToken): Promise<vscode.LanguageModelToolResult | undefined> {
 		let owner: string | undefined;
+
 		let name: string | undefined;
+
 		let folderManager: FolderRepositoryManager | undefined;
 		// The llm likes to make up an owner and name if it isn't provided one, and they tend to include 'owner' and 'name' respectively
 		if (options.parameters.repo && !options.parameters.repo.owner.includes('owner') && !options.parameters.repo.name.includes('name')) {
@@ -45,6 +47,7 @@ export class IssueTool implements vscode.LanguageModelTool<IssueToolParameters> 
 			throw new Error(`No folder manager found for ${owner}/${name}. Make sure to have the repository open.`);
 		}
 		const issue = await folderManager.resolveIssue(owner, name, options.parameters.issueNumber, true);
+
 		if (!issue) {
 			throw new Error(`No issue found for ${owner}/${name}/${options.parameters.issueNumber}. Make sure the issue exists.`);
 		}
@@ -53,6 +56,7 @@ export class IssueTool implements vscode.LanguageModelTool<IssueToolParameters> 
 			body: issue.body,
 			comments: issue.item.comments?.map(c => ({ body: c.body })) ?? []
 		};
+
 		return {
 			'text/plain': JSON.stringify(result)
 		};

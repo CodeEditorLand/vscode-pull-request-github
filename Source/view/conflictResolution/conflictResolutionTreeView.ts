@@ -26,7 +26,9 @@ export class ConflictResolutionTreeView extends Disposable implements vscode.Tre
 
 	async getTreeItem(element: ConflictNode): Promise<vscode.TreeItem> {
 		const resource = vscode.Uri.from({ path: element.conflict.prHeadFilePath, scheme: 'conflictResolution' });
+
 		const item = new vscode.TreeItem(resource);
+
 		if (this._conflictResolutionModel.isResolved(element.conflict.prHeadFilePath)) {
 			item.iconPath = new vscode.ThemeIcon('check');
 			item.command = {
@@ -57,7 +59,9 @@ export class ConflictResolutionTreeView extends Disposable implements vscode.Tre
 		exit.isTrusted = {
 			enabledCommands: ['pr.exitConflictResolutionMode', 'pr.completeMerge']
 		};
+
 		let children: ConflictNode[] = [];
+
 		if (!this._conflictResolutionModel.isResolvable()) {
 			exit.appendMarkdown(vscode.l10n.t('Not all conflicts can be resolved here. Check out the pull request to manually resolve conflicts.\n\n[Exit conflict resolution mode](command:pr.exitConflictResolutionMode)'));
 		} else {
@@ -69,6 +73,7 @@ export class ConflictResolutionTreeView extends Disposable implements vscode.Tre
 			children = Array.from(this._conflictResolutionModel.startingConflicts.values()).map(conflict => ({ conflict }));
 		}
 		(this._treeView as vscode.TreeView2<ConflictNode>).message = exit;
+
 		return children;
 	}
 }

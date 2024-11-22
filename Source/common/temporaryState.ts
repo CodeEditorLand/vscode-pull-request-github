@@ -40,6 +40,7 @@ export class TemporaryState extends vscode.Disposable {
 
 	private async writeState(subpath: string, filename: string, contents: Uint8Array, persistInSession: boolean): Promise<vscode.Uri> {
 		let filePath: vscode.Uri = this.path;
+
 		const workspace = (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0)
 			? vscode.workspace.workspaceFolders[0].name : undefined;
 
@@ -51,6 +52,7 @@ export class TemporaryState extends vscode.Disposable {
 			filePath = vscode.Uri.joinPath(filePath, subpath);
 		}
 		await vscode.workspace.fs.createDirectory(filePath);
+
 		const file = vscode.Uri.joinPath(filePath, filename);
 		await vscode.workspace.fs.writeFile(file, contents);
 
@@ -64,11 +66,13 @@ export class TemporaryState extends vscode.Disposable {
 			}
 		};
 		this.addDisposable(dispose, persistInSession);
+
 		return file;
 	}
 
 	private async readState(subpath: string, filename: string): Promise<Uint8Array> {
 		let filePath: vscode.Uri = this.path;
+
 		const workspace = (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0)
 			? vscode.workspace.workspaceFolders[0].name : undefined;
 
@@ -76,13 +80,16 @@ export class TemporaryState extends vscode.Disposable {
 			filePath = vscode.Uri.joinPath(filePath, workspace);
 		}
 		filePath = vscode.Uri.joinPath(filePath, subpath);
+
 		const file = vscode.Uri.joinPath(filePath, filename);
+
 		return vscode.workspace.fs.readFile(file);
 	}
 
 	static async init(context: vscode.ExtensionContext): Promise<vscode.Disposable | undefined> {
 		if (context.globalStorageUri && !tempState) {
 			tempState = new TemporaryState(context.globalStorageUri);
+
 			try {
 				await vscode.workspace.fs.delete(tempState.path, { recursive: true });
 			} catch (e) {
@@ -94,6 +101,7 @@ export class TemporaryState extends vscode.Disposable {
 				Logger.appendLine(`TemporaryState> Error in initialization: ${e.message}`);
 			}
 			context.subscriptions.push(tempState);
+
 			return tempState;
 		}
 	}

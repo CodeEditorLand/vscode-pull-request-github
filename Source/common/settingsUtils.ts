@@ -9,8 +9,10 @@ import { PR_SETTINGS_NAMESPACE, USE_REVIEW_MODE } from './settingKeys';
 
 export function getReviewMode(): { merged: boolean, closed: boolean } {
 	const desktopDefaults = { merged: false, closed: false };
+
 	const config = vscode.workspace.getConfiguration(PR_SETTINGS_NAMESPACE)
 		.get<{ merged: boolean, closed: boolean } | 'auto'>(USE_REVIEW_MODE, desktopDefaults);
+
 	if (config !== 'auto') {
 		return config;
 	}
@@ -19,3 +21,4 @@ export function getReviewMode(): { merged: boolean, closed: boolean } {
 	}
 	return desktopDefaults;
 }
+

@@ -37,6 +37,7 @@ export class RepositoryChangesNode extends DescriptionNode implements vscode.Tre
 		this._register(vscode.window.onDidChangeActiveTextEditor(e => {
 			if (vscode.workspace.getConfiguration(EXPLORER).get(AUTO_REVEAL)) {
 				const tabInput = vscode.window.tabGroups.activeTabGroup.activeTab?.input;
+
 				if (tabInput instanceof vscode.TabInputTextDiff) {
 					if ((tabInput.original.scheme === Schemes.Review)
 						&& (tabInput.modified.scheme !== Schemes.Review)
@@ -62,6 +63,7 @@ export class RepositoryChangesNode extends DescriptionNode implements vscode.Tre
 	private revealActiveEditorInTree(activeEditorUri: string | undefined): void {
 		if (this.parent.view.visible && activeEditorUri) {
 			const matchingFile = this._reviewModel.localFileChanges.find(change => change.changeModel.filePath.toString() === activeEditorUri);
+
 			if (matchingFile) {
 				this.reveal(matchingFile, { select: true });
 			}
@@ -70,6 +72,7 @@ export class RepositoryChangesNode extends DescriptionNode implements vscode.Tre
 
 	override async getChildren(): Promise<TreeNode[]> {
 		await this._progress.progress;
+
 		if (!this._filesCategoryNode || !this._commitsCategoryNode) {
 			Logger.appendLine(`Creating file and commit nodes for PR #${this.pullRequestModel.number}`, PR_TREE);
 			this._filesCategoryNode = new FilesCategoryNode(this.parent, this._reviewModel, this.pullRequestModel);
@@ -80,11 +83,13 @@ export class RepositoryChangesNode extends DescriptionNode implements vscode.Tre
 			);
 		}
 		this.children = [this._filesCategoryNode, this._commitsCategoryNode];
+
 		return this.children;
 	}
 
 	private setLabel() {
 		this.label = this.pullRequestModel.title;
+
 		if (this.label.length > 50) {
 			this.tooltip = this.label;
 			this.label = `${this.label.substring(0, 50)}...`;
@@ -95,10 +100,12 @@ export class RepositoryChangesNode extends DescriptionNode implements vscode.Tre
 		this.setLabel();
 		this.iconPath = (await DataUri.avatarCirclesAsImageDataUris(this._pullRequestManager.context, [this.pullRequestModel.author], 16, 16))[0];
 		this.description = undefined;
+
 		if (this.parent.children?.length && this.parent.children.length > 1) {
 			const allSameOwner = this.parent.children.every(child => {
 				return child instanceof RepositoryChangesNode && child.pullRequestModel.remote.owner === this.pullRequestModel.remote.owner;
 			});
+
 			if (allSameOwner) {
 				this.description = this.pullRequestModel.remote.repositoryName;
 			} else {
@@ -107,6 +114,7 @@ export class RepositoryChangesNode extends DescriptionNode implements vscode.Tre
 
 		}
 		this.updateContextValue();
+
 		return this;
 	}
 }

@@ -16,6 +16,7 @@ import {
 
 export class VSLSHost extends Disposable {
 	private _sharedService?: SharedService;
+
 	constructor(private readonly _liveShareAPI: LiveShare, private _api: API) {
 		super();
 	}
@@ -30,9 +31,13 @@ export class VSLSHost extends Disposable {
 
 	private async _gitHandler(args: any[]) {
 		const type = args[0];
+
 		const workspaceFolderPath = args[1];
+
 		const workspaceFolderUri = vscode.Uri.parse(workspaceFolderPath);
+
 		const localWorkSpaceFolderUri = this._liveShareAPI.convertSharedUriToLocal(workspaceFolderUri);
+
 		const gitProvider = this._api.getGitProvider(localWorkSpaceFolderUri);
 
 		if (!gitProvider) {
@@ -42,8 +47,10 @@ export class VSLSHost extends Disposable {
 		const localRepository: any = gitProvider.repositories.filter(
 			repository => repository.rootUri.toString() === localWorkSpaceFolderUri.toString(),
 		)[0];
+
 		if (localRepository) {
 			const commandArgs = args.slice(2);
+
 			if (type === VSLS_REPOSITORY_INITIALIZATION_NAME) {
 
 				this._register(localRepository.state.onDidChange(_ => {
@@ -64,7 +71,9 @@ export class VSLSHost extends Disposable {
 
 			if (type === 'show') {
 				const path = commandArgs[1];
+
 				const vslsFileUri = workspaceFolderUri.with({ path: path });
+
 				const localFileUri = this._liveShareAPI.convertSharedUriToLocal(vslsFileUri);
 				commandArgs[1] = localFileUri.fsPath;
 

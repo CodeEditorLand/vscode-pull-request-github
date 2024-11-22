@@ -34,18 +34,28 @@ export class IssueLinkProvider implements vscode.DocumentLinkProvider {
 		_token: vscode.CancellationToken,
 	): Promise<vscode.DocumentLink[]> {
 		const links: vscode.DocumentLink[] = [];
+
 		const wraps: boolean = vscode.workspace.getConfiguration(EDITOR, document).get(WORD_WRAP, 'off') !== 'off';
+
 		for (let i = 0; i < Math.min(document.lineCount, MAX_LINE_COUNT); i++) {
 			let searchResult = -1;
+
 			let lineOffset = 0;
+
 			const line = document.lineAt(i).text;
+
 			const lineLength = wraps ? line.length : Math.min(line.length, MAX_LINE_LENGTH);
+
 			let lineSubstring = line.substring(0, lineLength);
+
 			while ((searchResult = lineSubstring.search(ISSUE_EXPRESSION)) >= 0) {
 				const match = lineSubstring.match(ISSUE_EXPRESSION);
+
 				const parsed = parseIssueExpressionOutput(match);
+
 				if (match && parsed) {
 					const startPosition = new vscode.Position(i, searchResult + lineOffset);
+
 					if (await isComment(document, startPosition)) {
 						const link = new IssueDocumentLink(
 							new vscode.Range(
@@ -71,6 +81,7 @@ export class IssueLinkProvider implements vscode.DocumentLinkProvider {
 	): Promise<vscode.DocumentLink | undefined> {
 		if (this.manager.state === ReposManagerState.RepositoriesLoaded) {
 			const folderManager = this.manager.getManagerForFile(link.uri);
+
 			if (!folderManager) {
 				return;
 			}
@@ -80,6 +91,7 @@ export class IssueLinkProvider implements vscode.DocumentLinkProvider {
 				link.mappedLink.value,
 				link.mappedLink.parsed,
 			);
+
 			if (issue) {
 				link.target = await vscode.env.asExternalUri(vscode.Uri.parse(issue.html_url));
 			}

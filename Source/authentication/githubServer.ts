@@ -43,6 +43,7 @@ export class GitHubManager {
 		const matchingKnownServer = Array.from(this._knownServers.keys()).find(server => authority.endsWith(server));
 
 		const knownEnterprise = getEnterpriseUri();
+
 		if ((host.authority.toLowerCase() === knownEnterprise?.authority.toLowerCase()) && (!matchingKnownServer || (this._knownServers.get(matchingKnownServer) === GitHubServerType.None))) {
 			return GitHubServerType.Enterprise;
 		}
@@ -54,19 +55,27 @@ export class GitHubManager {
 		const [uri, options] = await GitHubManager.getOptions(host, 'HEAD', '/rate_limit');
 
 		let isGitHub = GitHubServerType.None;
+
 		try {
 			const response = await fetch(uri.toString(), options);
+
 			const otherGitHubHeaders: string[] = [];
 			response.headers.forEach((_value, header) => {
 				otherGitHubHeaders.push(header);
 			});
 			Logger.debug(`All headers: ${otherGitHubHeaders.join(', ')}`, 'GitHubServer');
+
 			const gitHubHeader = response.headers.get('x-github-request-id');
+
 			const gitHubEnterpriseHeader = response.headers.get('x-github-enterprise-version');
+
 			if (!gitHubHeader && !gitHubEnterpriseHeader) {
 				const [uriFallBack] = await GitHubManager.getOptions(host, 'HEAD', '/status');
+
 				const response = await fetch(uriFallBack.toString());
+
 				const responseText = await response.text();
+
 				if (responseText.startsWith('GitHub lives!')) {
 					// We've made it this far so it's not github.com
 					// It's very likely enterprise.
@@ -75,7 +84,9 @@ export class GitHubManager {
 					// Check if we got an enterprise-looking needs auth response:
 					// { message: 'Must authenticate to access this API.', documentation_url: 'https://docs.github.com/enterprise/3.3/rest'}
 					Logger.appendLine(`Received fallback response from the server: ${responseText}`, 'GitHubServer');
+
 					const parsedResponse = JSON.parse(responseText);
+
 					if (parsedResponse.documentation_url && (parsedResponse.documentation_url as string).startsWith('https://docs.github.com/enterprise')) {
 						isGitHub = GitHubServerType.Enterprise;
 					}
@@ -86,6 +97,7 @@ export class GitHubManager {
 			return isGitHub;
 		} catch (ex) {
 			Logger.warn(`No response from host ${host}: ${ex.message}`, 'GitHubServer');
+
 			return isGitHub;
 		} finally {
 			Logger.debug(`Host ${host} is associated with GitHub: ${isGitHub}`, 'GitHubServer');
@@ -105,11 +117,13 @@ export class GitHubManager {
 		} = {
 			'user-agent': 'GitHub VSCode Pull Requests',
 		};
+
 		if (token) {
 			headers.authorization = `token ${token}`;
 		}
 
 		const uri = vscode.Uri.joinPath(await HostHelper.getApiHost(hostUri), HostHelper.getApiPath(hostUri, path));
+
 		const requestInit = {
 			hostname: uri.authority,
 			port: 443,

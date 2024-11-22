@@ -53,6 +53,7 @@ export class RevertPullRequestViewProvider extends BaseCreatePullRequestViewProv
 		params.canModifyBranches = false;
 		params.actionDetail = vscode.l10n.t('Reverting');
 		params.associatedExistingPullRequest = this.pullRequest.number;
+
 		return params;
 	}
 
@@ -62,6 +63,7 @@ export class RevertPullRequestViewProvider extends BaseCreatePullRequestViewProv
 
 	protected override async _onDidReceiveMessage(message: IRequestMessage<any>) {
 		const result = await super._onDidReceiveMessage(message);
+
 		if (result !== this.MESSAGE_UNHANDLED) {
 			return;
 		}
@@ -69,6 +71,7 @@ export class RevertPullRequestViewProvider extends BaseCreatePullRequestViewProv
 		switch (message.command) {
 			case 'pr.openAssociatedPullRequest':
 				return this.openAssociatedPullRequest();
+
 			default:
 				// Log error
 				vscode.window.showErrorMessage('Unsupported webview message');
@@ -79,8 +82,10 @@ export class RevertPullRequestViewProvider extends BaseCreatePullRequestViewProv
 		let revertPr: PullRequestModel | undefined;
 		RevertPullRequestViewProvider.withProgress(async () => {
 			commands.setContext(contexts.CREATING, true);
+
 			try {
 				revertPr = await this._folderRepositoryManager.revert(this.pullRequest, message.args.title, message.args.body, message.args.draft);
+
 				if (revertPr) {
 					await this.postCreate(message, revertPr);
 					await openDescription(this.telemetry, revertPr, undefined, this._folderRepositoryManager, true);
@@ -89,6 +94,7 @@ export class RevertPullRequestViewProvider extends BaseCreatePullRequestViewProv
 			} catch (e) {
 				if (!revertPr) {
 					let errorMessage: string = e.message;
+
 					if (errorMessage.startsWith('GraphQL error: ')) {
 						errorMessage = errorMessage.substring('GraphQL error: '.length);
 					}
@@ -103,6 +109,7 @@ export class RevertPullRequestViewProvider extends BaseCreatePullRequestViewProv
 				}
 			} finally {
 				commands.setContext(contexts.CREATING, false);
+
 				if (revertPr) {
 					this._onDone.fire(revertPr);
 				} else {

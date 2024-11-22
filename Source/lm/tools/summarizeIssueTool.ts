@@ -18,7 +18,9 @@ export class IssueSummarizationTool implements vscode.LanguageModelTool<FetchIss
 			};
 		}
 		const shortenedTitle = options.input.title.length > 40;
+
 		const maxLengthTitle = shortenedTitle ? options.input.title.substring(0, 40) : options.input.title;
+
 		return {
 			invocationMessage: vscode.l10n.t('Summarizing "{0}', maxLengthTitle)
 		};
@@ -29,11 +31,14 @@ export class IssueSummarizationTool implements vscode.LanguageModelTool<FetchIss
 Title : ${options.input.title}
 Body : ${options.input.body}
 `;
+
 		const fileChanges = options.input.fileChanges;
+
 		if (fileChanges) {
 			issueOrPullRequestInfo += `
 The following are the files changed:
 `;
+
 			for (const fileChange of fileChanges.values()) {
 				issueOrPullRequestInfo += `
 File : ${fileChange.fileName}
@@ -42,6 +47,7 @@ Patch: ${fileChange.patch}
 			}
 		}
 		const comments = options.input.comments;
+
 		if (comments) {
 			for (const [index, comment] of comments.entries()) {
 				issueOrPullRequestInfo += `
@@ -55,16 +61,22 @@ Body: ${comment.body}
 			vendor: 'copilot',
 			family: 'gpt-4o'
 		});
+
 		const model = models[0];
+
 		const repo = options.input.repo;
+
 		const owner = options.input.owner;
 
 		if (model && repo && owner) {
 			const messages = [vscode.LanguageModelChatMessage.User(this.summarizeInstructions(repo, owner))];
 			messages.push(vscode.LanguageModelChatMessage.User(`The issue or pull request information is as follows:`));
 			messages.push(vscode.LanguageModelChatMessage.User(issueOrPullRequestInfo));
+
 			const response = await model.sendRequest(messages, {});
+
 			const responseText = await concatAsyncIterable(response.text);
+
 			return new vscode.LanguageModelToolResult([new vscode.LanguageModelTextPart(responseText)]);
 		} else {
 			return new vscode.LanguageModelToolResult([new vscode.LanguageModelTextPart(issueOrPullRequestInfo)]);

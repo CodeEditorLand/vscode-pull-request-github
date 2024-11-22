@@ -124,6 +124,7 @@ export interface MergePullRequest {
 	sha: string;
 	merged: boolean;
 	message: string;
+
 	documentation_url: string;
 }
 
@@ -248,6 +249,7 @@ export interface IRawFileContent {
 	url: string;
 	git_url: string | null;
 	html_url: string | null;
+
 	download_url: string | null;
 }
 

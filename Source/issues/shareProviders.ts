@@ -18,6 +18,7 @@ export class ShareProviderManager extends Disposable {
 
 	constructor(repositoryManager: RepositoriesManager, gitAPI: GitApiImpl) {
 		super();
+
 		if (!vscode.window.registerShareProvider) {
 			return;
 		}
@@ -100,6 +101,7 @@ abstract class AbstractShareProvider extends Disposable implements vscode.ShareP
 	public async provideShare(item: vscode.ShareableItem): Promise<vscode.Uri | string | undefined> {
 		// Get the blob
 		const folderManager = this.repositoryManager.getManagerForFile(item.resourceUri);
+
 		if (!folderManager) {
 			throw new Error(vscode.l10n.t('Current file does not belong to an open repository.'));
 		}
@@ -107,13 +109,17 @@ abstract class AbstractShareProvider extends Disposable implements vscode.ShareP
 
 		// Get the upstream
 		const repository = folderManager.repository;
+
 		const remote = await this.getUpstream(repository, blob);
+
 		if (!remote || !remote.fetchUrl) {
 			throw new Error(vscode.l10n.t('The selection may not exist on any remote.'));
 		}
 
 		const origin = getUpstreamOrigin(remote, this.origin).replace(/\/$/, '');
+
 		const path = encodeURIComponentExceptSlashes(item.resourceUri.path.substring(repository.rootUri.path.length));
+
 		const range = getRangeSegment(item);
 
 		return vscode.Uri.parse([
@@ -163,15 +169,19 @@ export class GitHubPermalinkShareProvider extends AbstractShareProvider implemen
 
 	protected async getBlob(folderManager: FolderRepositoryManager, uri: vscode.Uri): Promise<string> {
 		let commit: Commit | undefined;
+
 		let commitHash: string | undefined;
+
 		if (uri.scheme === Schemes.Review) {
 			commitHash = fromReviewUri(uri.query).commit;
 		}
 
 		if (!commitHash) {
 			const repository = folderManager.repository;
+
 			try {
 				const log = await repository.log({ maxEntries: 1, path: uri.fsPath });
+
 				if (log.length === 0) {
 					throw new Error(vscode.l10n.t('No branch on a remote contains the most recent commit for the file.'));
 				}
@@ -209,9 +219,11 @@ export class GitHubPermalinkAsMarkdownShareProvider extends GitHubPermalinkShare
 
 	override async provideShare(item: vscode.ShareableItem): Promise<vscode.Uri | string | undefined> {
 		Logger.trace('providing permalink markdown share', GitHubPermalinkAsMarkdownShareProvider.ID);
+
 		const link = await super.provideShare(item);
 
 		const text = await this.getMarkdownLinkText(item);
+
 		if (link) {
 			return `[${text?.trim() ?? ''}](${link.toString()})`;
 		}
@@ -228,11 +240,13 @@ export class GitHubPermalinkAsMarkdownShareProvider extends GitHubPermalinkShare
 				: new vscode.Range(item.selection.start, new vscode.Position(item.selection.start.line + 1, 0));
 
 			const selectedText = document.getText(editorSelection);
+
 			if (selectedText) {
 				return selectedText;
 			}
 
 			const wordRange = document.getWordRangeAtPosition(item.selection.start);
+
 			if (wordRange) {
 				return document.getText(wordRange);
 			}
@@ -272,9 +286,11 @@ function getRangeSegment(item: vscode.ShareableItem): string {
 
 async function getHEAD(folderManager: FolderRepositoryManager) {
 	let branchName = folderManager.repository.state.HEAD?.name;
+
 	if (!branchName) {
 		// Fall back to default branch name if we are not currently on a branch
 		const origin = await folderManager.getOrigin();
+
 		const metadata = await origin.getMetadata();
 		branchName = metadata.default_branch;
 	}

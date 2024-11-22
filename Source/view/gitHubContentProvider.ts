@@ -11,6 +11,7 @@ import { GitHubRepository } from '../github/githubRepository';
 
 async function getGitFileContent(folderRepoManager: FolderRepositoryManager, fileName: string, branch: string, isEmpty: boolean): Promise<Uint8Array> {
 	let content = '';
+
 	if (!isEmpty) {
 		content = await folderRepoManager.repository.show(branch, vscode.Uri.joinPath(folderRepoManager.repository.rootUri, fileName).fsPath);
 	}
@@ -29,6 +30,7 @@ export abstract class ChangesContentProvider implements Partial<vscode.FileSyste
 	public readonly changedFiles = new Map<string, FileData>(); // uri key
 
 	protected _editableBranch: string | undefined;
+
 	set editableBranch(value: string | undefined) {
 		this.changedFiles.clear();
 		this._editableBranch = value;
@@ -111,22 +113,27 @@ export class GitHubContentProvider extends ChangesContentProvider implements vsc
 
 	async readFile(uri: vscode.Uri): Promise<Uint8Array> {
 		const asParams = fromGitHubURI(uri);
+
 		const tryReadFile = await this.tryReadFile(uri, asParams);
+
 		if (tryReadFile) {
 			return tryReadFile;
 		}
 
 		const repo = this.gitHubRepositoryForOwner(asParams?.owner);
+
 		if (!repo) {
 			throw new Error(`No GitHub repository found for owner ${asParams!.owner}`);
 		}
 		const content = await repo.getFile(asParams!.fileName, asParams!.branch);
 		this.changedFiles.set(uri.toString(), { file: content, modified: false });
+
 		return this.changedFiles.get(uri.toString())!.file;
 	}
 
 	async applyChanges(commitMessage: string, branch: string): Promise<boolean> {
 		const changes: Map<string, Uint8Array> = new Map();
+
 		for (const [uri, fileData] of this.changedFiles) {
 			if (fileData.modified) {
 				changes.set(vscode.Uri.parse(uri).path, fileData.file);
@@ -143,22 +150,26 @@ export class GitContentProvider extends ChangesContentProvider implements vscode
 
 	async readFile(uri: vscode.Uri): Promise<Uint8Array> {
 		const params = fromGitHubURI(uri);
+
 		if (!params || params.isEmpty) {
 			return new TextEncoder().encode('');
 		}
 
 		const content = await getGitFileContent(this.folderRepositoryManager, params.fileName, params.branch, !!params.isEmpty);
 		this.changedFiles.set(uri.toString(), { file: content, modified: false });
+
 		return this.changedFiles.get(uri.toString())!.file;
 	}
 
 	async applyChanges(commitMessage: string): Promise<boolean> {
 		if (this.folderRepositoryManager.repository.state.indexChanges.length > 0 || this.folderRepositoryManager.repository.state.workingTreeChanges.length > 0) {
 			vscode.window.showWarningMessage('Please commit or stash your other changes before applying these changes.');
+
 			return false;
 		}
 
 		const uris: string[] = [];
+
 		for (const [uri, fileData] of this.changedFiles) {
 			if (fileData.modified) {
 				const fileUri = vscode.Uri.joinPath(this.folderRepositoryManager.repository.rootUri, vscode.Uri.parse(uri).path);
@@ -168,8 +179,10 @@ export class GitContentProvider extends ChangesContentProvider implements vscode
 		}
 		await this.folderRepositoryManager.repository.add(uris);
 		await this.folderRepositoryManager.repository.commit(commitMessage);
+
 		if (this.folderRepositoryManager.repository.state.HEAD?.upstream) {
 			await this.folderRepositoryManager.repository.push(this.folderRepositoryManager.repository.state.HEAD.upstream.remote, this.folderRepositoryManager.repository.state.HEAD.upstream.name);
+
 			return true;
 		}
 		return false;

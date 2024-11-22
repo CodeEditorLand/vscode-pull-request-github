@@ -46,6 +46,7 @@ export class CreatePRContextNew {
 		private _handler: MessageHandler | null = null,
 	) {
 		this.createParams = vscode.getState() ?? defaultCreateParams;
+
 		if (!_handler) {
 			this._handler = getMessageHandler(this.handleMessage);
 		}
@@ -93,12 +94,14 @@ export class CreatePRContextNew {
 	public cancelCreate = (): Promise<void> => {
 		const args = this.copyParams();
 		vscode.setState(defaultCreateParams);
+
 		return this.postMessage({ command: 'pr.cancelCreate', args });
 	};
 
 	public updateState = (params: Partial<CreateParamsNew>, reset: boolean = false): void => {
 		this.createParams = reset ? { ...defaultCreateParams, ...params } : { ...this.createParams, ...params };
 		vscode.setState(this.createParams);
+
 		if (this.onchange) {
 			this.onchange(this.createParams);
 		}
@@ -109,6 +112,7 @@ export class CreatePRContextNew {
 			currentRemote,
 			currentBranch
 		};
+
 		const response: ChooseBaseRemoteAndBranchResult = await this.postMessage({
 			command: 'pr.changeBaseRemoteAndBranch',
 			args
@@ -119,20 +123,24 @@ export class CreatePRContextNew {
 			baseBranch: response.baseBranch,
 			createError: ''
 		};
+
 		if ((this.createParams.baseRemote?.owner !== response.baseRemote.owner) || (this.createParams.baseRemote.repositoryName !== response.baseRemote.repositoryName)) {
 			updateValues.defaultMergeMethod = response.defaultMergeMethod;
 			updateValues.allowAutoMerge = response.allowAutoMerge;
 			updateValues.mergeMethodsAvailability = response.mergeMethodsAvailability;
 			updateValues.autoMergeDefault = response.autoMergeDefault;
 			updateValues.baseHasMergeQueue = response.baseHasMergeQueue;
+
 			if (!this.createParams.allowAutoMerge && updateValues.allowAutoMerge) {
 				updateValues.autoMerge = this.createParams.isDraft ? false : updateValues.autoMergeDefault;
 			}
 			updateValues.defaultTitle = response.defaultTitle;
+
 			if ((this.createParams.pendingTitle === undefined) || (this.createParams.pendingTitle === this.createParams.defaultTitle)) {
 				updateValues.pendingTitle = response.defaultTitle;
 			}
 			updateValues.defaultDescription = response.defaultDescription;
+
 			if ((this.createParams.pendingDescription === undefined) || (this.createParams.pendingDescription === this.createParams.defaultDescription)) {
 				updateValues.pendingDescription = response.defaultDescription;
 			}
@@ -150,6 +158,7 @@ export class CreatePRContextNew {
 			currentRemote,
 			currentBranch
 		};
+
 		const response: ChooseCompareRemoteAndBranchResult = await this.postMessage({
 			command: 'pr.changeCompareRemoteAndBranch',
 			args
@@ -168,11 +177,14 @@ export class CreatePRContextNew {
 		const args: TitleAndDescriptionArgs = {
 			useCopilot
 		};
+
 		const response: TitleAndDescriptionResult = await this.postMessage({
 			command: 'pr.generateTitleAndDescription',
 			args
 		});
+
 		const updateValues: { pendingTitle?: string, pendingDescription?: string } = {};
+
 		if (response.title) {
 			updateValues.pendingTitle = response.title;
 		}
@@ -208,6 +220,7 @@ export class CreatePRContextNew {
 
 	public preReview = async (): Promise<void> => {
 		this.updateState({ reviewing: true });
+
 		const result: PreReviewState = await this.postMessage({ command: 'pr.preReview' });
 		this.updateState({ preReviewState: result, reviewing: false });
 	}
@@ -218,6 +231,7 @@ export class CreatePRContextNew {
 
 	public validate = (): boolean => {
 		let isValid = true;
+
 		if (!this.createParams.pendingTitle) {
 			this.updateState({ showTitleValidationError: true });
 			isValid = false;
@@ -252,6 +266,7 @@ export class CreatePRContextNew {
 	public submit = async (): Promise<void> => {
 		try {
 			this.updateState({ creating: false });
+
 			const args: CreatePullRequestNew = this.copyParams();
 			vscode.setState(defaultCreateParams);
 			await this.postMessage({
@@ -306,6 +321,7 @@ export class CreatePRContextNew {
 				if (this.createParams.autoMerge === undefined) {
 					message.params.autoMerge = message.params.autoMergeDefault;
 					message.params.autoMergeMethod = message.params.defaultMergeMethod;
+
 					if (message.params.autoMerge) {
 						message.params.isDraft = false;
 					}
@@ -315,11 +331,13 @@ export class CreatePRContextNew {
 				}
 
 				this.updateState(message.params);
+
 				return;
 
 			case 'reset':
 				if (!message.params) {
 					this.updateState(defaultCreateParams, true);
+
 					return;
 				}
 				message.params.creating = message.params.creating ?? false;
@@ -332,10 +350,12 @@ export class CreatePRContextNew {
 				message.params.autoMerge = (message.params.autoMergeDefault !== undefined ? message.params.autoMergeDefault : this.createParams.autoMerge);
 				message.params.autoMergeMethod = (message.params.defaultMergeMethod !== undefined ? message.params.defaultMergeMethod : this.createParams.autoMergeMethod);
 				message.params.isDraft = (message.params.isDraftDefault !== undefined ? message.params.isDraftDefault : this.createParams.isDraft);
+
 				if (message.params.autoMergeDefault) {
 					message.params.isDraft = false;
 				}
 				this.updateState(message.params);
+
 				return;
 
 			case 'set-scroll':
@@ -343,6 +363,7 @@ export class CreatePRContextNew {
 					return;
 				}
 				window.scrollTo(message.scrollPosition.x, message.scrollPosition.y);
+
 				return;
 
 			case 'set-labels':
@@ -353,24 +374,31 @@ export class CreatePRContextNew {
 					return;
 				}
 				this.updateState(message.params);
+
 				return;
+
 			case 'set-milestone':
 				if (!message.params) {
 					return;
 				}
 				this.updateState(Object.keys(message.params).length === 0 ? { milestone: undefined } : message.params);
+
 				return;
+
 			case 'create':
 				if (!message.params) {
 					return;
 				}
 				this.updateState(message.params);
+
 				return;
+
 			case 'reviewing':
 				if (!message.params) {
 					return;
 				}
 				this.preReview();
+
 				return;
 		}
 	};

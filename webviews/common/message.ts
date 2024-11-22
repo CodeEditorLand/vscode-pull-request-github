@@ -22,6 +22,7 @@ export class MessageHandler {
 	private _commandHandler: ((message: any) => void) | null;
 	private lastSentReq: number;
 	private pendingReplies: any;
+
 	constructor(commandHandler: any) {
 		this._commandHandler = commandHandler;
 		this.lastSentReq = 0;
@@ -35,6 +36,7 @@ export class MessageHandler {
 
 	public async postMessage(message: any): Promise<any> {
 		const req = String(++this.lastSentReq);
+
 		return new Promise<any>((resolve, reject) => {
 			this.pendingReplies[req] = {
 				resolve: resolve,
@@ -53,6 +55,7 @@ export class MessageHandler {
 		if (message.seq) {
 			// this is a reply
 			const pendingReply = this.pendingReplies[message.seq];
+
 			if (pendingReply) {
 				if (message.err) {
 					pendingReply.reject(message.err);

@@ -22,13 +22,17 @@ export class UserHoverProvider implements vscode.HoverProvider {
 		}
 
 		let wordPosition = document.getWordRangeAtPosition(position, USER_EXPRESSION);
+
 		if (wordPosition && wordPosition.start.character > 0) {
 			wordPosition = new vscode.Range(
 				new vscode.Position(wordPosition.start.line, wordPosition.start.character),
 				wordPosition.end,
 			);
+
 			const word = document.getText(wordPosition);
+
 			const match = word.match(USER_EXPRESSION);
+
 			if (match) {
 				const username = match[1];
 				// JS and TS doc checks
@@ -41,6 +45,7 @@ export class UserHoverProvider implements vscode.HoverProvider {
 					return;
 				}
 				const isDoxygenLanguage = document.languageId === 'cpp' || document.languageId === 'c' || document.languageId === 'csharp' || document.languageId === 'java' || document.languageId === 'objective-c' || document.languageId === 'php';
+
 				if (isDoxygenLanguage && DOXYGEN_NON_USERS.indexOf(username) >= 0) {
 					return;
 				}
@@ -58,16 +63,20 @@ export class UserHoverProvider implements vscode.HoverProvider {
 	): Promise<vscode.Hover | undefined> {
 		try {
 			const folderManager = this.manager.getManagerForFile(uri);
+
 			if (!folderManager) {
 				return;
 			}
 			const origin = await folderManager.getPullRequestDefaults();
+
 			const user = await folderManager.resolveUser(origin.owner, origin.repo, username);
+
 			if (user && user.name) {
 				/* __GDPR__
 					"issue.userHover" : {}
 				*/
 				this.telemetry.sendTelemetryEvent('issues.userHover');
+
 				return new vscode.Hover(userMarkdown(origin, user), range);
 			} else {
 				return;

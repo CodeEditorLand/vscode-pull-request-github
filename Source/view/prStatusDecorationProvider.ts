@@ -33,10 +33,12 @@ export class PRStatusDecorationProvider extends Disposable implements vscode.Fil
 			return;
 		}
 		const params = fromPRNodeUri(uri);
+
 		if (!params) {
 			return;
 		}
 		const status = this._prsTreeModel.cachedPRStatus(params.prIdentifier);
+
 		if (!status) {
 			return;
 		}

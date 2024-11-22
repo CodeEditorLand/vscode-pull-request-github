@@ -21,11 +21,13 @@ export class VSLSGuest extends Disposable implements IGit {
 	private _onDidCloseRepository = this._register(new vscode.EventEmitter<Repository>());
 	readonly onDidCloseRepository: vscode.Event<Repository> = this._onDidCloseRepository.event;
 	private _openRepositories: Repository[] = [];
+
 	get repositories(): Repository[] {
 		return this._openRepositories;
 	}
 
 	private _sharedServiceProxy?: SharedServiceProxy;
+
 	constructor(private readonly _liveShareAPI: LiveShare) {
 		super();
 	}
@@ -84,11 +86,14 @@ export class VSLSGuest extends Disposable implements IGit {
 
 	public async openVSLSRepository(folder: vscode.WorkspaceFolder): Promise<void> {
 		const existingRepository = this.getRepository(folder);
+
 		if (existingRepository) {
 			return;
 		}
 		const liveShareRepository = new LiveShareRepository(folder, this._sharedServiceProxy!);
+
 		const repositoryProxyHandler = new LiveShareRepositoryProxyHandler();
+
 		const repository = new Proxy(liveShareRepository, repositoryProxyHandler);
 		await repository.initialize();
 		this.openRepository(repository);
@@ -96,6 +101,7 @@ export class VSLSGuest extends Disposable implements IGit {
 
 	public async closeVSLSRepository(folder: vscode.WorkspaceFolder): Promise<void> {
 		const existingRepository = this.getRepository(folder);
+
 		if (!existingRepository) {
 			return;
 		}

@@ -15,11 +15,13 @@ import { VSLSHost } from './vslshost';
  */
 async function getVSLSApi() {
 	const liveshareExtension = vscode.extensions.getExtension('ms-vsliveshare.vsliveshare');
+
 	if (!liveshareExtension) {
 		// The extension is not installed.
 		return null;
 	}
 	const extensionApi = liveshareExtension.isActive ? liveshareExtension.exports : await liveshareExtension.activate();
+
 	if (!extensionApi) {
 		// The extensibility API is not enabled.
 		return null;
@@ -56,6 +58,7 @@ export class LiveShareManager extends Disposable {
 		}
 
 		this._register(this._liveShareAPI.onDidChangeSession(e => this._onDidChangeSession(e.session), this));
+
 		if (this._liveShareAPI!.session) {
 			this._onDidChangeSession(this._liveShareAPI!.session);
 		}
@@ -70,6 +73,7 @@ export class LiveShareManager extends Disposable {
 			this._host = new VSLSHost(this._liveShareAPI!, this._api);
 			this._localDisposables.push(this._host);
 			await this._host.initialize();
+
 			return;
 		}
 

@@ -34,6 +34,7 @@ export class PRCommentControllerRegistry extends Disposable implements vscode.Co
 
 	async provideCommentingRanges(document: vscode.TextDocument, token: vscode.CancellationToken): Promise<vscode.Range[] | undefined> {
 		const uri = document.uri;
+
 		const params = fromPRUri(uri);
 
 		if (!params || !this._prCommentingRangeProviders[params.prNumber]) {
@@ -49,6 +50,7 @@ export class PRCommentControllerRegistry extends Disposable implements vscode.Co
 
 	async toggleReaction(comment: GHPRComment, reaction: vscode.CommentReaction): Promise<void> {
 		const uri = comment.parent!.uri;
+
 		const params = fromPRUri(uri);
 
 		if (
@@ -76,6 +78,7 @@ export class PRCommentControllerRegistry extends Disposable implements vscode.Co
 	public registerCommentController(prNumber: number, pullRequestModel: PullRequestModel, folderRepositoryManager: FolderRepositoryManager): vscode.Disposable {
 		if (this._prCommentHandlers[prNumber]) {
 			this._prCommentHandlers[prNumber].refCount += 1;
+
 			return this._prCommentHandlers[prNumber];
 		}
 
@@ -97,6 +100,7 @@ export class PRCommentControllerRegistry extends Disposable implements vscode.Co
 				}
 
 				this._prCommentHandlers[prNumber].refCount -= 1;
+
 				if (this._prCommentHandlers[prNumber].refCount === 0) {
 					this._prCommentHandlers[prNumber].handler.dispose();
 					delete this._prCommentHandlers[prNumber];

@@ -11,6 +11,7 @@ import { LiveShareManager } from './vsls';
 
 export function registerLiveShareGitProvider(apiImpl: API): LiveShareManager {
 	const liveShareManager = new LiveShareManager(apiImpl);
+
 	return liveShareManager;
 }
 
@@ -19,8 +20,10 @@ export async function registerBuiltinGitProvider(
 	apiImpl: API,
 ): Promise<vscode.Disposable | undefined> {
 	const builtInGitProvider = await BuiltinGitProvider.createProvider();
+
 	if (builtInGitProvider) {
 		apiImpl.registerGitProvider(builtInGitProvider);
+
 		return builtInGitProvider;
 	}
 }

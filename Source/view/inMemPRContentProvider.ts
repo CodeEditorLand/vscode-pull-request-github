@@ -58,6 +58,7 @@ export class InMemPRFileSystemProvider extends RepositoryFileSystemProvider {
 				disposable.dispose();
 				resolve();
 			}, milliseconds);
+
 			const disposable = folderRepositoryManager.onDidLoadRepositories(e => {
 				if (e === ReposManagerState.RepositoriesLoaded) {
 					clearTimeout(timeout);
@@ -70,14 +71,17 @@ export class InMemPRFileSystemProvider extends RepositoryFileSystemProvider {
 
 	private async tryRegisterNewProvider(uri: vscode.Uri, prUriParams: PRUriParams) {
 		await this.waitForAuth();
+
 		if ((this.gitAPI.state !== 'initialized') || (this.gitAPI.repositories.length === 0)) {
 			await this.waitForRepos(4000);
 		}
 		const folderRepositoryManager = this.reposManagers.getManagerForFile(uri);
+
 		if (!folderRepositoryManager) {
 			return;
 		}
 		let repo = folderRepositoryManager.findRepo(repo => repo.remote.remoteName === prUriParams.remoteName);
+
 		if (!repo) {
 			// Depending on the git provider, we might not have a GitHub repo right away, even if we already have git repos.
 			// This can take a long time.
@@ -88,17 +92,21 @@ export class InMemPRFileSystemProvider extends RepositoryFileSystemProvider {
 			return;
 		}
 		const pr = await folderRepositoryManager.resolvePullRequest(repo.remote.owner, repo.remote.repositoryName, prUriParams.prNumber);
+
 		if (!pr) {
 			return;
 		}
 		const rawChanges = await pr.getFileChangesInfo();
+
 		const mergeBase = pr.mergeBase;
+
 		if (!mergeBase) {
 			return;
 		}
 		const changes = this.resolveChanges(rawChanges, pr, folderRepositoryManager, mergeBase);
 		this.registerTextDocumentContentProvider(pr.number, async (uri: vscode.Uri) => {
 			const params = fromPRUri(uri);
+
 			if (!params) {
 				return '';
 			}
@@ -108,6 +116,7 @@ export class InMemPRFileSystemProvider extends RepositoryFileSystemProvider {
 
 			if (!fileChange) {
 				Logger.error(`Cannot find content for document ${uri.toString()}`, 'PR');
+
 				return '';
 			}
 
@@ -117,8 +126,10 @@ export class InMemPRFileSystemProvider extends RepositoryFileSystemProvider {
 
 	private async readFileWithProvider(uri: vscode.Uri, prNumber: number): Promise<Uint8Array | undefined> {
 		const provider = this._prFileChangeContentProviders[prNumber];
+
 		if (provider) {
 			const content = await provider(uri);
+
 			if (typeof content === 'string') {
 				return new TextEncoder().encode(content);
 			} else {
@@ -129,15 +140,18 @@ export class InMemPRFileSystemProvider extends RepositoryFileSystemProvider {
 
 	async readFile(uri: vscode.Uri): Promise<Uint8Array> {
 		const prUriParams = fromPRUri(uri);
+
 		if (!prUriParams || (prUriParams.prNumber === undefined)) {
 			return new TextEncoder().encode('');
 		}
 		const providerResult = await this.readFileWithProvider(uri, prUriParams.prNumber);
+
 		if (providerResult) {
 			return providerResult;
 		}
 
 		await this.tryRegisterNewProvider(uri, prUriParams);
+
 		return (await this.readFileWithProvider(uri, prUriParams.prNumber)) ?? new TextEncoder().encode('');
 	}
 }
@@ -160,7 +174,9 @@ export async function provideDocumentContentForChangeModel(folderRepoManager: Fo
 	}
 
 	const diffHunks = await fileChange.diffHunks();
+
 	let inMemNeedsFullFile = false;
+
 	if (fileChange instanceof InMemFileChangeModel) {
 		// Partial or looks like binary.
 		inMemNeedsFullFile = await fileChange.isPartial();
@@ -188,6 +204,7 @@ export async function provideDocumentContentForChangeModel(folderRepoManager: Fo
 						vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(fileChange.blobUrl));
 					}
 				});
+
 			return '';
 		}
 	}
@@ -200,9 +217,11 @@ export async function provideDocumentContentForChangeModel(folderRepoManager: Fo
 			if (params.isBase) {
 				// left
 				const left: string[] = [];
+
 				for (let i = 0; i < diffHunks.length; i++) {
 					for (let j = 0; j < diffHunks[i].diffLines.length; j++) {
 						const diffLine = diffHunks[i].diffLines[j];
+
 						if (diffLine.type === DiffChangeType.Add) {
 							// nothing
 						} else if (diffLine.type === DiffChangeType.Delete) {
@@ -218,9 +237,11 @@ export async function provideDocumentContentForChangeModel(folderRepoManager: Fo
 				return left.join('\n');
 			} else {
 				const right: string[] = [];
+
 				for (let i = 0; i < diffHunks.length; i++) {
 					for (let j = 0; j < diffHunks[i].diffLines.length; j++) {
 						const diffLine = diffHunks[i].diffLines[j];
+
 						if (diffLine.type === DiffChangeType.Add) {
 							right.push(diffLine.text);
 						} else if (diffLine.type === DiffChangeType.Delete) {
@@ -238,10 +259,12 @@ export async function provideDocumentContentForChangeModel(folderRepoManager: Fo
 		} else {
 			const originalFileName =
 				fileChange.status === GitChangeType.RENAME ? fileChange.previousFileName : fileChange.fileName;
+
 			const originalFilePath = vscode.Uri.joinPath(
 				folderRepoManager.repository.rootUri,
 				originalFileName!,
 			);
+
 			const originalContent = await folderRepoManager.repository.show(
 				params.baseCommit,
 				originalFilePath.fsPath,

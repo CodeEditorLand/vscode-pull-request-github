@@ -50,12 +50,14 @@ export class DirectoryTreeNode extends TreeNode implements vscode.TreeItem {
 			return;
 		}
 		const child = this.children[0];
+
 		if (!(child instanceof DirectoryTreeNode)) {
 			return;
 		}
 
 		// perform the merge
 		this.label = this.label + '/' + child.label;
+
 		if (this.label.startsWith('/')) {
 			this.label = this.label.substr(1);
 		}
@@ -69,6 +71,7 @@ export class DirectoryTreeNode extends TreeNode implements vscode.TreeItem {
 		}
 
 		const dirs: DirectoryTreeNode[] = [];
+
 		const files: (RemoteFileChangeNode | InMemFileChangeNode | GitFileChangeNode)[] = [];
 
 		// process directory
@@ -102,6 +105,7 @@ export class DirectoryTreeNode extends TreeNode implements vscode.TreeItem {
 		if (paths.length === 1) {
 			file.parent = this;
 			this.children.push(file);
+
 			return;
 		}
 
@@ -109,6 +113,7 @@ export class DirectoryTreeNode extends TreeNode implements vscode.TreeItem {
 		const tail = paths.slice(1); // rest
 
 		let node = this.pathToChild.get(dir);
+
 		if (!node) {
 			node = new DirectoryTreeNode(this, dir);
 			this.pathToChild.set(dir, node);
@@ -139,6 +144,7 @@ export class DirectoryTreeNode extends TreeNode implements vscode.TreeItem {
 
 	getTreeItem(): vscode.TreeItem {
 		this.setCheckboxState(this.allChildrenViewed());
+
 		return this;
 	}
 }

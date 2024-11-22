@@ -77,6 +77,7 @@ export class GithubRemoteSourceProvider implements RemoteSourceProvider {
 		}
 
 		const raw = await hub.octokit.call(hub.octokit.api.search.repos, { q: query, sort: 'updated' });
+
 		return raw.data.items.map(repoResponseAsRemoteSource);
 	}
 }

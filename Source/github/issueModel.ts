@@ -80,6 +80,7 @@ export class IssueModel<TItem extends Issue = Issue> {
 	public get userAvatarUri(): vscode.Uri | undefined {
 		if (this.item) {
 			const key = this.userAvatar;
+
 			if (key) {
 				const uri = vscode.Uri.parse(`${key}&s=${64}`);
 
@@ -116,6 +117,7 @@ export class IssueModel<TItem extends Issue = Issue> {
 		this.graphNodeId = issue.graphNodeId;
 		this.number = issue.number;
 		this.title = issue.title;
+
 		if (issue.titleHTML) {
 			this.titleHTML = issue.titleHTML;
 		}
@@ -167,6 +169,7 @@ export class IssueModel<TItem extends Issue = Issue> {
 					},
 				},
 			});
+
 			if (data?.updatePullRequest.pullRequest) {
 				this.item.body = data.updatePullRequest.pullRequest.body;
 				this.bodyHTML = data.updatePullRequest.pullRequest.bodyHTML;
@@ -182,11 +185,13 @@ export class IssueModel<TItem extends Issue = Issue> {
 
 	canEdit(): Promise<boolean> {
 		const username = this.author && this.author.login;
+
 		return this.githubRepository.isCurrentUser(username);
 	}
 
 	async createIssueComment(text: string): Promise<IComment> {
 		const { mutate, schema } = await this.githubRepository.ensure();
+
 		const { data } = await mutate<AddIssueCommentResponse>({
 			mutation: schema.AddIssueComment,
 			variables: {
@@ -236,6 +241,7 @@ export class IssueModel<TItem extends Issue = Issue> {
 
 	async setLabels(labels: string[]): Promise<void> {
 		const { octokit, remote } = await this.githubRepository.ensure();
+
 		try {
 			await octokit.call(octokit.api.issues.setLabels, {
 				owner: remote.owner,
@@ -295,6 +301,7 @@ export class IssueModel<TItem extends Issue = Issue> {
 						},
 					},
 				})));
+
 			if (!this.item.projectItems) {
 				this.item.projectItems = [];
 			}
@@ -306,15 +313,19 @@ export class IssueModel<TItem extends Issue = Issue> {
 
 	async updateProjects(projects: IProject[]): Promise<IProjectItem[] | undefined> {
 		const projectsToAdd: IProject[] = projects.filter(project => !this.item.projectItems?.find(p => p.project.id === project.id));
+
 		const projectsToRemove: IProjectItem[] = this.item.projectItems?.filter(project => !projects.find(p => p.id === project.project.id)) ?? [];
 		await this.removeProjects(projectsToRemove);
 		await this.addProjects(projectsToAdd);
+
 		return this.item.projectItems;
 	}
 
 	async getIssueTimelineEvents(): Promise<TimelineEvent[]> {
 		Logger.debug(`Fetch timeline events of issue #${this.number} - enter`, IssueModel.ID);
+
 		const githubRepository = this.githubRepository;
+
 		const { query, remote, schema } = await githubRepository.ensure();
 
 		try {
@@ -329,14 +340,17 @@ export class IssueModel<TItem extends Issue = Issue> {
 
 			if (data.repository === null) {
 				Logger.error('Unexpected null repository when getting issue timeline events', IssueModel.ID);
+
 				return [];
 			}
 			const ret = data.repository.pullRequest.timelineItems.nodes;
+
 			const events = parseGraphQLTimelineEvents(ret, githubRepository);
 
 			return events;
 		} catch (e) {
 			console.log(e);
+
 			return [];
 		}
 	}

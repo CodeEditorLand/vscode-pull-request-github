@@ -29,8 +29,10 @@ export abstract class CommentControllerBase extends Disposable {
 	protected githubReposForPullRequest(pullRequest: PullRequestModel | undefined): GitHubRepository[] | undefined;
 	protected githubReposForPullRequest(pullRequest: PullRequestModel | undefined): GitHubRepository[] | undefined {
 		const githubRepositories = pullRequest ? [pullRequest.githubRepository] : undefined;
+
 		if (githubRepositories && pullRequest?.head) {
 			const headRepo = this._folderRepoManager.findExistingGitHubRepository({ owner: pullRequest.head.owner, repositoryName: pullRequest.remote.repositoryName });
+
 			if (headRepo) {
 				githubRepositories.push(headRepo);
 			}

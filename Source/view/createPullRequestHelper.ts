@@ -157,7 +157,9 @@ export class CreatePullRequestHelper extends Disposable {
 		) {
 			// There is an upstream/parent repo, but the remote for it does not exist in the current workspace. Fall back to using origin instead.
 			const origin = await folderRepoManager.getOrigin();
+
 			const metadata = await folderRepoManager.getMetadata(origin.remote.remoteName);
+
 			return {
 				owner: metadata.owner.login,
 				repo: metadata.name,
@@ -184,6 +186,7 @@ export class CreatePullRequestHelper extends Disposable {
 
 		if (!this._createPRViewProvider || !(this._createPRViewProvider instanceof RevertPullRequestViewProvider)) {
 			this._createPRViewProvider?.dispose();
+
 			const model: BasePullRequestDataModel = {
 				baseOwner: pullRequestModel.remote.owner,
 				repositoryName: pullRequestModel.remote.repositoryName
@@ -230,14 +233,17 @@ export class CreatePullRequestHelper extends Disposable {
 				folderRepoManager.repository.state.HEAD?.name ? folderRepoManager.repository.state.HEAD : undefined);
 
 		let createViewProvider: CreatePullRequestViewProvider;
+
 		if (!this._createPRViewProvider || !(this._createPRViewProvider instanceof CreatePullRequestViewProvider)) {
 			this._createPRViewProvider?.dispose();
+
 			const pullRequestDefaults = await this.ensureDefaultsAreLocal(
 				folderRepoManager,
 				await folderRepoManager.getPullRequestDefaults(branch),
 			);
 
 			const compareOrigin = await folderRepoManager.getOrigin(branch);
+
 			const model = new CreatePullRequestDataModel(folderRepoManager, pullRequestDefaults.owner, pullRequestDefaults.base, compareOrigin.remote.owner, branch?.name ?? pullRequestDefaults.base, compareOrigin.remote.repositoryName);
 			createViewProvider = this._createPRViewProvider = new CreatePullRequestViewProvider(
 				telemetry,
@@ -280,6 +286,7 @@ export class CreatePullRequestHelper extends Disposable {
 
 	override dispose() {
 		this.reset();
+
 		super.dispose();
 	}
 }

@@ -23,13 +23,17 @@ export function getGitChangeTypeFromApi(status: Status): GitChangeType {
 	switch (status) {
 		case Status.DELETED:
 			return GitChangeType.DELETE;
+
 		case Status.ADDED_BY_US:
 		case Status.INDEX_ADDED:
 			return GitChangeType.ADD;
+
 		case Status.INDEX_RENAMED:
 			return GitChangeType.RENAME;
+
 		case Status.MODIFIED:
 			return GitChangeType.MODIFY;
+
 		default:
 			return GitChangeType.UNKNOWN;
 	}
@@ -50,6 +54,7 @@ class GitHubCommitNode extends TreeNode {
 			return [];
 		}
 		const { octokit, remote } = await this.model.gitHubRepository.ensure();
+
 		const { data } = await octokit.call(octokit.api.repos.compareCommits, {
 			repo: remote.repositoryName,
 			owner: remote.owner,
@@ -95,7 +100,9 @@ class GitCommitNode extends TreeNode {
 
 		return changes.map(change => {
 			const filename = pathLib.posix.relative(this.folderRepoManager.repository.rootUri.path, change.uri.path);
+
 			const previousFilename = pathLib.posix.relative(this.folderRepoManager.repository.rootUri.path, change.originalUri.path);
+
 			return new GitHubFileChangeNode(
 				this,
 				filename,
@@ -151,11 +158,14 @@ abstract class CompareChangesTreeProvider extends Disposable implements vscode.T
 	protected async getRawGitHubData() {
 		try {
 			const rawFiles = await this.model.gitHubFiles();
+
 			const rawCommits = await this.model.gitHubCommits();
+
 			const mergeBase = await this.model.gitHubMergeBase();
 
 			if (!rawFiles?.length || !rawCommits?.length) {
 				(this.view as vscode.TreeView2<TreeNode>).message = new vscode.MarkdownString(vscode.l10n.t('There are no commits between the base `{0}` branch and the comparing `{1}` branch', this.model.baseBranch, this.model.compareBranch));
+
 				return {};
 			} else if (this._isDisposed) {
 				return {};
@@ -189,6 +199,7 @@ abstract class CompareChangesTreeProvider extends Disposable implements vscode.T
 			}
 		} catch (e) {
 			Logger.error(`Comparing changes failed: ${e}`);
+
 			return [];
 		}
 		return this._children;
@@ -219,8 +230,10 @@ class CompareChangesFilesTreeProvider extends CompareChangesTreeProvider {
 		}
 
 		const { rawFiles, mergeBase } = await this.getRawGitHubData();
+
 		if (rawFiles && mergeBase) {
 			(this.view as vscode.TreeView2<TreeNode>).message = this.addReviewMessage();
+
 			return rawFiles.map(file => {
 				return new GitHubFileChangeNode(
 					this,
@@ -238,7 +251,9 @@ class CompareChangesFilesTreeProvider extends CompareChangesTreeProvider {
 	private async getGitFileChildren(diff: Change[]) {
 		return diff.map(change => {
 			const filename = pathLib.posix.relative(this.folderRepoManager.repository.rootUri.path, change.uri.path);
+
 			const previousFilename = pathLib.posix.relative(this.folderRepoManager.repository.rootUri.path, change.originalUri.path);
+
 			return new GitHubFileChangeNode(
 				this,
 				filename,
@@ -253,6 +268,7 @@ class CompareChangesFilesTreeProvider extends CompareChangesTreeProvider {
 
 	private addReviewMessage(markdown?: vscode.MarkdownString): vscode.MarkdownString | undefined {
 		const preReviewer = this.folderRepoManager.getAutoReviewer();
+
 		if (!preReviewer) {
 			return markdown;
 		}
@@ -263,14 +279,17 @@ class CompareChangesFilesTreeProvider extends CompareChangesTreeProvider {
 		}
 		markdown.supportThemeIcons = true;
 		markdown.appendMarkdown(`[${vscode.l10n.t('$(sparkle) {0} Code Review', preReviewer.title)}](command:pr.preReview)`);
+
 		return markdown;
 	}
 
 	protected async getGitChildren(element?: TreeNode) {
 		if (!element) {
 			const diff = await this.model.gitFiles();
+
 			if (diff.length === 0) {
 				(this.view as vscode.TreeView2<TreeNode>).message = new vscode.MarkdownString(vscode.l10n.t('There are no commits between the base `{0}` branch and the comparing `{1}` branch', this.model.baseBranch, this.model.compareBranch));
+
 				return [];
 			} else if (!(await this.model.getCompareHasUpstream())) {
 				const message = new vscode.MarkdownString(vscode.l10n.t({ message: 'Branch `{0}` has not been pushed yet. [Publish branch](command:git.publish) to see all changes from base branch.', args: [this.model.compareBranch], comment: "{Locked='](command:git.publish)'}" }));
@@ -304,6 +323,7 @@ class CompareChangesCommitsTreeProvider extends CompareChangesTreeProvider {
 		}
 
 		const { rawCommits } = await this.getRawGitHubData();
+
 		if (rawCommits) {
 			return rawCommits.map((commit, index) => {
 				return new GitHubCommitNode(this, this.model, commit, index === 0 ? this.model.baseBranch : rawCommits[index - 1].sha);
@@ -317,8 +337,10 @@ class CompareChangesCommitsTreeProvider extends CompareChangesTreeProvider {
 		}
 
 		const log = await this.model.gitCommits();
+
 		if (log.length === 0) {
 			(this.view as vscode.TreeView2<TreeNode>).message = new vscode.MarkdownString(vscode.l10n.t('There are no commits between the base `{0}` branch and the comparing `{1}` branch', this.model.baseBranch, this.model.compareBranch));
+
 			return [];
 		} else if (this._isDisposed) {
 			return [];

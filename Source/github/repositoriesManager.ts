@@ -57,6 +57,7 @@ export class RepositoriesManager extends Disposable {
 
 	private updateActiveReviewCount() {
 		let count = 0;
+
 		for (const folderManager of this._folderManagers) {
 			if (folderManager.activePullRequest) {
 				count++;
@@ -86,10 +87,12 @@ export class RepositoriesManager extends Disposable {
 
 		// Try to insert the new repository in workspace folder order
 		const workspaceFolders = vscode.workspace.workspaceFolders;
+
 		if (workspaceFolders) {
 			const index = workspaceFolders.findIndex(
 				folder => isDescendant(folder.uri.fsPath, folderManager.repository.rootUri.fsPath) || isDescendant(folderManager.repository.rootUri.fsPath, folder.uri.fsPath),
 			);
+
 			if (index > -1) {
 				const arrayEnd = this._folderManagers.slice(index, this._folderManagers.length);
 				this._folderManagers = this._folderManagers.slice(0, index);
@@ -97,6 +100,7 @@ export class RepositoriesManager extends Disposable {
 				this._folderManagers.push(...arrayEnd);
 				this.updateActiveReviewCount();
 				this._onDidChangeFolderRepositories.fire({ added: folderManager });
+
 				return;
 			}
 		}
@@ -109,6 +113,7 @@ export class RepositoriesManager extends Disposable {
 		const existingFolderManagerIndex = this._folderManagers.findIndex(
 			manager => manager.repository.rootUri.toString() === repo.rootUri.toString(),
 		);
+
 		if (existingFolderManagerIndex > -1) {
 			const folderManager = this._folderManagers[existingFolderManagerIndex];
 			disposeAll(this._subs.get(folderManager)!);
@@ -139,9 +144,11 @@ export class RepositoriesManager extends Disposable {
 
 		for (const folderManager of folderManagers) {
 			const managerPath = folderManager.repository.rootUri.path;
+
 			const testUriRelativePath = uri.path.substring(
 				managerPath.length > 1 ? managerPath.length + 1 : managerPath.length,
 			);
+
 			if (compareIgnoreCase(vscode.Uri.joinPath(folderManager.repository.rootUri, testUriRelativePath).path, uri.path) === 0) {
 				return folderManager;
 			}
@@ -151,6 +158,7 @@ export class RepositoriesManager extends Disposable {
 
 	getManagerForRepository(owner: string, repo: string) {
 		const issueRemoteUrl = `${owner.toLowerCase()}/${repo.toLowerCase()}`;
+
 		for (const folderManager of this._folderManagers) {
 			if (
 				folderManager.gitHubRepositories
@@ -171,6 +179,7 @@ export class RepositoriesManager extends Disposable {
 	set state(state: ReposManagerState) {
 		const stateChange = state !== this._state;
 		this._state = state;
+
 		if (stateChange) {
 			vscode.commands.executeCommand('setContext', ReposManagerStateContext, state);
 			this._onDidChangeState.fire();
@@ -191,16 +200,19 @@ export class RepositoriesManager extends Disposable {
 			return !!this._credentialStore.login(AuthProvider.github);
 		}
 		const { dotComRemotes, enterpriseRemotes, unknownRemotes } = await findDotComAndEnterpriseRemotes(this.folderManagers);
+
 		const yes = vscode.l10n.t('Yes');
 
 		if (enterprise) {
 			const remoteToUse = getEnterpriseUri()?.toString() ?? (enterpriseRemotes.length ? enterpriseRemotes[0].normalizedHost : (unknownRemotes.length ? unknownRemotes[0].normalizedHost : undefined));
+
 			if (enterpriseRemotes.length === 0 && unknownRemotes.length === 0) {
 				Logger.appendLine(`Enterprise login selected, but no possible enterprise remotes discovered (${dotComRemotes.length} .com)`);
 			}
 			if (remoteToUse) {
 				const promptResult = await vscode.window.showInformationMessage(vscode.l10n.t('Would you like to set up GitHub Pull Requests and Issues to authenticate with the enterprise server {0}?', remoteToUse),
 					{ modal: true }, yes, vscode.l10n.t('No, manually set {0}', 'github-enterprise.uri'));
+
 				if (promptResult === yes) {
 					await setEnterpriseUri(remoteToUse);
 				} else {
@@ -208,6 +220,7 @@ export class RepositoriesManager extends Disposable {
 				}
 			} else {
 				const setEnterpriseUriPrompt = await vscode.window.showInputBox({ placeHolder: vscode.l10n.t('Set a GitHub Enterprise server URL'), ignoreFocusOut: true });
+
 				if (setEnterpriseUriPrompt) {
 					await setEnterpriseUri(setEnterpriseUriPrompt);
 				} else {
@@ -219,6 +232,7 @@ export class RepositoriesManager extends Disposable {
 		else if (!hasEnterpriseUri() && (dotComRemotes.length === 0) && (enterpriseRemotes.length > 0)) {
 			const promptResult = await vscode.window.showInformationMessage(vscode.l10n.t('It looks like you might be using GitHub Enterprise. Would you like to set up GitHub Pull Requests and Issues to authenticate with the enterprise server {0}?', enterpriseRemotes[0].normalizedHost),
 				{ modal: true }, yes, vscode.l10n.t('No, use GitHub.com'));
+
 			if (promptResult === yes) {
 				await setEnterpriseUri(enterpriseRemotes[0].normalizedHost);
 			} else if (promptResult === undefined) {
@@ -227,11 +241,14 @@ export class RepositoriesManager extends Disposable {
 		}
 
 		let githubEnterprise;
+
 		const hasNonDotComRemote = (enterpriseRemotes.length > 0) || (unknownRemotes.length > 0);
+
 		if ((hasEnterpriseUri() || (dotComRemotes.length === 0)) && hasNonDotComRemote) {
 			githubEnterprise = await this._credentialStore.login(AuthProvider.githubEnterprise);
 		}
 		let github;
+
 		if (!githubEnterprise && (!hasEnterpriseUri() || enterpriseRemotes.length === 0)) {
 			github = await this._credentialStore.login(AuthProvider.github);
 		}
@@ -247,14 +264,19 @@ export function getEventType(text: string) {
 	switch (text) {
 		case 'committed':
 			return EventType.Committed;
+
 		case 'mentioned':
 			return EventType.Mentioned;
+
 		case 'subscribed':
 			return EventType.Subscribed;
+
 		case 'commented':
 			return EventType.Commented;
+
 		case 'reviewed':
 			return EventType.Reviewed;
+
 		default:
 			return EventType.Other;
 	}

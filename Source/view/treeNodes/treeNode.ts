@@ -28,6 +28,7 @@ export abstract class TreeNode extends Disposable {
 	}
 
 	abstract getTreeItem(): vscode.TreeItem | Promise<vscode.TreeItem>;
+
 	getParent(): TreeNode | undefined {
 		if (this.parent instanceof TreeNode) {
 			return this.parent;
@@ -67,6 +68,7 @@ export abstract class TreeNode extends Disposable {
 
 	override dispose(): void {
 		super.dispose();
+
 		if (this.childrenDisposables) {
 			disposeAll(this.childrenDisposables);
 		}
@@ -75,6 +77,7 @@ export abstract class TreeNode extends Disposable {
 
 export class LabelOnlyNode extends TreeNode {
 	public override readonly label: string = '';
+
 	constructor(parent: TreeNodeParent, label: string) {
 		super(parent);
 		this.label = label;
@@ -84,3 +87,4 @@ export class LabelOnlyNode extends TreeNode {
 	}
 
 }
+

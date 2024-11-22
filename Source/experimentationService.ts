@@ -24,6 +24,7 @@ export class ExperimentationTelemetry extends Disposable implements IExperimenta
 
 	constructor(private baseReporter: TelemetryReporter | undefined) {
 		super();
+
 		if (baseReporter) {
 			this._register(baseReporter);
 		}
@@ -57,6 +58,7 @@ export class ExperimentationTelemetry extends Disposable implements IExperimenta
 
 	postEvent(eventName: string, props: Map<string, string>): void {
 		const event: Record<string, string> = {};
+
 		for (const [key, value] of props) {
 			event[key] = value;
 		}
@@ -68,12 +70,16 @@ function getTargetPopulation(): TargetPopulation {
 	switch (vscode.env.uriScheme) {
 		case 'vscode':
 			return TargetPopulation.Public;
+
 		case 'vscode-insiders':
 			return TargetPopulation.Insiders;
+
 		case 'vscode-exploration':
 			return TargetPopulation.Internal;
+
 		case 'code-oss':
 			return TargetPopulation.Team;
+
 		default:
 			return TargetPopulation.Public;
 	}
@@ -112,8 +118,11 @@ export async function createExperimentationService(
 	experimentationTelemetry: ExperimentationTelemetry,
 ): Promise<IExperimentationService> {
 	const id = context.extension.id;
+
 	const name = context.extension.packageJSON['name'];
+
 	const version: string = context.extension.packageJSON['version'];
+
 	const targetPopulation = getTargetPopulation();
 
 	// We only create a real experimentation service for the stable version of the extension, not insiders.

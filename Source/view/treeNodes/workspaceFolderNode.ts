@@ -66,6 +66,7 @@ export class WorkspaceFolderNode extends TreeNode implements vscode.TreeItem {
 	override async getChildren(): Promise<TreeNode[]> {
 		super.getChildren();
 		this.children = WorkspaceFolderNode.getCategoryTreeNodes(this.folderManager, this.telemetry, this, this.notificationProvider, this.context, this._prsTreeModel);
+
 		return this.children;
 	}
 
@@ -81,6 +82,7 @@ export class WorkspaceFolderNode extends TreeNode implements vscode.TreeItem {
 			queryInfo =>
 				new CategoryTreeNode(parent, folderManager, telemetry, PRType.Query, notificationProvider, prsTreeModel, queryInfo.label, queryInfo.query),
 		);
+
 		return [
 			new CategoryTreeNode(parent, folderManager, telemetry, PRType.LocalPullRequest, notificationProvider, prsTreeModel),
 			...queryCategories,

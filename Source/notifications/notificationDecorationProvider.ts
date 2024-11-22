@@ -43,12 +43,14 @@ export class NotificationsDecorationProvider extends Disposable implements vscod
 		}
 
 		const notificationUriParams = fromNotificationUri(uri);
+
 		if (!notificationUriParams) {
 			return undefined;
 		}
 
 		// Limit the length of the priority badge to two characters
 		const notification = this._notificationsManager.getNotification(notificationUriParams.key);
+
 		const priority = notification?.priority === '100' ? '99' : notification?.priority ?? '0';
 
 		return { badge: priority, tooltip: vscode.l10n.t('Priority score is {0}. {1}', priority, notification?.priorityReason ?? '') };

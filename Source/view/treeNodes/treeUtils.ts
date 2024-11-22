@@ -10,10 +10,12 @@ import { TreeNode } from './treeNode';
 export namespace TreeUtils {
 	export function processCheckboxUpdates(checkboxUpdates: vscode.TreeCheckboxChangeEvent<TreeNode>) {
 		const checkedNodes: FileChangeNode[] = [];
+
 		const uncheckedNodes: FileChangeNode[] = [];
 
 		checkboxUpdates.items.forEach(checkboxUpdate => {
 			const node = checkboxUpdate[0];
+
 			const newState = checkboxUpdate[1];
 
 			if (node instanceof FileChangeNode) {
@@ -29,11 +31,13 @@ export namespace TreeUtils {
 
 		if (checkedNodes.length > 0) {
 			const prModel = checkedNodes[0].pullRequest;
+
 			const filenames = checkedNodes.map(n => n.fileName);
 			prModel.markFiles(filenames, true, 'viewed');
 		}
 		if (uncheckedNodes.length > 0) {
 			const prModel = uncheckedNodes[0].pullRequest;
+
 			const filenames = uncheckedNodes.map(n => n.fileName);
 			prModel.markFiles(filenames, true, 'unviewed');
 		}

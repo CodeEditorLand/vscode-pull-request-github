@@ -44,6 +44,7 @@ export class GitLensIntegration extends Disposable {
 		const extension =
 			vscode.extensions.getExtension<Promise<GitLensApi | undefined>>('eamodio.gitlens') ??
 			vscode.extensions.getExtension<Promise<GitLensApi | undefined>>('eamodio.gitlens-insiders');
+
 		if (extension) {
 			this._extensionsDisposable.dispose();
 

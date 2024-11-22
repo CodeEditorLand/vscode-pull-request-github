@@ -35,6 +35,7 @@ export class GitHubCreatePullRequestLinkProvider implements vscode.TerminalLinkP
 		_token: vscode.CancellationToken,
 	): vscode.ProviderResult<GitHubCreateTerminalLink[]> {
 		const startIndex = context.line.indexOf('https://github.com');
+
 		if (startIndex === -1) {
 			return [];
 		}
@@ -44,11 +45,16 @@ export class GitHubCreatePullRequestLinkProvider implements vscode.TerminalLinkP
 		 * remote:      https://github.com/RMacfarlane/pullrequest-demo/pull/new/rmacfarlane/testbranch3
 		 */
 		const url = context.line.substring(startIndex);
+
 		const regex = new RegExp(/https:\/\/github\.com\/(.*)\/(.*)\/pull\/new\/(.*)/);
+
 		const result = url.match(regex);
+
 		if (result && result.length === 4) {
 			const owner = result[1];
+
 			const repositoryName = result[2];
+
 			const branchName = result[3];
 
 			const hasMatchingGitHubRepo =
@@ -81,15 +87,18 @@ export class GitHubCreatePullRequestLinkProvider implements vscode.TerminalLinkP
 
 		if (defaultHandler === 'github') {
 			this.openLink(link);
+
 			return;
 		}
 
 		if (defaultHandler === 'vscode') {
 			this.reviewManager.createPullRequest();
+
 			return;
 		}
 
 		const yes = 'Yes';
+
 		const neverShow = 'Don\'t Show Again';
 
 		vscode.window
@@ -103,11 +112,13 @@ export class GitHubCreatePullRequestLinkProvider implements vscode.TerminalLinkP
 				switch (notificationResult) {
 					case yes: {
 						this.reviewManager.createPullRequest();
+
 						break;
 					}
 					case neverShow: {
 						vscode.workspace.getConfiguration(PR_SETTINGS_NAMESPACE).update(TERMINAL_LINK_HANDLER, 'github', vscode.ConfigurationTarget.Global);
 						this.openLink(link);
+
 						break;
 					}
 					default: this.openLink(link);

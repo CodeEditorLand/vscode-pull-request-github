@@ -18,10 +18,15 @@ export interface CreateParams {
 	branchesForCompare: string[];
 
 	defaultBaseRemote?: RemoteInfo;
+
 	defaultBaseBranch?: string;
+
 	defaultCompareRemote?: RemoteInfo;
+
 	defaultCompareBranch?: string;
+
 	defaultTitle?: string;
+
 	defaultDescription?: string;
 
 	pendingTitle?: string;
@@ -43,6 +48,7 @@ export interface CreateParams {
 	autoMerge?: boolean;
 	autoMergeMethod?: MergeMethod;
 	allowAutoMerge?: boolean;
+
 	defaultMergeMethod?: MergeMethod;
 	mergeMethodsAvailability?: MergeMethodsAvailability;
 }
@@ -92,11 +98,17 @@ export interface CreateParamsNew {
 	canModifyBranches: boolean;
 	actionDetail?: string;
 	associatedExistingPullRequest?: number;
+
 	defaultBaseRemote?: RemoteInfo;
+
 	defaultBaseBranch?: string;
+
 	defaultCompareRemote?: RemoteInfo;
+
 	defaultCompareBranch?: string;
+
 	defaultTitle?: string;
+
 	defaultDescription?: string;
 	pendingTitle?: string;
 	pendingDescription?: string;
@@ -126,6 +138,7 @@ export interface CreateParamsNew {
 	autoMerge?: boolean;
 	autoMergeMethod?: MergeMethod;
 	allowAutoMerge?: boolean;
+
 	defaultMergeMethod?: MergeMethod;
 	mergeMethodsAvailability?: MergeMethodsAvailability;
 	baseHasMergeQueue: boolean;
@@ -142,19 +155,24 @@ export interface ChooseRemoteAndBranchArgs {
 export interface ChooseBaseRemoteAndBranchResult {
 	baseRemote: RemoteInfo;
 	baseBranch: string;
+
 	defaultBaseBranch: string;
+
 	defaultMergeMethod: MergeMethod;
 	allowAutoMerge: boolean;
 	mergeMethodsAvailability: MergeMethodsAvailability;
 	autoMergeDefault: boolean;
 	baseHasMergeQueue: boolean;
+
 	defaultTitle: string;
+
 	defaultDescription: string;
 }
 
 export interface ChooseCompareRemoteAndBranchResult {
 	compareRemote: RemoteInfo;
 	compareBranch: string;
+
 	defaultCompareBranch: string;
 }
 

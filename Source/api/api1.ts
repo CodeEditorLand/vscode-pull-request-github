@@ -121,6 +121,7 @@ export class GitApiImpl extends Disposable implements API, IGit {
 
 	registerGitProvider(provider: IGit): vscode.Disposable {
 		Logger.appendLine(`Registering git provider`);
+
 		const handle = this._nextHandle();
 		this._providers.set(handle, provider);
 
@@ -130,6 +131,7 @@ export class GitApiImpl extends Disposable implements API, IGit {
 			this._updateReposContext();
 			this._onDidOpenRepository.fire(e);
 		}));
+
 		if (provider.onDidChangeState) {
 			this._register(provider.onDidChangeState(e => this._onDidChangeState.fire(e)));
 		}
@@ -145,6 +147,7 @@ export class GitApiImpl extends Disposable implements API, IGit {
 		return {
 			dispose: () => {
 				const repos = provider?.repositories;
+
 				if (repos && repos.length > 0) {
 					repos.forEach(r => this._onDidCloseRepository.fire(r));
 				}
@@ -158,6 +161,7 @@ export class GitApiImpl extends Disposable implements API, IGit {
 
 		this._providers.forEach(provider => {
 			const repos = provider.repositories;
+
 			if (repos && repos.length > 0) {
 				for (const repository of repos) {
 					foldersMap.set(repository.rootUri, provider);
@@ -175,6 +179,7 @@ export class GitApiImpl extends Disposable implements API, IGit {
 			}
 			return { dispose: () => { } };
 		});
+
 		return {
 			dispose: () => disposables.forEach(disposable => disposable.dispose())
 		};
@@ -188,9 +193,11 @@ export class GitApiImpl extends Disposable implements API, IGit {
 	registerTitleAndDescriptionProvider(title: string, provider: TitleAndDescriptionProvider): vscode.Disposable {
 		const registeredValue = { title, provider };
 		this._titleAndDescriptionProviders.add(registeredValue);
+
 		const disposable = this._register({
 			dispose: () => this._titleAndDescriptionProviders.delete(registeredValue)
 		});
+
 		return disposable;
 	}
 
@@ -210,9 +217,11 @@ export class GitApiImpl extends Disposable implements API, IGit {
 	registerReviewerCommentsProvider(title: string, provider: ReviewerCommentsProvider): vscode.Disposable {
 		const registeredValue = { title, provider };
 		this._reviewerCommentsProviders.add(registeredValue);
+
 		const disposable = this._register({
 			dispose: () => this._reviewerCommentsProviders.delete(registeredValue)
 		});
+
 		return disposable;
 	}
 

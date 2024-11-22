@@ -6,12 +6,15 @@ import { parse as parseConfig } from 'ssh-config';
 import Logger from '../../common/logger';
 
 const SSH_URL_RE = /^(?:([^@:]+)@)?([^:/]+):?(.+)$/;
+
 const URL_SCHEME_RE = /^([a-z-+]+):\/\//;
 
 export const sshParse = (url: string): Config | undefined => {
 	const urlMatch = URL_SCHEME_RE.exec(url);
+
 	if (urlMatch) {
 		const [fullSchemePrefix, scheme] = urlMatch;
+
 		if (scheme.includes('ssh')) {
 			url = url.slice(fullSchemePrefix.length);
 		} else {
@@ -19,10 +22,12 @@ export const sshParse = (url: string): Config | undefined => {
 		}
 	}
 	const match = SSH_URL_RE.exec(url);
+
 	if (!match) {
 		return;
 	}
 	const [, User, Host, path] = match;
+
 	return { User, Host, path };
 };
 
@@ -54,6 +59,7 @@ export const sshParse = (url: string): Config | undefined => {
  */
 export const resolve = (url: string, resolveConfig = Resolvers.current) => {
 	const config = sshParse(url);
+
 	return config && resolveConfig(config);
 };
 
@@ -83,6 +89,7 @@ export type ConfigResolver = (config: Config) => Config;
 
 export function chainResolvers(...chain: (ConfigResolver | undefined)[]): ConfigResolver {
 	const resolvers = chain.filter(x => !!x) as ConfigResolver[];
+
 	return (config: Config) =>
 		resolvers.reduce((resolved, next) => {
 			try {
@@ -95,6 +102,7 @@ export function chainResolvers(...chain: (ConfigResolver | undefined)[]): Config
 				// Since we can't guarantee that ssh-config package won't throw and we're reducing over the entire chain of resolvers,
 				// we'll skip erroneous resolvers for now and log. Potentially can validate
 				Logger.warn(`Failed to parse config for '${config.Host}, this can occur when the extension configurations is invalid or system ssh config files are malformed. Skipping erroneous resolver for now.'`);
+
 				return resolved;
 			}
 		}, config);
@@ -102,6 +110,7 @@ export function chainResolvers(...chain: (ConfigResolver | undefined)[]): Config
 
 export function resolverFromConfig(text: string): ConfigResolver {
 	const config = parseConfig(text);
+
 	return h => config.compute(h.Host);
 }
 

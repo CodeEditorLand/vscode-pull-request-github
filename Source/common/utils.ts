@@ -62,6 +62,7 @@ export function uniqBy<T>(arr: T[], fn: (el: T) => string): T[] {
 		}
 
 		seen[key] = true;
+
 		return true;
 	});
 }
@@ -88,6 +89,7 @@ export function onceEvent<T>(event: Event<T>): Event<T> {
 		const result = event(
 			e => {
 				result.dispose();
+
 				return listener.call(thisArgs, e);
 			},
 			null,
@@ -124,6 +126,7 @@ export function groupBy<T>(arr: T[], fn: (el: T) => string): { [key: string]: T[
 	return arr.reduce((result, el) => {
 		const key = fn(el);
 		result[key] = [...(result[key] || []), el];
+
 		return result;
 	}, Object.create(null));
 }
@@ -144,10 +147,12 @@ function isHookError(e: Error): e is HookError {
 
 function hasFieldErrors(e: any): e is Error & { errors: { value: string; field: string; code: string }[] } {
 	let areFieldErrors = true;
+
 	if (!!e.errors && Array.isArray(e.errors)) {
 		for (const error of e.errors) {
 			if (!error.field || !error.value || !error.code) {
 				areFieldErrors = false;
+
 				break;
 			}
 		}
@@ -173,7 +178,9 @@ export function formatError(e: HookError | any): string {
 	}
 
 	let errorMessage = e.message;
+
 	let furtherInfo: string | undefined;
+
 	if (e.message === 'Validation Failed' && hasFieldErrors(e)) {
 		furtherInfo = e.errors
 			.map(error => {
@@ -245,19 +252,25 @@ export function gitHubLabelColor(hexColor: string, isDark: boolean, markDown: bo
 		const hslColor = rgbToHsl(rgbColor.r, rgbColor.g, rgbColor.b);
 
 		const lightnessThreshold = 0.6;
+
 		const backgroundAlpha = 0.18;
+
 		const borderAlpha = 0.3;
 
 		const perceivedLightness = (rgbColor.r * 0.2126 + rgbColor.g * 0.7152 + rgbColor.b * 0.0722) / 255;
+
 		const lightnessSwitch = Math.max(0, Math.min((perceivedLightness - lightnessThreshold) * -1000, 1));
 
 		const lightenBy = (lightnessThreshold - perceivedLightness) * 100 * lightnessSwitch;
+
 		const rgbBorder = hexToRgb(hslToHex(hslColor.h, hslColor.s, hslColor.l + lightenBy));
 
 		const textColor = `#${hslToHex(hslColor.h, hslColor.s, hslColor.l + lightenBy)}`;
+
 		const backgroundColor = !markDown ?
 			`rgba(${rgbColor.r},${rgbColor.g},${rgbColor.b},${backgroundAlpha})` :
 			`#${rgbToHex({ ...rgbColor, a: backgroundAlpha })}`;
+
 		const borderColor = !markDown ?
 			`rgba(${rgbBorder.r},${rgbBorder.g},${rgbBorder.b},${borderAlpha})` :
 			`#${rgbToHex({ ...rgbBorder, a: borderAlpha })}`;
@@ -271,6 +284,7 @@ export function gitHubLabelColor(hexColor: string, isDark: boolean, markDown: bo
 
 const rgbToHex = (color: { r: number, g: number, b: number, a?: number }) => {
 	const colors = [color.r, color.g, color.b];
+
 	if (color.a) {
 		colors.push(Math.floor(color.a * 255));
 	}
@@ -347,9 +361,12 @@ function rgbToHsl(r: number, g: number, b: number) {
 function hslToHex(h: number, s: number, l: number): string {
 	// source https://www.jameslmilner.com/posts/converting-rgb-hex-hsl-colors/
 	const hDecimal = l / 100;
+
 	const a = (s * Math.min(hDecimal, 1 - hDecimal)) / 100;
+
 	const f = (n: number) => {
 		const k = (n + h / 30) % 12;
+
 		const color = hDecimal - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
 
 		// Convert to Hex and prefix with "0" if required
@@ -357,12 +374,14 @@ function hslToHex(h: number, s: number, l: number): string {
 			.toString(16)
 			.padStart(2, '0');
 	};
+
 	return `${f(0)}${f(8)}${f(4)}`;
 }
 
 function contrastColor(rgbColor: { r: number, g: number, b: number }) {
 	// Color algorithm from https://stackoverflow.com/questions/1855884/determine-font-color-based-on-background-color
 	const luminance = (0.299 * rgbColor.r + 0.587 * rgbColor.g + 0.114 * rgbColor.b) / 255;
+
 	return luminance > 0.5 ? '000000' : 'ffffff';
 }
 
@@ -405,7 +424,9 @@ export function compareSubstring(
 ): number {
 	for (; aStart < aEnd && bStart < bEnd; aStart++, bStart++) {
 		const codeA = a.charCodeAt(aStart);
+
 		const codeB = b.charCodeAt(bStart);
+
 		if (codeA < codeB) {
 			return -1;
 		} else if (codeA > codeB) {
@@ -413,7 +434,9 @@ export function compareSubstring(
 		}
 	}
 	const aLen = aEnd - aStart;
+
 	const bLen = bEnd - bStart;
+
 	if (aLen < bLen) {
 		return -1;
 	} else if (aLen > bLen) {
@@ -436,6 +459,7 @@ export function compareSubstringIgnoreCase(
 ): number {
 	for (; aStart < aEnd && bStart < bEnd; aStart++, bStart++) {
 		let codeA = a.charCodeAt(aStart);
+
 		let codeB = b.charCodeAt(bStart);
 
 		if (codeA === codeB) {
@@ -444,6 +468,7 @@ export function compareSubstringIgnoreCase(
 		}
 
 		const diff = codeA - codeB;
+
 		if (diff === 32 && isUpperAsciiLetter(codeB)) {
 			//codeB =[65-90] && codeA =[97-122]
 			continue;
@@ -461,6 +486,7 @@ export function compareSubstringIgnoreCase(
 	}
 
 	const aLen = aEnd - aStart;
+
 	const bLen = bEnd - bStart;
 
 	if (aLen < bLen) {
@@ -496,11 +522,13 @@ export class StringIterator implements IKeyIterator<string> {
 	reset(key: string): this {
 		this._value = key;
 		this._pos = 0;
+
 		return this;
 	}
 
 	next(): this {
 		this._pos += 1;
+
 		return this;
 	}
 
@@ -510,7 +538,9 @@ export class StringIterator implements IKeyIterator<string> {
 
 	cmp(a: string): number {
 		const aCode = a.charCodeAt(0);
+
 		const thisCode = this._value.charCodeAt(this._pos);
+
 		return aCode - thisCode;
 	}
 
@@ -530,6 +560,7 @@ export class ConfigKeysIterator implements IKeyIterator<string> {
 		this._value = key;
 		this._from = 0;
 		this._to = 0;
+
 		return this.next();
 	}
 
@@ -540,9 +571,12 @@ export class ConfigKeysIterator implements IKeyIterator<string> {
 	next(): this {
 		// this._data = key.split(/[\\/]/).filter(s => !!s);
 		this._from = this._to;
+
 		let justSeps = true;
+
 		for (; this._to < this._value.length; this._to++) {
 			const ch = this._value.charCodeAt(this._to);
+
 			if (ch === CharCode.Period) {
 				if (justSeps) {
 					this._from++;
@@ -578,6 +612,7 @@ export class PathIterator implements IKeyIterator<string> {
 		this._value = key.replace(/\\$|\/$/, '');
 		this._from = 0;
 		this._to = 0;
+
 		return this.next();
 	}
 
@@ -588,9 +623,12 @@ export class PathIterator implements IKeyIterator<string> {
 	next(): this {
 		// this._data = key.split(/[\\/]/).filter(s => !!s);
 		this._from = this._to;
+
 		let justSeps = true;
+
 		for (; this._to < this._value.length; this._to++) {
 			const ch = this._value.charCodeAt(this._to);
+
 			if (ch === CharCode.Slash || (this._splitOnBackslash && ch === CharCode.Backslash)) {
 				if (justSeps) {
 					this._from++;
@@ -634,6 +672,7 @@ export class UriIterator implements IKeyIterator<Uri> {
 	reset(key: Uri): this {
 		this._value = key;
 		this._states = [];
+
 		if (this._value.scheme) {
 			this._states.push(UriIteratorState.Scheme);
 		}
@@ -643,6 +682,7 @@ export class UriIterator implements IKeyIterator<Uri> {
 		if (this._value.path) {
 			this._pathIterator = new PathIterator(false, !this._ignorePathCasing(key));
 			this._pathIterator.reset(key.path);
+
 			if (this._pathIterator.value()) {
 				this._states.push(UriIteratorState.Path);
 			}
@@ -654,6 +694,7 @@ export class UriIterator implements IKeyIterator<Uri> {
 			this._states.push(UriIteratorState.Fragment);
 		}
 		this._stateIdx = 0;
+
 		return this;
 	}
 
@@ -706,8 +747,11 @@ export class UriIterator implements IKeyIterator<Uri> {
 
 export function isPreRelease(context: ExtensionContext): boolean {
 	const uri = context.extensionUri;
+
 	const path = uri.path;
+
 	const lastIndexOfDot = path.lastIndexOf('.');
+
 	if (lastIndexOfDot === -1) {
 		return false;
 	}
@@ -760,6 +804,7 @@ export class TernarySearchTree<K, V> {
 
 	set(key: K, element: V): V | undefined {
 		const iter = this._iter.reset(key);
+
 		let node: TernarySearchTreeNode<K, V>;
 
 		if (!this._root) {
@@ -768,8 +813,10 @@ export class TernarySearchTree<K, V> {
 		}
 
 		node = this._root;
+
 		while (true) {
 			const val = iter.cmp(node.segment);
+
 			if (val > 0) {
 				// left
 				if (!node.left) {
@@ -787,6 +834,7 @@ export class TernarySearchTree<K, V> {
 			} else if (iter.hasNext()) {
 				// mid
 				iter.next();
+
 				if (!node.mid) {
 					node.mid = new TernarySearchTreeNode<K, V>();
 					node.mid.segment = iter.value();
@@ -799,6 +847,7 @@ export class TernarySearchTree<K, V> {
 		const oldElement = node.value;
 		node.value = element;
 		node.key = key;
+
 		return oldElement;
 	}
 
@@ -808,9 +857,12 @@ export class TernarySearchTree<K, V> {
 
 	private _getNode(key: K) {
 		const iter = this._iter.reset(key);
+
 		let node = this._root;
+
 		while (node) {
 			const val = iter.cmp(node.segment);
+
 			if (val > 0) {
 				// left
 				node = node.left;
@@ -830,6 +882,7 @@ export class TernarySearchTree<K, V> {
 
 	has(key: K): boolean {
 		const node = this._getNode(key);
+
 		return !(node?.value === undefined && node?.mid === undefined);
 	}
 
@@ -843,12 +896,15 @@ export class TernarySearchTree<K, V> {
 
 	private _delete(key: K, superStr: boolean): void {
 		const iter = this._iter.reset(key);
+
 		const stack: [-1 | 0 | 1, TernarySearchTreeNode<K, V>][] = [];
+
 		let node = this._root;
 
 		// find and unset node
 		while (node) {
 			const val = iter.cmp(node.segment);
+
 			if (val > 0) {
 				// left
 				stack.push([1, node]);
@@ -876,15 +932,21 @@ export class TernarySearchTree<K, V> {
 				// clean up empty nodes
 				while (stack.length > 0 && node.isEmpty()) {
 					let [dir, parent] = stack.pop()!;
+
 					switch (dir) {
 						case 1:
 							parent.left = undefined;
+
 							break;
+
 						case 0:
 							parent.mid = undefined;
+
 							break;
+
 						case -1:
 							parent.right = undefined;
+
 							break;
 					}
 					node = parent;
@@ -896,10 +958,14 @@ export class TernarySearchTree<K, V> {
 
 	findSubstr(key: K): V | undefined {
 		const iter = this._iter.reset(key);
+
 		let node = this._root;
+
 		let candidate: V | undefined = undefined;
+
 		while (node) {
 			const val = iter.cmp(node.segment);
+
 			if (val > 0) {
 				// left
 				node = node.left;
@@ -920,9 +986,12 @@ export class TernarySearchTree<K, V> {
 
 	findSuperstr(key: K): IterableIterator<[K, V]> | undefined {
 		const iter = this._iter.reset(key);
+
 		let node = this._root;
+
 		while (node) {
 			const val = iter.cmp(node.segment);
+
 			if (val > 0) {
 				// left
 				node = node.left;
@@ -963,6 +1032,7 @@ export class TernarySearchTree<K, V> {
 			// node
 			if (node.value) {
 				// callback(node.value, this._iter.join(parts));
+
 				yield [node.key, node.value];
 			}
 			// mid
@@ -979,10 +1049,14 @@ export async function stringReplaceAsync(str: string, regex: RegExp, asyncFn: (s
 	str.replace(regex, (match, ...args) => {
 		const promise = asyncFn(match, ...args);
 		promises.push(promise);
+
 		return '';
 	});
+
 	const data = await Promise.all(promises);
+
 	let offset = 0;
+
 	return str.replace(regex, () => data[offset++]);
 }
 

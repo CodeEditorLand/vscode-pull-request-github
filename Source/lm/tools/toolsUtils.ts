@@ -43,6 +43,7 @@ export abstract class ToolBase<T> implements vscode.LanguageModelTool<T> {
 
 export async function concatAsyncIterable(asyncIterable: AsyncIterable<string>): Promise<string> {
 	let result = '';
+
 	for await (const chunk of asyncIterable) {
 		result += chunk;
 	}
@@ -56,7 +57,9 @@ export abstract class RepoToolBase<T> extends ToolBase<T> {
 
 	protected async getRepoInfo(options: { owner?: string, name?: string }): Promise<{ owner: string; name: string; folderManager: FolderRepositoryManager }> {
 		let owner: string | undefined;
+
 		let name: string | undefined;
+
 		let folderManager: FolderRepositoryManager | undefined;
 		// The llm likes to make up an owner and name if it isn't provided one, and they tend to include 'owner' and 'name' respectively
 		if (options.owner && options.name && !options.owner.includes('owner') && !options.name.includes('name')) {
@@ -67,10 +70,12 @@ export abstract class RepoToolBase<T> extends ToolBase<T> {
 
 		if (!folderManager && this.repositoriesManager.folderManagers.length > 0) {
 			folderManager = this.repositoriesManager.folderManagers[0];
+
 			if (owner && name) {
 				await folderManager.createGitHubRepositoryFromOwnerName(owner, name);
 			} else {
 				const defaults = await folderManager.getPullRequestDefaults();
+
 				if (defaults) {
 					owner = defaults.owner;
 					name = defaults.repo;
@@ -89,6 +94,7 @@ export abstract class RepoToolBase<T> extends ToolBase<T> {
 
 	protected getGitHub(): GitHub | undefined {
 		let authProvider: AuthProvider | undefined;
+
 		if (this.credentialStore.isAuthenticated(AuthProvider.githubEnterprise) && hasEnterpriseUri()) {
 			authProvider = AuthProvider.githubEnterprise;
 		} else if (this.credentialStore.isAuthenticated(AuthProvider.github)) {

@@ -24,6 +24,7 @@ export class NotificationsFeatureRegister extends Disposable {
 		private readonly _telemetry: ITelemetry
 	) {
 		super();
+
 		const notificationsProvider = new NotificationsProvider(credentialStore, this._repositoriesManager);
 		this._register(notificationsProvider);
 
@@ -103,7 +104,9 @@ export class NotificationsFeatureRegister extends Disposable {
 		this._register(
 			vscode.commands.registerCommand('notification.markAsRead', (options: any) => {
 				let threadId: string;
+
 				let notificationKey: string;
+
 				if (isNotificationTreeItem(options)) {
 					threadId = options.notification.id;
 					notificationKey = options.notification.key;

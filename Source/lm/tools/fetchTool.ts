@@ -36,15 +36,20 @@ export interface FetchResult {
 export class FetchTool extends RepoToolBase<FetchToolParameters> {
 	async invoke(options: vscode.LanguageModelToolInvocationOptions<FetchToolParameters>, _token: vscode.CancellationToken): Promise<vscode.LanguageModelToolResult | undefined> {
 		const { owner, name, folderManager } = await this.getRepoInfo(options);
+
 		const issueOrPullRequest = await this._fetchIssueOrPR(options, folderManager, owner, name);
+
 		const result: FetchResult = {
 			title: issueOrPullRequest.title,
 			body: issueOrPullRequest.body,
 			comments: issueOrPullRequest.item.comments?.map(c => ({ body: c.body })) ?? []
 		};
+
 		if (issueOrPullRequest instanceof PullRequestModel) {
 			const fileChanges = await issueOrPullRequest.getFileChangesInfo();
+
 			const fetchedFileChanges: FileChange[] = [];
+
 			for (const fileChange of fileChanges) {
 				if (fileChange instanceof InMemFileChange) {
 					fetchedFileChanges.push({
@@ -69,6 +74,7 @@ export class FetchTool extends RepoToolBase<FetchToolParameters> {
 
 	private async _fetchIssueOrPR(options: vscode.LanguageModelToolInvocationOptions<FetchToolParameters>, folderManager: FolderRepositoryManager, owner: string, name: string): Promise<PullRequestModel | IssueModel> {
 		let issueOrPullRequest: IssueModel | PullRequestModel | undefined = await folderManager.resolveIssue(owner, name, options.parameters.issueNumber, true);
+
 		if (!issueOrPullRequest) {
 			issueOrPullRequest = await folderManager.resolvePullRequest(owner, name, options.parameters.issueNumber);
 		}

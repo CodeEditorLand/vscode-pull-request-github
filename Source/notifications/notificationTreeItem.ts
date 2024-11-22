@@ -23,5 +23,6 @@ export class LoadMoreNotificationsTreeItem { }
 export interface INotificationItem {
 	notification: Notification;
 	model: IssueModel;
+
 	getPriority(): { priority: string, priorityReasoning: string } | undefined;
 }

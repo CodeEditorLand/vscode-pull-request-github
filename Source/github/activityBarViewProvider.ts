@@ -75,15 +75,19 @@ export class PullRequestViewProvider extends WebviewViewBase implements vscode.W
 	private async updateBranch(message: IRequestMessage<string>): Promise<void> {
 		if (this._folderRepositoryManager.repository.state.workingTreeChanges.length > 0 || this._folderRepositoryManager.repository.state.indexChanges.length > 0) {
 			await vscode.window.showErrorMessage(vscode.l10n.t('The pull request branch cannot be updated when the there changed files in the working tree or index. Stash or commit all change and then try again.'), { modal: true });
+
 			return this._replyMessage(message, {});
 		}
 		const mergeSucceeded = await this._folderRepositoryManager.tryMergeBaseIntoHead(this._item, true);
+
 		if (!mergeSucceeded) {
 			this._replyMessage(message, {});
 		}
 		// The mergability of the PR doesn't update immediately. Poll.
 		let mergability = PullRequestMergeability.Unknown;
+
 		let attemptsRemaining = 5;
+
 		do {
 			mergability = (await this._item.getMergeability()).mergeability;
 			attemptsRemaining--;
@@ -100,6 +104,7 @@ export class PullRequestViewProvider extends WebviewViewBase implements vscode.W
 
 	protected override async _onDidReceiveMessage(message: IRequestMessage<any>) {
 		const result = await super._onDidReceiveMessage(message);
+
 		if (result !== this.MESSAGE_UNHANDLED) {
 			return;
 		}
@@ -107,31 +112,45 @@ export class PullRequestViewProvider extends WebviewViewBase implements vscode.W
 		switch (message.command) {
 			case 'alert':
 				vscode.window.showErrorMessage(message.args);
+
 				return;
+
 			case 'pr.close':
 				return this.close(message);
+
 			case 'pr.comment':
 				return this.createComment(message);
+
 			case 'pr.merge':
 				return this.mergePullRequest(message);
+
 			case 'pr.open-create':
 				return this.create();
+
 			case 'pr.deleteBranch':
 				return this.deleteBranch(message);
+
 			case 'pr.readyForReview':
 				return this.setReadyForReview(message);
+
 			case 'pr.approve':
 				return this.approvePullRequestMessage(message);
+
 			case 'pr.request-changes':
 				return this.requestChangesMessage(message);
+
 			case 'pr.submit':
 				return this.submitReviewMessage(message);
+
 			case 'pr.openOnGitHub':
 				return openPullRequestOnGitHub(this._item, (this._item as any)._telemetry);
+
 			case 'pr.checkout-default-branch':
 				return this.checkoutDefaultBranch(message);
+
 			case 'pr.update-branch':
 				return this.updateBranch(message);
+
 			case 'pr.re-request-review':
 				return this.reRequestReview(message);
 		}
@@ -140,8 +159,10 @@ export class PullRequestViewProvider extends WebviewViewBase implements vscode.W
 	private async checkoutDefaultBranch(message: IRequestMessage<string>): Promise<void> {
 		try {
 			const defaultBranch = await this._folderRepositoryManager.getPullRequestRepositoryDefaultBranch(this._item);
+
 			const prBranch = this._folderRepositoryManager.repository.state.HEAD?.name;
 			await this._folderRepositoryManager.checkoutDefaultBranch(defaultBranch);
+
 			if (prBranch) {
 				await this._folderRepositoryManager.cleanupAfterPullRequest(prBranch, this._item);
 			}
@@ -153,12 +174,16 @@ export class PullRequestViewProvider extends WebviewViewBase implements vscode.W
 
 	private reRequestReview(message: IRequestMessage<string>): void {
 		let targetReviewer: ReviewState | undefined;
+
 		const userReviewers: string[] = [];
+
 		const teamReviewers: string[] = [];
 
 		for (const reviewer of this._existingReviewers) {
 			let id: string | undefined;
+
 			let reviewerArray: string[] | undefined;
+
 			if (reviewer && isTeam(reviewer.reviewer)) {
 				id = reviewer.reviewer.id;
 				reviewerArray = teamReviewers;
@@ -168,6 +193,7 @@ export class PullRequestViewProvider extends WebviewViewBase implements vscode.W
 			}
 			if (reviewerArray && id && ((reviewer.state === 'REQUESTED') || (id === message.args))) {
 				reviewerArray.push(id);
+
 				if (id === message.args) {
 					targetReviewer = reviewer;
 				}
@@ -220,6 +246,7 @@ export class PullRequestViewProvider extends WebviewViewBase implements vscode.W
 			this.registerPrSpecificListeners(pullRequestModel);
 		}
 		this._item = pullRequestModel;
+
 		return Promise.all([
 			this._folderRepositoryManager.resolvePullRequest(
 				pullRequestModel.remote.owner,
@@ -237,6 +264,7 @@ export class PullRequestViewProvider extends WebviewViewBase implements vscode.W
 		])
 			.then(result => {
 				const [pullRequest, repositoryAccess, timelineEvents, requestedReviewers, branchInfo, defaultBranch, currentUser, viewerCanEdit, hasReviewDraft] = result;
+
 				if (!pullRequest) {
 					throw new Error(
 						`Fail to resolve Pull Request #${pullRequestModel.number} in ${pullRequestModel.remote.owner}/${pullRequestModel.remote.repositoryName}`,
@@ -244,6 +272,7 @@ export class PullRequestViewProvider extends WebviewViewBase implements vscode.W
 				}
 
 				this._item = pullRequest;
+
 				if (!this._view) {
 					// If the there is no PR webview, then there is nothing else to update.
 					return;
@@ -256,9 +285,13 @@ export class PullRequestViewProvider extends WebviewViewBase implements vscode.W
 				}
 
 				const isCurrentlyCheckedOut = pullRequestModel.equals(this._folderRepositoryManager.activePullRequest);
+
 				const hasWritePermission = repositoryAccess!.hasWritePermission;
+
 				const mergeMethodsAvailability = repositoryAccess!.mergeMethodsAvailability;
+
 				const canEdit = hasWritePermission || viewerCanEdit;
+
 				const defaultMergeMethod = getDefaultMergeMethod(mergeMethodsAvailability);
 				this._existingReviewers = parseReviewers(
 					requestedReviewers ?? [],
@@ -272,6 +305,7 @@ export class PullRequestViewProvider extends WebviewViewBase implements vscode.W
 					!pullRequest.base.repositoryCloneUrl.equals(pullRequest.head.repositoryCloneUrl);
 
 				const continueOnGitHub = !!(isCrossRepository && isInCodespaces());
+
 				const reviewState = this.getCurrentUserReviewState(this._existingReviewers, currentUser);
 
 				const context: Partial<PullRequest> = {
@@ -355,6 +389,7 @@ export class PullRequestViewProvider extends WebviewViewBase implements vscode.W
 			const existingReviewer = this._existingReviewers.find(
 				reviewer => review.user.login === reviewerId(reviewer.reviewer),
 			);
+
 			if (existingReviewer) {
 				existingReviewer.state = review.state;
 			} else {
@@ -372,9 +407,11 @@ export class PullRequestViewProvider extends WebviewViewBase implements vscode.W
 			lastReviewType: reviewType
 		};
 		this._postMessage(submittingMessage);
+
 		try {
 			const review = await action(context.body);
 			this.updateReviewers(review);
+
 			const reviewMessage = {
 				command: 'pr.append-review',
 				review,
@@ -440,6 +477,7 @@ export class PullRequestViewProvider extends WebviewViewBase implements vscode.W
 
 	private async deleteBranch(message: IRequestMessage<any>) {
 		const result = await PullRequestView.deleteBranch(this._folderRepositoryManager, this._item);
+
 		if (result.isReply) {
 			this._replyMessage(message, result.message);
 		} else {
@@ -465,14 +503,18 @@ export class PullRequestViewProvider extends WebviewViewBase implements vscode.W
 		message: IRequestMessage<MergeArguments>,
 	): Promise<void> {
 		const { title, description, method } = message.args;
+
 		const yes = vscode.l10n.t('Yes');
+
 		const confirmation = await vscode.window.showInformationMessage(
 			vscode.l10n.t('Merge this pull request?'),
 			{ modal: true },
 			yes,
 		);
+
 		if (confirmation !== yes) {
 			this._replyMessage(message, { state: GithubItemStateEnum.Open });
+
 			return;
 		}
 

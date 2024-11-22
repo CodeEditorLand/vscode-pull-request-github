@@ -27,6 +27,7 @@ export class GitContentFileSystemProvider extends RepositoryFileSystemProvider {
 	private getChangeModelForFileAndFilesArray(file: vscode.Uri, getFiles: (manager: ReviewManager) => (GitFileChangeNode | RemoteFileChangeNode)[]) {
 		for (const manager of this.getReviewManagers()) {
 			const files = getFiles(manager);
+
 			for (const change of files) {
 				if ((change.changeModel.filePath.authority === file.authority) && (change.changeModel.filePath.path === file.path)) {
 					return change.changeModel;
@@ -45,6 +46,7 @@ export class GitContentFileSystemProvider extends RepositoryFileSystemProvider {
 
 	private async getRepositoryForFile(file: vscode.Uri): Promise<Repository | undefined> {
 		await this.waitForAuth();
+
 		if ((this.gitAPI.state !== 'initialized') || (this.gitAPI.repositories.length === 0)) {
 			await this.waitForRepos(4000);
 		}
@@ -64,16 +66,21 @@ export class GitContentFileSystemProvider extends RepositoryFileSystemProvider {
 		}
 
 		const repository = await this.getRepositoryForFile(vscode.Uri.file(rootPath));
+
 		if (!repository) {
 			vscode.window.showErrorMessage(`We couldn't find an open repository for ${commit} locally.`);
+
 			return new TextEncoder().encode('');
 		}
 
 		const absolutePath = pathLib.join(repository.rootUri.fsPath, path).replace(/\\/g, '/');
+
 		let content: string | undefined;
+
 		try {
 			Logger.appendLine(`Getting change model (${repository.rootUri}) content for commit ${commit} and path ${absolutePath}`, 'GitContentFileSystemProvider');
 			content = await this.getChangeModelForFile(uri)?.showBase();
+
 			if (!content) {
 				Logger.appendLine(`Getting repository (${repository.rootUri}) content for commit ${commit} and path ${absolutePath}`, 'GitContentFileSystemProvider');
 				content = await repository.show(commit, absolutePath);
@@ -84,6 +91,7 @@ export class GitContentFileSystemProvider extends RepositoryFileSystemProvider {
 		} catch (_) {
 			Logger.appendLine('Using fallback content provider.', 'GitContentFileSystemProvider');
 			content = await this._fallback(uri);
+
 			if (!content) {
 				// Content does not exist for the base or modified file for a file deletion or addition.
 				// Manually check if the commit exists before notifying the user.

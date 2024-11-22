@@ -129,7 +129,9 @@ export class NotificationProvider extends Disposable {
 			return `${pullRequest.remote.url}:${pullRequest.number}`;
 		}
 		const splitPrUrl = pullRequest.subject.url.split('/');
+
 		const prNumber = splitPrUrl[splitPrUrl.length - 1];
+
 		return `${pullRequest.repository.html_url}.git:${prNumber}`;
 	}
 
@@ -139,13 +141,17 @@ export class NotificationProvider extends Disposable {
 		const identifier = pullRequest instanceof IssueModel ?
 			this.getPrIdentifier(pullRequest) :
 			pullRequest;
+
 		const prNotifications = this._notifications.get(identifier);
+
 		return prNotifications !== undefined && prNotifications.length > 0;
 	}
 
 	private updateViewBadge() {
 		const treeView = this._gitHubPrsTree.view;
+
 		const singularMessage = vscode.l10n.t('1 notification');
+
 		const pluralMessage = vscode.l10n.t('{0} notifications', this._notifications.size);
 		treeView.badge = this._notifications.size !== 0 ? {
 			tooltip: this._notifications.size === 1 ? singularMessage : pluralMessage,
@@ -160,10 +166,12 @@ export class NotificationProvider extends Disposable {
 
 		if (node instanceof PRNode) {
 			const prNotifications = this._notifications.get(this.getPrIdentifier(node.pullRequestModel));
+
 			if (prNotifications) {
 				for (const prNotification of prNotifications) {
 					if (prNotification) {
 						prNotification.pullRequestModel = node.pullRequestModel;
+
 						return;
 					}
 				}
@@ -191,6 +199,7 @@ export class NotificationProvider extends Disposable {
 
 			allPrs.forEach((pr) => {
 				const prNotifications = this._notifications.get(this.getPrIdentifier(pr));
+
 				if (prNotifications) {
 					for (const prNotification of prNotifications) {
 						prNotification.pullRequestModel = pr;
@@ -207,6 +216,7 @@ export class NotificationProvider extends Disposable {
 
 	private checkNotificationSetting() {
 		const notificationsTurnedOn = NotificationProvider.isPRNotificationsOn();
+
 		if (notificationsTurnedOn && this._pollingHandler === null) {
 			this.startPolling();
 		}
@@ -224,6 +234,7 @@ export class NotificationProvider extends Disposable {
 
 	private uriFromNotifications(): vscode.Uri[] {
 		const notificationUris: vscode.Uri[] = [];
+
 		for (const [identifier, prNotifications] of this._notifications.entries()) {
 			if (prNotifications.length) {
 				notificationUris.push(createPRNodeUri(identifier));
@@ -240,14 +251,18 @@ export class NotificationProvider extends Disposable {
 
 	private async getNotifications() {
 		const gitHub = this.getGitHub();
+
 		if (gitHub === undefined)
 			return undefined;
+
 		const { data, headers } = await gitHub.octokit.call(gitHub.octokit.api.activity.listNotificationsForAuthenticatedUser, {});
+
 		return { data: data, headers: headers };
 	}
 
 	private async markNotificationThreadAsRead(thredId) {
 		const github = this.getGitHub();
+
 		if (!github) {
 			return;
 		}
@@ -258,7 +273,9 @@ export class NotificationProvider extends Disposable {
 
 	public async markPrNotificationsAsRead(pullRequestModel: IssueModel) {
 		const identifier = this.getPrIdentifier(pullRequestModel);
+
 		const prNotifications = this._notifications.get(identifier);
+
 		if (prNotifications && prNotifications.length) {
 			for (const notification of prNotifications) {
 				await this.markNotificationThreadAsRead(notification.threadId);
@@ -273,15 +290,18 @@ export class NotificationProvider extends Disposable {
 
 	private async pollForNewNotifications() {
 		const response = await this.getNotifications();
+
 		if (response === undefined) {
 			return;
 		}
 		const { data, headers } = response;
+
 		const pollTimeSuggested = Number(headers['x-poll-interval']);
 
 		// Adapt polling interval if it has changed.
 		if (pollTimeSuggested !== this._pollingDuration) {
 			this._pollingDuration = pollTimeSuggested;
+
 			if (this._pollingHandler && NotificationProvider.isPRNotificationsOn()) {
 				Logger.appendLine('Notifications: Clearing interval');
 				clearInterval(this._pollingHandler);
@@ -310,11 +330,14 @@ export class NotificationProvider extends Disposable {
 		await Promise.all(data.map(async (notification) => {
 
 			const repoUrl = `${notification.repository.html_url}.git`;
+
 			const githubRepo = currentRepos.get(repoUrl);
 
 			if (githubRepo && notification.subject.type === 'PullRequest') {
 				const splitPrUrl = notification.subject.url.split('/');
+
 				const prNumber = Number(splitPrUrl[splitPrUrl.length - 1]);
+
 				const identifier = this.getPrIdentifier(notification);
 
 				const { remote, query, schema } = await githubRepo.ensure();
@@ -345,6 +368,7 @@ export class NotificationProvider extends Disposable {
 					);
 
 					const currentPrNotifications = this._notifications.get(identifier);
+
 					if (currentPrNotifications === undefined) {
 						this._notifications.set(
 							identifier, [newNotification]
@@ -361,6 +385,7 @@ export class NotificationProvider extends Disposable {
 		this.adaptPRNotifications();
 
 		this.updateViewBadge();
+
 		for (const uri of this.uriFromNotifications()) {
 			if (prNodesToUpdate.find(u => u.fsPath === uri.fsPath) === undefined) {
 				prNodesToUpdate.push(uri);

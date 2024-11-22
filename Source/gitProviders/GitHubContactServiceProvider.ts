@@ -68,8 +68,10 @@ export class GitHubContactServiceProvider implements ContactServiceProvider {
 
 				// if we get initialized and users are available on the pr manager
 				const allAssignableUsers: Map<string, IAccount> = new Map();
+
 				for (const pullRequestManager of this.pullRequestManager.folderManagers) {
 					const batch = pullRequestManager.getAllAssignableUsers();
+
 					if (!batch) {
 						continue;
 					}
@@ -84,6 +86,7 @@ export class GitHubContactServiceProvider implements ContactServiceProvider {
 				}
 
 				break;
+
 			default:
 				throw new Error(`type:${type} not supported`);
 		}
@@ -93,6 +96,7 @@ export class GitHubContactServiceProvider implements ContactServiceProvider {
 
 	private async notifySuggestedAccounts(accounts: IAccount[]) {
 		let currentLoginUser: string | undefined;
+
 		try {
 			currentLoginUser = await this.getCurrentUserLogin();
 		} catch (e) {
@@ -124,8 +128,10 @@ export class GitHubContactServiceProvider implements ContactServiceProvider {
 			return undefined;
 		}
 		const origin = await this.pullRequestManager.folderManagers[0]?.getOrigin();
+
 		if (origin) {
 			const currentUser = origin.hub.currentUser ? await origin.hub.currentUser : undefined;
+
 			if (currentUser) {
 				return currentUser.login;
 			}

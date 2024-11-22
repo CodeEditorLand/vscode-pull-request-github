@@ -9,6 +9,7 @@ function done<T>(promise: Promise<T>): Promise<void> {
 
 export function throttle<T>(fn: () => Promise<T>): () => Promise<T> {
 	let current: Promise<T> | undefined;
+
 	let next: Promise<T> | undefined;
 
 	const trigger = (): Promise<T> => {
@@ -19,6 +20,7 @@ export function throttle<T>(fn: () => Promise<T>): () => Promise<T> {
 		if (current) {
 			next = done(current).then(() => {
 				next = undefined;
+
 				return trigger();
 			});
 
@@ -28,6 +30,7 @@ export function throttle<T>(fn: () => Promise<T>): () => Promise<T> {
 		current = fn();
 
 		const clear = () => (current = undefined);
+
 		done(current).then(clear, clear);
 
 		return current;

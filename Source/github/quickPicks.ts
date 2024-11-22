@@ -18,8 +18,10 @@ async function getItems<T extends IAccount | ITeam | ISuggestedReviewer>(context
 	const alreadyAssignedItems: (vscode.QuickPickItem & { user?: T })[] = [];
 	// Address skip list before first await
 	const filteredUsers: T[] = [];
+
 	for (const user of users) {
 		const id = reviewerId(user);
+
 		if (!skipList.has(id)) {
 			filteredUsers.push(user);
 			skipList.add(id);
@@ -27,10 +29,12 @@ async function getItems<T extends IAccount | ITeam | ISuggestedReviewer>(context
 	}
 
 	const avatars = await DataUri.avatarCirclesAsImageDataUris(context, filteredUsers, 16, 16, tooManyAssignable);
+
 	for (let i = 0; i < filteredUsers.length; i++) {
 		const user = filteredUsers[i];
 
 		let detail: string | undefined;
+
 		if (isSuggestedReviewer(user)) {
 			detail = user.isAuthor && user.isCommenter
 				? vscode.l10n.t('Recently edited and reviewed changes to these files')
@@ -60,7 +64,9 @@ export async function getAssigneesQuickPickItems(folderRepositoryManager: Folder
 		folderRepositoryManager.getAssignableUsers(),
 		item ? folderRepositoryManager.getPullRequestParticipants(item.githubRepository, item.number) : undefined
 	]);
+
 	const viewer = participantsAndViewer?.viewer;
+
 	const participants = participantsAndViewer?.participants ?? [];
 
 	let assignableUsers = allAssignableUsers[remoteName];
@@ -109,6 +115,7 @@ export async function getAssigneesQuickPickItems(folderRepositoryManager: Folder
 
 	if (assignYourself) {
 		const currentUser = viewer ?? await folderRepositoryManager.getCurrentUser(gitHubRepository);
+
 		if (assignees.length !== 0) {
 			assignees.unshift({ kind: vscode.QuickPickItemKind.Separator, label: vscode.l10n.t('Users') });
 		}
@@ -130,9 +137,13 @@ async function getReviewersQuickPickItems(folderRepositoryManager: FolderReposit
 	}
 
 	const allAssignableUsers = await folderRepositoryManager.getAssignableUsers();
+
 	const allTeamReviewers = isInOrganization ? await folderRepositoryManager.getTeamReviewers(refreshKind) : [];
+
 	const teamReviewers: ITeam[] = allTeamReviewers[remoteName] ?? [];
+
 	const assignableUsers: (IAccount | ITeam)[] = [...teamReviewers];
+
 	if (allAssignableUsers[remoteName]) {
 		assignableUsers.push(...allAssignableUsers[remoteName]);
 	}
@@ -174,19 +185,23 @@ export async function reviewersQuickPick(folderRepositoryManager: FolderReposito
 	const quickPick = vscode.window.createQuickPick<vscode.QuickPickItem & { user?: IAccount | ITeam }>();
 	// The quick-max is used to show the "update reviewers" button. If the number of teams is less than the quick-max, then they'll be automatically updated when the quick pick is opened.
 	const quickMaxTeamReviewers = 100;
+
 	const defaultPlaceholder = vscode.l10n.t('Add reviewers');
 	quickPick.busy = true;
 	quickPick.canSelectMany = true;
 	quickPick.matchOnDescription = true;
 	quickPick.placeholder = defaultPlaceholder;
+
 	if (isInOrganization) {
 		quickPick.buttons = [{ iconPath: new vscode.ThemeIcon('organization'), tooltip: vscode.l10n.t('Show or refresh team reviewers') }];
 	}
 	quickPick.show();
+
 	const updateItems = async (refreshKind: TeamReviewerRefreshKind) => {
 		const slowWarning = setTimeout(() => {
 			quickPick.placeholder = vscode.l10n.t('Getting team reviewers can take several minutes. Results will be cached.');
 		}, 3000);
+
 		const start = performance.now();
 		quickPick.items = await getReviewersQuickPickItems(folderRepositoryManager, remoteName, isInOrganization, author, existingReviewers, suggestedReviewers, refreshKind);
 		Logger.appendLine(`Setting quick pick reviewers took ${performance.now() - start}ms`, 'QuickPicks');
@@ -204,6 +219,7 @@ export async function reviewersQuickPick(folderRepositoryManager: FolderReposito
 			quickPick.busy = false;
 		});
 	});
+
 	return quickPick;
 }
 
@@ -216,8 +232,10 @@ function isProjectQuickPickItem(x: vscode.QuickPickItem | ProjectQuickPickItem):
 export async function getProjectFromQuickPick(folderRepoManager: FolderRepositoryManager, githubRepository: GitHubRepository, currentProjects: IProject[] | undefined, callback: (projects: IProject[]) => Promise<void>): Promise<void> {
 	try {
 		let selectedItems: vscode.QuickPickItem[] = [];
+
 		async function getProjectOptions(): Promise<(ProjectQuickPickItem | vscode.QuickPickItem)[]> {
 			const projects = await folderRepoManager.getAllProjects(githubRepository);
+
 			if (!projects || !projects.length) {
 				return [
 					{
@@ -233,11 +251,13 @@ export async function getProjectFromQuickPick(folderRepoManager: FolderRepositor
 					id: result.id,
 					project: result
 				};
+
 				if (currentProjects && currentProjects.find(project => project.id === result.id)) {
 					selectedItems.push(item);
 				}
 				return item;
 			});
+
 			return projectItems;
 		}
 
@@ -254,7 +274,9 @@ export async function getProjectFromQuickPick(folderRepoManager: FolderRepositor
 		folderRepoManager.getOrgProjects(true);
 		quickPick.onDidAccept(async () => {
 			quickPick.hide();
+
 			const projectsToAdd = quickPick.selectedItems.map(item => isProjectQuickPickItem(item) ? item.project : undefined).filter(project => project !== undefined) as IProject[];
+
 			if (projectsToAdd) {
 				await callback(projectsToAdd);
 			}
@@ -275,9 +297,12 @@ export async function getMilestoneFromQuickPick(folderRepositoryManager: FolderR
 		const removeMilestoneItem: vscode.QuickPickItem = {
 			label: vscode.l10n.t('Remove Milestone')
 		};
+
 		let selectedItem: vscode.QuickPickItem | undefined;
+
 		async function getMilestoneOptions(): Promise<(MilestoneQuickPickItem | vscode.QuickPickItem)[]> {
 			const milestones = await githubRepository.getMilestones();
+
 			if (!milestones || !milestones.length) {
 				return [
 					{
@@ -293,11 +318,13 @@ export async function getMilestoneFromQuickPick(folderRepositoryManager: FolderR
 					id: result.id,
 					milestone: result
 				};
+
 				if (currentMilestone && currentMilestone.id === result.id) {
 					selectedItem = item;
 				}
 				return item;
 			});
+
 			if (currentMilestone) {
 				milestonesItems.unshift({ label: 'Milestones', kind: vscode.QuickPickItemKind.Separator });
 				milestonesItems.unshift(removeMilestoneItem);
@@ -319,28 +346,33 @@ export async function getMilestoneFromQuickPick(folderRepositoryManager: FolderR
 			const inputBox = vscode.window.createInputBox();
 			inputBox.title = vscode.l10n.t('Create new milestone');
 			inputBox.placeholder = vscode.l10n.t('New milestone title');
+
 			if (quickPick.value !== '') {
 				inputBox.value = quickPick.value;
 			}
 			inputBox.show();
 			inputBox.onDidAccept(async () => {
 				inputBox.hide();
+
 				if (inputBox.value === '') {
 					return;
 				}
 				if (inputBox.value.length > 255) {
 					vscode.window.showErrorMessage(vscode.l10n.t(`Failed to create milestone: The title can contain a maximum of 255 characters`));
+
 					return;
 				}
 				// Check if milestone already exists (only check open ones)
 				for (const existingMilestone of quickPick.items) {
 					if (existingMilestone.label === inputBox.value) {
 						vscode.window.showErrorMessage(vscode.l10n.t('Failed to create milestone: The milestone \'{0}\' already exists', inputBox.value));
+
 						return;
 					}
 				}
 				try {
 					const milestone = await folderRepositoryManager.createMilestone(githubRepository, inputBox.value);
+
 					if (milestone !== undefined) {
 						await callback(milestone);
 					}
@@ -362,7 +394,9 @@ export async function getMilestoneFromQuickPick(folderRepositoryManager: FolderR
 
 		quickPick.onDidAccept(async () => {
 			quickPick.hide();
+
 			const milestoneToAdd = quickPick.selectedItems[0];
+
 			if (milestoneToAdd && isMilestoneQuickPickItem(milestoneToAdd)) {
 				await callback(milestoneToAdd.milestone);
 			} else if (milestoneToAdd && milestoneToAdd === removeMilestoneItem) {
@@ -392,12 +426,14 @@ export async function getLabelOptions(
 				</svg>`, 'utf8'))
 		};
 	});
+
 	return { newLabels, labelPicks };
 }
 
 export async function pickEmail(githubRepository: GitHubRepository, current: string): Promise<string | undefined> {
 	async function getEmails(): Promise<(vscode.QuickPickItem)[]> {
 		const emails = await githubRepository.getAuthenticatedUserEmails();
+
 		return emails.map(email => {
 			return {
 				label: email,
@@ -407,5 +443,7 @@ export async function pickEmail(githubRepository: GitHubRepository, current: str
 	}
 
 	const result = await vscode.window.showQuickPick(getEmails(), { canPickMany: false, title: vscode.l10n.t('Choose an email') });
+
 	return result ? result.label : undefined;
 }
+

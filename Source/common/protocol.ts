@@ -29,6 +29,7 @@ export class Protocol {
 	}
 
 	public readonly url: vscode.Uri;
+
 	constructor(uriString: string) {
 		if (this.parseSshProtocol(uriString)) {
 			return;
@@ -39,6 +40,7 @@ export class Protocol {
 			this.type = this.getType(this.url.scheme);
 
 			this.host = this.getHostName(this.url.authority);
+
 			if (this.host) {
 				this.repositoryName = this.getRepositoryName(this.url.path) || '';
 				this.owner = this.getOwnerName(this.url.path) || '';
@@ -55,13 +57,17 @@ export class Protocol {
 		switch (scheme) {
 			case 'file':
 				return ProtocolType.Local;
+
 			case 'http':
 			case 'https':
 				return ProtocolType.HTTP;
+
 			case 'git':
 				return ProtocolType.GIT;
+
 			case 'ssh':
 				return ProtocolType.SSH;
+
 			default:
 				return ProtocolType.OTHER;
 		}
@@ -69,6 +75,7 @@ export class Protocol {
 
 	private parseSshProtocol(uriString: string): boolean {
 		const sshConfig = resolve(uriString);
+
 		if (!sshConfig) {
 			return false;
 		}
@@ -77,6 +84,7 @@ export class Protocol {
 		this.owner = this.getOwnerName(path) || '';
 		this.repositoryName = this.getRepositoryName(path) || '';
 		this.type = ProtocolType.SSH;
+
 		return true;
 	}
 
@@ -95,11 +103,14 @@ export class Protocol {
 
 	getRepositoryName(path: string) {
 		let normalized = path.replace(/\\/g, '/');
+
 		if (normalized.endsWith('/')) {
 			normalized = normalized.substr(0, normalized.length - 1);
 		}
 		const lastIndex = normalized.lastIndexOf('/');
+
 		const lastSegment = normalized.substr(lastIndex + 1);
+
 		if (lastSegment === '' || lastSegment === '/') {
 			return;
 		}
@@ -109,11 +120,13 @@ export class Protocol {
 
 	getOwnerName(path: string) {
 		let normalized = path.replace(/\\/g, '/');
+
 		if (normalized.endsWith('/')) {
 			normalized = normalized.substr(0, normalized.length - 1);
 		}
 
 		const fragments = normalized.split('/');
+
 		if (fragments.length > 1) {
 			return fragments[fragments.length - 2];
 		}
@@ -131,6 +144,7 @@ export class Protocol {
 		}
 
 		let scheme = 'https';
+
 		if (this.url && (this.url.scheme === 'http' || this.url.scheme === 'https')) {
 			scheme = this.url.scheme;
 		}
@@ -165,6 +179,7 @@ export class Protocol {
 		}
 
 		const normalizedUri = this.normalizeUri();
+
 		if (normalizedUri) {
 			return normalizedUri.toString();
 		}
@@ -194,11 +209,13 @@ export class Protocol {
 
 	equals(other: Protocol) {
 		const normalizeUri = this.normalizeUri();
+
 		if (!normalizeUri) {
 			return false;
 		}
 
 		const otherNormalizeUri = other.normalizeUri();
+
 		if (!otherNormalizeUri) {
 			return false;
 		}

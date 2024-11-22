@@ -61,6 +61,7 @@ export class CreatePullRequestDataModel {
 
 	private get baseRemoteName(): string {
 		const findValue = `/${this._baseOwner.toLowerCase()}/`;
+
 		return this.folderRepositoryManager.repository.state.remotes.find(remote => remote.fetchUrl?.toLowerCase().includes(findValue))?.name ?? 'origin';
 	}
 
@@ -96,6 +97,7 @@ export class CreatePullRequestDataModel {
 			this._compareGitHubRepository = this.folderRepositoryManager.gitHubRepositories.find(
 				repo => repo.remote.owner === this._compareOwner,
 			);
+
 			if (this._compareGitHubRepository) {
 				this._gitHubcontentProvider.gitHubRepository = this._compareGitHubRepository;
 			}
@@ -129,12 +131,15 @@ export class CreatePullRequestDataModel {
 
 	public async setCompareBranch(value: string | undefined): Promise<void> {
 		const oldUpstreamValue = this._compareHasUpstream;
+
 		let changed: boolean = false;
+
 		if (value) {
 			changed = (await this.updateHasUpstream(value)) !== oldUpstreamValue;
 		}
 		if (this._compareBranch !== value) {
 			changed = true;
+
 			if (value) {
 				this._compareBranch = value;
 			}
@@ -147,11 +152,13 @@ export class CreatePullRequestDataModel {
 	private async updateHasUpstream(branch: string): Promise<boolean> {
 		const compareBranch = await this.folderRepositoryManager.repository.getBranch(branch);
 		this._compareHasUpstream = !!compareBranch.upstream;
+
 		return this._compareHasUpstream;
 	}
 
 	public async getCompareHasUpstream(): Promise<boolean> {
 		await this._constructed;
+
 		return this._compareHasUpstream;
 	}
 
@@ -171,10 +178,14 @@ export class CreatePullRequestDataModel {
 
 	public async gitCommits(): Promise<Commit[]> {
 		await this._constructed;
+
 		if (this._gitLog === undefined) {
 			const startBase = this._baseBranch;
+
 			const startCompare = this._compareBranch;
+
 			const result = this.folderRepositoryManager.repository.log({ range: `${this.baseRemoteName}/${this._baseBranch}..${this._compareBranch}` });
+
 			if (startBase !== this._baseBranch || startCompare !== this._compareBranch) {
 				// The branches have changed while we were waiting for the log. We can use the result, but we shouldn't save it
 				return result;
@@ -187,10 +198,14 @@ export class CreatePullRequestDataModel {
 
 	public async gitFiles(): Promise<Change[]> {
 		await this._constructed;
+
 		if (this._gitFiles === undefined) {
 			const startBase = this._baseBranch;
+
 			const startCompare = this._compareBranch;
+
 			const result = await this.folderRepositoryManager.repository.diffBetween(`${this.baseRemoteName}/${this._baseBranch}`, this._compareBranch);
+
 			if (startBase !== this._baseBranch || startCompare !== this._compareBranch) {
 				Logger.debug(`Branches have changed while getting git diff. Base: ${startBase} -> ${this._baseBranch}, Compare: ${startCompare} -> ${this._compareBranch}`, CreatePullRequestDataModel.ID);
 				// The branches have changed while we were waiting for the diff. We can use the result, but we shouldn't save it
@@ -205,12 +220,14 @@ export class CreatePullRequestDataModel {
 
 	public async gitHubCommits(): Promise<OctokitCommon.Commit[]> {
 		await this._constructed;
+
 		if (!this._compareGitHubRepository) {
 			return [];
 		}
 
 		if (this._gitHubLog === undefined) {
 			const { octokit, remote } = await this._compareGitHubRepository.ensure();
+
 			const { data } = await octokit.call(octokit.api.repos.compareCommits, {
 				repo: remote.repositoryName,
 				owner: remote.owner,
@@ -226,6 +243,7 @@ export class CreatePullRequestDataModel {
 
 	public async gitHubFiles(): Promise<OctokitCommon.CommitFile[]> {
 		await this._constructed;
+
 		if (this._gitHubFiles === undefined) {
 			await this.gitHubCommits();
 		}
@@ -234,6 +252,7 @@ export class CreatePullRequestDataModel {
 
 	public async gitHubMergeBase(): Promise<string> {
 		await this._constructed;
+
 		if (this._gitHubMergeBase === undefined) {
 			await this.gitHubCommits();
 		}

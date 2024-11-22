@@ -23,12 +23,17 @@ export function getCommentingRanges(diffHunks: DiffHunk[], isBase: boolean, logI
 
 	for (let i = 0; i < diffHunks.length; i++) {
 		const diffHunk = diffHunks[i];
+
 		let startingLine: number | undefined;
+
 		let length: number;
+
 		if (isBase) {
 			let endingLine: number | undefined;
+
 			for (let j = 0; j < diffHunk.diffLines.length; j++) {
 				const diffLine = diffHunk.diffLines[j];
+
 				if (diffLine.type === DiffChangeType.Delete) {
 					if (startingLine !== undefined) {
 						endingLine = getZeroBased(diffLine.oldLineNumber);
@@ -64,5 +69,6 @@ export function getCommentingRanges(diffHunks: DiffHunk[], isBase: boolean, logI
 	}
 
 	Logger.debug(`Found ${ranges.length} commenting ranges.`, logId);
+
 	return ranges;
 }

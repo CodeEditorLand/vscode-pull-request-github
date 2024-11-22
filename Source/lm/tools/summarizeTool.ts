@@ -17,11 +17,14 @@ export class SummarizationTool implements vscode.LanguageModelTool<FetchResult> 
 Title : ${options.parameters.title}
 Body : ${options.parameters.body}
 `;
+
 		const fileChanges = options.parameters.fileChanges;
+
 		if (fileChanges) {
 			issueOrPullRequestInfo += `
 The following are the files changed:
 `;
+
 			for (const fileChange of fileChanges.values()) {
 				issueOrPullRequestInfo += `
 File : ${fileChange.fileName}
@@ -29,6 +32,7 @@ Patch: ${fileChange.patch}
 `;
 			}
 			const comments = options.parameters.comments;
+
 			for (const [index, comment] of comments.entries()) {
 				issueOrPullRequestInfo += `
 Comment ${index} :
@@ -39,14 +43,18 @@ Body: ${comment.body}
 				vendor: 'copilot',
 				family: 'gpt-4o'
 			});
+
 			const model = models[0];
 
 			if (model) {
 				const messages = [vscode.LanguageModelChatMessage.User(summarizeInstructions())];
 				messages.push(vscode.LanguageModelChatMessage.User(`The issue or pull request information is as follows:`));
 				messages.push(vscode.LanguageModelChatMessage.User(issueOrPullRequestInfo));
+
 				const response = await model.sendRequest(messages, {});
+
 				const responseText = await concatAsyncIterable(response.text);
+
 				return {
 					'text/plain': responseText
 				};

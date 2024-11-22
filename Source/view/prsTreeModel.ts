@@ -48,9 +48,11 @@ export class PrsTreeModel extends Disposable {
 
 	constructor(private _telemetry: ITelemetry, private readonly _reposManager: RepositoriesManager, private readonly _context: vscode.ExtensionContext) {
 		super();
+
 		const repoEvents = (manager: FolderRepositoryManager) => {
 			this._register(manager.onDidChangeActivePullRequest(() => {
 				this.clearRepo(manager);
+
 				if (this._activePRDisposables.has(manager)) {
 					disposeAll(this._activePRDisposables.get(manager)!);
 					this._activePRDisposables.delete(manager);
@@ -124,6 +126,7 @@ export class PrsTreeModel extends Disposable {
 		// or even GitHub's secondary rate limit. If there are more than 100 PRs,
 		// chunk them into 100s.
 		let checks: [PullRequestChecks | null, PullRequestReviewRequirement | null][] = [];
+
 		for (let i = 0; i < pullRequests.length; i += 100) {
 			const sliceEnd = (i + 100 < pullRequests.length) ? i + 100 : pullRequests.length;
 			checks.push(...await Promise.all(pullRequests.slice(i, sliceEnd).map(pullRequest => {
@@ -132,9 +135,12 @@ export class PrsTreeModel extends Disposable {
 		}
 
 		const changedStatuses: string[] = [];
+
 		for (let i = 0; i < pullRequests.length; i++) {
 			const pullRequest = pullRequests[i];
+
 			const [check, reviewRequirement] = checks[i];
+
 			let newStatus: UnsatisfiedChecks = UnsatisfiedChecks.None;
 
 			if (reviewRequirement) {
@@ -161,7 +167,9 @@ export class PrsTreeModel extends Disposable {
 				}
 			}
 			const identifier = createPRNodeIdentifier(pullRequest);
+
 			const oldState = this._queriedPullRequests.get(identifier);
+
 			if ((oldState === undefined) || (oldState.status !== newStatus)) {
 				const newState = { pullRequest, status: newStatus };
 				changedStatuses.push(identifier);
@@ -173,6 +181,7 @@ export class PrsTreeModel extends Disposable {
 
 	private getFolderCache(folderRepoManager: FolderRepositoryManager): Map<string | PRType.LocalPullRequest | PRType.All, ItemsResponseResult<PullRequestModel>> {
 		let cache = this._cachedPRs.get(folderRepoManager);
+
 		if (!cache) {
 			cache = new Map();
 			this._cachedPRs.set(folderRepoManager, cache);
@@ -182,6 +191,7 @@ export class PrsTreeModel extends Disposable {
 
 	async getLocalPullRequests(folderRepoManager: FolderRepositoryManager, update?: boolean) {
 		const cache = this.getFolderCache(folderRepoManager);
+
 		if (!update && cache.has(PRType.LocalPullRequest)) {
 			return cache.get(PRType.LocalPullRequest)!;
 		}
@@ -199,11 +209,13 @@ export class PrsTreeModel extends Disposable {
 		// Don't await this._getChecks. It fires an event that will be listened to.
 		this._getChecks(prs);
 		this.hasLoaded = true;
+
 		return { hasMorePages: false, hasUnsearchedRepositories: false, items: prs };
 	}
 
 	async getPullRequestsForQuery(folderRepoManager: FolderRepositoryManager, fetchNextPage: boolean, query: string): Promise<ItemsResponseResult<PullRequestModel>> {
 		const cache = this.getFolderCache(folderRepoManager);
+
 		if (!fetchNextPage && cache.has(query)) {
 			return cache.get(query)!;
 		}
@@ -222,11 +234,13 @@ export class PrsTreeModel extends Disposable {
 		// Don't await this._getChecks. It fires an event that will be listened to.
 		this._getChecks(prs.items);
 		this.hasLoaded = true;
+
 		return prs;
 	}
 
 	async getAllPullRequests(folderRepoManager: FolderRepositoryManager, fetchNextPage: boolean, update?: boolean): Promise<ItemsResponseResult<PullRequestModel>> {
 		const cache = this.getFolderCache(folderRepoManager);
+
 		if (!update && cache.has(PRType.All) && !fetchNextPage) {
 			return cache.get(PRType.All)!;
 		}
@@ -244,6 +258,7 @@ export class PrsTreeModel extends Disposable {
 		// Don't await this._getChecks. It fires an event that will be listened to.
 		this._getChecks(prs.items);
 		this.hasLoaded = true;
+
 		return prs;
 	}
 

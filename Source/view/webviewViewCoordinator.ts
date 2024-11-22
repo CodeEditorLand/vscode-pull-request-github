@@ -50,11 +50,14 @@ export class WebviewViewCoordinator extends Disposable {
 
 	private updatePullRequest() {
 		const pullRequestModel = Array.from(this._pullRequestModel.keys())[0];
+
 		if (!pullRequestModel) {
 			this.reset();
+
 			return;
 		}
 		const { folderRepositoryManager, reviewManager } = this._pullRequestModel.get(pullRequestModel)!;
+
 		if (!this._webviewViewProvider) {
 			this.create(pullRequestModel, folderRepositoryManager, reviewManager);
 		} else {
@@ -65,7 +68,9 @@ export class WebviewViewCoordinator extends Disposable {
 	public removePullRequest(pullRequestModel: PullRequestModel) {
 		const oldHead = Array.from(this._pullRequestModel.keys())[0];
 		this._pullRequestModel.delete(pullRequestModel);
+
 		const newHead = Array.from(this._pullRequestModel.keys())[0];
+
 		if (newHead !== oldHead) {
 			this.updatePullRequest();
 		}

@@ -16,7 +16,9 @@ export abstract class RepositoryFileSystemProvider extends ReadonlyFileSystemPro
 
 	protected async waitForRepos(milliseconds: number): Promise<void> {
 		Logger.appendLine('Waiting for repositories.', 'RepositoryFileSystemProvider');
+
 		let eventDisposable: vscode.Disposable | undefined = undefined;
+
 		const openPromise = new Promise<void>(resolve => {
 			eventDisposable = this.gitAPI.onDidOpenRepository(() => {
 				Logger.appendLine('Found at least one repository.', 'RepositoryFileSystemProvider');
@@ -25,7 +27,9 @@ export abstract class RepositoryFileSystemProvider extends ReadonlyFileSystemPro
 				resolve();
 			});
 		});
+
 		let timeout: NodeJS.Timeout | undefined;
+
 		const timeoutPromise = new Promise<void>(resolve => {
 			timeout = setTimeout(() => {
 				Logger.appendLine('Timed out while waiting for repositories.', 'RepositoryFileSystemProvider');
@@ -33,6 +37,7 @@ export abstract class RepositoryFileSystemProvider extends ReadonlyFileSystemPro
 			}, milliseconds);
 		});
 		await Promise.race([openPromise, timeoutPromise]);
+
 		if (timeout) {
 			clearTimeout(timeout);
 		}

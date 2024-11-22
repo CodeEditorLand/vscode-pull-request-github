@@ -14,11 +14,13 @@ import { IResolvedPullRequestModel, PullRequestModel } from '../github/pullReque
 
 export abstract class FileChangeModel {
 	protected _filePath: vscode.Uri;
+
 	get filePath(): vscode.Uri {
 		return this._filePath;
 	}
 
 	protected _parentFilePath: vscode.Uri;
+
 	get parentFilePath(): vscode.Uri {
 		return this._parentFilePath;
 	}
@@ -36,6 +38,7 @@ export abstract class FileChangeModel {
 	}
 
 	private _viewed: ViewedState;
+
 	get viewed(): ViewedState {
 		return this._viewed;
 	}
@@ -56,6 +59,7 @@ export abstract class FileChangeModel {
 		} else if (this.status !== GitChangeType.RENAME) {
 			try {
 				const commit = this.sha ?? this.pullRequest.head!.sha;
+
 				const patch = await this.folderRepoManager.repository.diffBetween(this.pullRequest.base.sha, commit, this.fileName);
 				diffHunks = parsePatch(patch);
 			} catch (e) {
@@ -84,6 +88,7 @@ export class GitFileChangeModel extends FileChangeModel {
 		super(pullRequest, folderRepositoryManager, change, sha);
 		this._filePath = filePath;
 		this._parentFilePath = parentFilePath;
+
 		if (preload) {
 			try {
 				this.showBase();
@@ -97,6 +102,7 @@ export class GitFileChangeModel extends FileChangeModel {
 	async showBase(): Promise<string | undefined> {
 		if (!this._show && this.change.status !== GitChangeType.ADD) {
 			const commit = ((this.change instanceof InMemFileChange || this.change instanceof SlimFileChange) ? this.change.baseCommit : this.sha!);
+
 			const absolutePath = vscode.Uri.joinPath(this.folderRepoManager.repository.rootUri, this.fileName).fsPath;
 			this._show = this.folderRepoManager.repository.show(commit, absolutePath);
 		}
@@ -111,6 +117,7 @@ export class InMemFileChangeModel extends FileChangeModel {
 
 	async isPartial(): Promise<boolean> {
 		let originalFileExist = false;
+
 		let fileName: string | undefined = undefined;
 
 		if ((this.change.patch === '') &&
@@ -145,9 +152,13 @@ export class InMemFileChangeModel extends FileChangeModel {
 		isCurrentPR: boolean,
 		mergeBase: string) {
 		super(pullRequest, folderRepositoryManager, change);
+
 		const headCommit = pullRequest.head!.sha;
+
 		const parentFileName = change.status === GitChangeType.RENAME ? change.previousFileName! : change.fileName;
+
 		const filePath = folderRepositoryManager.repository.rootUri.with({ path: vscode.Uri.file(resolvePath(folderRepositoryManager.repository.rootUri, change.fileName)).path });
+
 		const parentPath = folderRepositoryManager.repository.rootUri.with({ path: vscode.Uri.file(resolvePath(folderRepositoryManager.repository.rootUri, parentFileName)).path });
 		this._filePath = isCurrentPR ? ((change.status === GitChangeType.DELETE)
 			? toReviewUri(filePath, undefined, undefined, '', false, { base: false }, folderRepositoryManager.repository.rootUri)
@@ -196,7 +207,9 @@ export class RemoteFileChangeModel extends FileChangeModel {
 		pullRequest: PullRequestModel,
 	) {
 		super(pullRequest, folderRepositoryManager, change);
+
 		const headCommit = pullRequest.head!.sha;
+
 		const parentFileName = change.status === GitChangeType.RENAME ? change.previousFileName! : change.fileName;
 		this._filePath = toPRUri(
 			vscode.Uri.file(

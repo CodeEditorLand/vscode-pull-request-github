@@ -18,13 +18,16 @@ import { PullRequestModel } from './pullRequestModel';
 export namespace PullRequestView {
 	export async function deleteBranch(folderRepositoryManager: FolderRepositoryManager, item: PullRequestModel): Promise<{ isReply: boolean, message: any }> {
 		const branchInfo = await folderRepositoryManager.getBranchNameForPullRequest(item);
+
 		const actions: (vscode.QuickPickItem & { type: 'upstream' | 'local' | 'remote' | 'suspend' })[] = [];
+
 		const defaultBranch = await folderRepositoryManager.getPullRequestRepositoryDefaultBranch(item);
 
 		if (item.isResolved()) {
 			const branchHeadRef = item.head.ref;
 
 			const isDefaultBranch = defaultBranch === item.head.ref;
+
 			if (!isDefaultBranch && !item.isRemoteHeadDeleted) {
 				actions.push({
 					label: vscode.l10n.t('Delete remote branch {0}', `${item.remote.remoteName}/${branchHeadRef}`),
@@ -69,6 +72,7 @@ export namespace PullRequestView {
 			vscode.window.showWarningMessage(
 				vscode.l10n.t('There is no longer an upstream or local branch for Pull Request #{0}', item.number),
 			);
+
 			return {
 				isReply: true,
 				message: {
@@ -98,15 +102,18 @@ export namespace PullRequestView {
 							await folderRepositoryManager.repository.checkout(defaultBranch);
 						}
 						return;
+
 					case 'local':
 						if (isBranchActive) {
 							if (folderRepositoryManager.repository.state.workingTreeChanges.length) {
 								const yes = vscode.l10n.t('Yes');
+
 								const response = await vscode.window.showWarningMessage(
 									vscode.l10n.t('Your local changes will be lost, do you want to continue?'),
 									{ modal: true },
 									yes,
 								);
+
 								if (response === yes) {
 									await vscode.commands.executeCommand('git.cleanAll');
 								} else {
@@ -116,12 +123,17 @@ export namespace PullRequestView {
 							await folderRepositoryManager.repository.checkout(defaultBranch);
 						}
 						await folderRepositoryManager.repository.deleteBranch(branchInfo!.branch, true);
+
 						return deletedBranchTypes.push(action.type);
+
 					case 'remote':
 						deletedBranchTypes.push(action.type);
+
 						return folderRepositoryManager.repository.removeRemote(branchInfo!.remote!);
+
 					case 'suspend':
 						deletedBranchTypes.push(action.type);
+
 						return vscode.commands.executeCommand('github.codespaces.disconnectSuspend');
 				}
 			});

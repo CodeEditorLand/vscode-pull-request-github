@@ -73,16 +73,19 @@ export class ConflictResolutionModel {
 
 	public mergeBaseUri(conflict: { prHeadFilePath: string }): vscode.Uri {
 		const fileUri = vscode.Uri.file(conflict.prHeadFilePath);
+
 		return toGitHubUri(fileUri, Schemes.GithubPr, { fileName: conflict.prHeadFilePath, branch: this.prMergeBaseRef, owner: this.prBaseOwner });
 	}
 
 	public baseUri(conflict: Conflict): vscode.Uri {
 		const fileUri = vscode.Uri.file(conflict.prHeadFilePath);
+
 		return toGitHubUri(fileUri, Schemes.GithubPr, { fileName: conflict.prHeadFilePath, branch: this.latestPrBaseSha, owner: this.prBaseOwner });
 	}
 
 	public prHeadUri(conflict: Conflict): vscode.Uri {
 		const fileUri = vscode.Uri.file(conflict.prHeadFilePath);
+
 		return toGitHubUri(fileUri, Schemes.GithubPr, { fileName: conflict.prHeadFilePath, branch: this.prHeadBranchName, owner: this.prHeadOwner });
 	}
 }

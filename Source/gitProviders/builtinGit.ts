@@ -31,6 +31,7 @@ export class BuiltinGitProvider extends Disposable implements IGit {
 
 	private constructor(extension: vscode.Extension<GitExtension>) {
 		super();
+
 		const gitExtension = extension.exports;
 
 		try {
@@ -38,6 +39,7 @@ export class BuiltinGitProvider extends Disposable implements IGit {
 		} catch (e) {
 			// The git extension will throw if a git model cannot be found, i.e. if git is not installed.
 			commands.setContext('gitNotInstalled', true);
+
 			throw e;
 		}
 
@@ -49,8 +51,10 @@ export class BuiltinGitProvider extends Disposable implements IGit {
 
 	static async createProvider(): Promise<BuiltinGitProvider | undefined> {
 		const extension = vscode.extensions.getExtension<GitExtension>('vscode.git');
+
 		if (extension) {
 			await extension.activate();
+
 			return new BuiltinGitProvider(extension);
 		}
 		return undefined;
