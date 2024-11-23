@@ -3,18 +3,22 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as vscode from 'vscode';
-import { AuthenticationError } from '../../common/authentication';
-import { PR_SETTINGS_NAMESPACE, QUERIES } from '../../common/settingKeys';
-import { ITelemetry } from '../../common/telemetry';
-import { formatError } from '../../common/utils';
-import { FolderRepositoryManager, ItemsResponseResult } from '../../github/folderRepositoryManager';
-import { PRType } from '../../github/interface';
-import { NotificationProvider } from '../../github/notifications';
-import { PullRequestModel } from '../../github/pullRequestModel';
-import { PrsTreeModel } from '../prsTreeModel';
-import { PRNode } from './pullRequestNode';
-import { TreeNode, TreeNodeParent } from './treeNode';
+import * as vscode from "vscode";
+
+import { AuthenticationError } from "../../common/authentication";
+import { PR_SETTINGS_NAMESPACE, QUERIES } from "../../common/settingKeys";
+import { ITelemetry } from "../../common/telemetry";
+import { formatError } from "../../common/utils";
+import {
+	FolderRepositoryManager,
+	ItemsResponseResult,
+} from "../../github/folderRepositoryManager";
+import { PRType } from "../../github/interface";
+import { NotificationProvider } from "../../github/notifications";
+import { PullRequestModel } from "../../github/pullRequestModel";
+import { PrsTreeModel } from "../prsTreeModel";
+import { PRNode } from "./pullRequestNode";
+import { TreeNode, TreeNodeParent } from "./treeNode";
 
 export enum PRCategoryActionType {
 	Empty,
@@ -39,7 +43,7 @@ interface QueryInspect {
 	globalLanguageValue?: { label: string; query: string }[];
 	workspaceLanguageValue?: { label: string; query: string }[];
 	workspaceFolderLanguageValue?: { label: string; query: string }[];
-	languageIds?: string[]
+	languageIds?: string[];
 }
 
 export class PRCategoryActionNode extends TreeNode implements vscode.TreeItem {
@@ -48,72 +52,80 @@ export class PRCategoryActionNode extends TreeNode implements vscode.TreeItem {
 	public type: PRCategoryActionType;
 	public command?: vscode.Command;
 
-	constructor(parent: TreeNodeParent, type: PRCategoryActionType, node?: CategoryTreeNode) {
+	constructor(
+		parent: TreeNodeParent,
+		type: PRCategoryActionType,
+		node?: CategoryTreeNode,
+	) {
 		super(parent);
 		this.type = type;
 		this.collapsibleState = vscode.TreeItemCollapsibleState.None;
 
 		switch (type) {
 			case PRCategoryActionType.Empty:
-				this.label = vscode.l10n.t('0 pull requests in this category');
+				this.label = vscode.l10n.t("0 pull requests in this category");
 
 				break;
 
 			case PRCategoryActionType.More:
-				this.label = vscode.l10n.t('Load more');
+				this.label = vscode.l10n.t("Load more");
 				this.command = {
-					title: vscode.l10n.t('Load more'),
-					command: 'pr.loadMore',
+					title: vscode.l10n.t("Load more"),
+					command: "pr.loadMore",
 					arguments: [node],
 				};
 
 				break;
 
 			case PRCategoryActionType.TryOtherRemotes:
-				this.label = vscode.l10n.t('Continue fetching from other remotes');
+				this.label = vscode.l10n.t(
+					"Continue fetching from other remotes",
+				);
 				this.command = {
-					title: vscode.l10n.t('Load more'),
-					command: 'pr.loadMore',
+					title: vscode.l10n.t("Load more"),
+					command: "pr.loadMore",
 					arguments: [node],
 				};
 
 				break;
 
 			case PRCategoryActionType.Login:
-				this.label = vscode.l10n.t('Sign in');
+				this.label = vscode.l10n.t("Sign in");
 				this.command = {
-					title: vscode.l10n.t('Sign in'),
-					command: 'pr.signinAndRefreshList',
+					title: vscode.l10n.t("Sign in"),
+					command: "pr.signinAndRefreshList",
 					arguments: [],
 				};
 
 				break;
 
 			case PRCategoryActionType.LoginEnterprise:
-				this.label = vscode.l10n.t('Sign in with GitHub Enterprise...');
+				this.label = vscode.l10n.t("Sign in with GitHub Enterprise...");
 				this.command = {
-					title: 'Sign in',
-					command: 'pr.signinAndRefreshList',
+					title: "Sign in",
+					command: "pr.signinAndRefreshList",
 					arguments: [],
 				};
 
 				break;
 
 			case PRCategoryActionType.NoRemotes:
-				this.label = vscode.l10n.t('No GitHub repositories found.');
+				this.label = vscode.l10n.t("No GitHub repositories found.");
 
 				break;
 
 			case PRCategoryActionType.NoMatchingRemotes:
-				this.label = vscode.l10n.t('No remotes match the current setting.');
+				this.label = vscode.l10n.t(
+					"No remotes match the current setting.",
+				);
 
 				break;
 
 			case PRCategoryActionType.ConfigureRemotes:
-				this.label = vscode.l10n.t('Configure remotes...');
+				this.label = vscode.l10n.t("Configure remotes...");
 				this.command = {
-					title: vscode.l10n.t('Configure remotes'),
-					command: 'pr.configureRemotes',
+					title: vscode.l10n.t("Configure remotes"),
+					command: "pr.configureRemotes",
 					arguments: [],
 				};
 
@@ -138,7 +150,10 @@ export class CategoryTreeNode extends TreeNode implements vscode.TreeItem {
 	public collapsibleState: vscode.TreeItemCollapsibleState;
 	public prs: PullRequestModel[];
 	public fetchNextPage: boolean = false;
-	public repositoryPageInformation: Map<string, PageInformation> = new Map<string, PageInformation>();
+	public repositoryPageInformation: Map<string, PageInformation> = new Map<
+		string,
+		PageInformation
+	>();
 	public contextValue: string;
 
 	constructor(
@@ -157,7 +172,7 @@ export class CategoryTreeNode extends TreeNode implements vscode.TreeItem {
 
 		switch (this.type) {
 			case PRType.All:
-				this.label = vscode.l10n.t('All Open');
+				this.label = vscode.l10n.t("All Open");
 
 				break;
 
@@ -167,58 +182,71 @@ export class CategoryTreeNode extends TreeNode implements vscode.TreeItem {
 				break;
 
 			case PRType.LocalPullRequest:
-				this.label = vscode.l10n.t('Local Pull Request Branches');
+				this.label = vscode.l10n.t("Local Pull Request Branches");
 
 				break;
 
 			default:
-				this.label = '';
+				this.label = "";
 
 				break;
 		}
 
-		this.id = parent instanceof TreeNode ? `${parent.id ?? parent.label}/${this.label}` : this.label;
+		this.id =
+			parent instanceof TreeNode
+				? `${parent.id ?? parent.label}/${this.label}`
+				: this.label;
 
-		if ((this._prsTreeModel.expandedQueries.size === 0) && (this.type === PRType.All)) {
+		if (
+			this._prsTreeModel.expandedQueries.size === 0 &&
+			this.type === PRType.All
+		) {
 			this.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
 		} else {
-			this.collapsibleState =
-				this._prsTreeModel.expandedQueries.has(this.id)
-					? vscode.TreeItemCollapsibleState.Expanded
-					: vscode.TreeItemCollapsibleState.Collapsed;
+			this.collapsibleState = this._prsTreeModel.expandedQueries.has(
+				this.id,
+			)
+				? vscode.TreeItemCollapsibleState.Expanded
+				: vscode.TreeItemCollapsibleState.Collapsed;
 		}
 
 		if (this._categoryQuery) {
-			this.contextValue = 'query';
+			this.contextValue = "query";
 		}
 	}
 
-	private async addNewQuery(config: vscode.WorkspaceConfiguration, inspect: QueryInspect | undefined, startingValue: string) {
+	private async addNewQuery(
+		config: vscode.WorkspaceConfiguration,
+		inspect: QueryInspect | undefined,
+		startingValue: string,
+	) {
 		const inputBox = vscode.window.createInputBox();
-		inputBox.title = vscode.l10n.t('Enter the title of the new query');
-		inputBox.placeholder = vscode.l10n.t('Title');
+		inputBox.title = vscode.l10n.t("Enter the title of the new query");
+		inputBox.placeholder = vscode.l10n.t("Title");
 		inputBox.step = 1;
 		inputBox.totalSteps = 2;
 		inputBox.show();
 
 		let title: string | undefined;
 		inputBox.onDidAccept(async () => {
-			inputBox.validationMessage = '';
+			inputBox.validationMessage = "";
 
 			if (inputBox.step === 1) {
 				if (!inputBox.value) {
-					inputBox.validationMessage = vscode.l10n.t('Title is required');
+					inputBox.validationMessage =
+						vscode.l10n.t("Title is required");
 
 					return;
 				}
 
 				title = inputBox.value;
 				inputBox.value = startingValue;
-				inputBox.title = vscode.l10n.t('Enter the GitHub search query');
+				inputBox.title = vscode.l10n.t("Enter the GitHub search query");
 				inputBox.step++;
 			} else {
 				if (!inputBox.value) {
-					inputBox.validationMessage = vscode.l10n.t('Query is required');
+					inputBox.validationMessage =
+						vscode.l10n.t("Query is required");
 
 					return;
 				}
@@ -226,12 +254,26 @@ export class CategoryTreeNode extends TreeNode implements vscode.TreeItem {
 
 				if (inputBox.value && title) {
 					if (inspect?.workspaceValue) {
-						inspect.workspaceValue.push({ label: title, query: inputBox.value });
-						await config.update(QUERIES, inspect.workspaceValue, vscode.ConfigurationTarget.Workspace);
+						inspect.workspaceValue.push({
+							label: title,
+							query: inputBox.value,
+						});
+						await config.update(
+							QUERIES,
+							inspect.workspaceValue,
+							vscode.ConfigurationTarget.Workspace,
+						);
 					} else {
-						const value = config.get<{ label: string; query: string }[]>(QUERIES);
+						const value =
+							config.get<{ label: string; query: string }[]>(
+								QUERIES,
+							);
 						value?.push({ label: title, query: inputBox.value });
-						await config.update(QUERIES, value, vscode.ConfigurationTarget.Global);
+						await config.update(
+							QUERIES,
+							value,
+							vscode.ConfigurationTarget.Global,
+						);
 					}
 				}
 				inputBox.dispose();
@@ -240,7 +282,10 @@ export class CategoryTreeNode extends TreeNode implements vscode.TreeItem {
 		inputBox.onDidHide(() => inputBox.dispose());
 	}
 
-	private updateQuery(queries: { label: string; query: string }[], queryToUpdate: { label: string; query: string }) {
+	private updateQuery(
+		queries: { label: string; query: string }[],
+		queryToUpdate: { label: string; query: string },
+	) {
 		for (const query of queries) {
 			if (query.label === queryToUpdate.label) {
 				query.query = queryToUpdate.query;
@@ -250,18 +295,29 @@ export class CategoryTreeNode extends TreeNode implements vscode.TreeItem {
 		}
 	}
 
-	private async openSettings(config: vscode.WorkspaceConfiguration, inspect: QueryInspect | undefined) {
+	private async openSettings(
+		config: vscode.WorkspaceConfiguration,
+		inspect: QueryInspect | undefined,
+	) {
 		let command: string;
 
 		if (inspect?.workspaceValue) {
-			command = 'workbench.action.openWorkspaceSettingsFile';
+			command = "workbench.action.openWorkspaceSettingsFile";
 		} else {
-			const value = config.get<{ label: string; query: string }[]>(QUERIES);
+			const value =
+				config.get<{ label: string; query: string }[]>(QUERIES);
 
-			if (inspect?.defaultValue && JSON.stringify(inspect?.defaultValue) === JSON.stringify(value)) {
-				await config.update(QUERIES, inspect.defaultValue, vscode.ConfigurationTarget.Global);
+			if (
+				inspect?.defaultValue &&
+				JSON.stringify(inspect?.defaultValue) === JSON.stringify(value)
+			) {
+				await config.update(
+					QUERIES,
+					inspect.defaultValue,
+					vscode.ConfigurationTarget.Global,
+				);
 			}
-			command = 'workbench.action.openSettingsJson';
+			command = "workbench.action.openSettingsJson";
 		}
 		await vscode.commands.executeCommand(command);
 
@@ -280,7 +336,10 @@ export class CategoryTreeNode extends TreeNode implements vscode.TreeItem {
 		}
 	}
 
-	public async expandPullRequest(pullRequest: PullRequestModel, retry: boolean = true): Promise<boolean> {
+	public async expandPullRequest(
+		pullRequest: PullRequestModel,
+		retry: boolean = true,
+	): Promise<boolean> {
 		if (!this.children && retry) {
 			await this.getChildren();
 			retry = false;
@@ -308,12 +367,32 @@ export class CategoryTreeNode extends TreeNode implements vscode.TreeItem {
 	async editQuery() {
 		const config = vscode.workspace.getConfiguration(PR_SETTINGS_NAMESPACE);
 
-		const inspect = config.inspect<{ label: string; query: string }[]>(QUERIES);
+		const inspect =
+			config.inspect<{ label: string; query: string }[]>(QUERIES);
 
 		const inputBox = vscode.window.createQuickPick();
-		inputBox.title = vscode.l10n.t('Edit Pull Request Query "{0}"', this.label ?? '');
-		inputBox.value = this._categoryQuery ?? '';
-		inputBox.items = [{ iconPath: new vscode.ThemeIcon('pencil'), label: vscode.l10n.t('Save edits'), alwaysShow: true }, { iconPath: new vscode.ThemeIcon('add'), label: vscode.l10n.t('Add new query'), alwaysShow: true }, { iconPath: new vscode.ThemeIcon('settings'), label: vscode.l10n.t('Edit in settings.json'), alwaysShow: true }];
+		inputBox.title = vscode.l10n.t(
+			'Edit Pull Request Query "{0}"',
+			this.label ?? "",
+		);
+		inputBox.value = this._categoryQuery ?? "";
+		inputBox.items = [
+			{
+				iconPath: new vscode.ThemeIcon("pencil"),
+				label: vscode.l10n.t("Save edits"),
+				alwaysShow: true,
+			},
+			{
+				iconPath: new vscode.ThemeIcon("add"),
+				label: vscode.l10n.t("Add new query"),
+				alwaysShow: true,
+			},
+			{
+				iconPath: new vscode.ThemeIcon("settings"),
+				label: vscode.l10n.t("Edit in settings.json"),
+				alwaysShow: true,
+			},
+		];
 		inputBox.activeItems = [];
 		inputBox.selectedItems = [];
 		inputBox.onDidAccept(async () => {
@@ -324,12 +403,29 @@ export class CategoryTreeNode extends TreeNode implements vscode.TreeItem {
 
 				if (newQuery !== this._categoryQuery && this.label) {
 					if (inspect?.workspaceValue) {
-						this.updateQuery(inspect.workspaceValue, { label: this.label, query: newQuery });
-						await config.update(QUERIES, inspect.workspaceValue, vscode.ConfigurationTarget.Workspace);
+						this.updateQuery(inspect.workspaceValue, {
+							label: this.label,
+							query: newQuery,
+						});
+						await config.update(
+							QUERIES,
+							inspect.workspaceValue,
+							vscode.ConfigurationTarget.Workspace,
+						);
 					} else {
-						const value = config.get<{ label: string; query: string }[]>(QUERIES) ?? inspect!.defaultValue!;
-						this.updateQuery(value, { label: this.label, query: newQuery });
-						await config.update(QUERIES, value, vscode.ConfigurationTarget.Global);
+						const value =
+							config.get<{ label: string; query: string }[]>(
+								QUERIES,
+							) ?? inspect!.defaultValue!;
+						this.updateQuery(value, {
+							label: this.label,
+							query: newQuery,
+						});
+						await config.update(
+							QUERIES,
+							value,
+							vscode.ConfigurationTarget.Global,
+						);
 					}
 				}
 			} else if (inputBox.selectedItems[0] === inputBox.items[1]) {
@@ -366,9 +462,18 @@ export class CategoryTreeNode extends TreeNode implements vscode.TreeItem {
 
 		if (this.type === PRType.LocalPullRequest) {
 			try {
-				this.prs = (await this._prsTreeModel.getLocalPullRequests(this._folderRepoManager)).items;
+				this.prs = (
+					await this._prsTreeModel.getLocalPullRequests(
+						this._folderRepoManager,
+					)
+				).items;
 			} catch (e) {
-				vscode.window.showErrorMessage(vscode.l10n.t('Fetching local pull requests failed: {0}', formatError(e)));
+				vscode.window.showErrorMessage(
+					vscode.l10n.t(
+						"Fetching local pull requests failed: {0}",
+						formatError(e),
+					),
+				);
 				needLogin = e instanceof AuthenticationError;
 			}
 		} else {
@@ -377,12 +482,20 @@ export class CategoryTreeNode extends TreeNode implements vscode.TreeItem {
 
 				switch (this.type) {
 					case PRType.All:
-						response = await this._prsTreeModel.getAllPullRequests(this._folderRepoManager, fetchNextPage);
+						response = await this._prsTreeModel.getAllPullRequests(
+							this._folderRepoManager,
+							fetchNextPage,
+						);
 
 						break;
 
 					case PRType.Query:
-						response = await this._prsTreeModel.getPullRequestsForQuery(this._folderRepoManager, fetchNextPage, this._categoryQuery!);
+						response =
+							await this._prsTreeModel.getPullRequestsForQuery(
+								this._folderRepoManager,
+								fetchNextPage,
+								this._categoryQuery!,
+							);
 
 						break;
 				}
@@ -398,34 +511,67 @@ export class CategoryTreeNode extends TreeNode implements vscode.TreeItem {
 
 				const actions: string[] = [];
 
-				if (error.includes('Bad credentials')) {
-					actions.push(vscode.l10n.t('Login again'));
+				if (error.includes("Bad credentials")) {
+					actions.push(vscode.l10n.t("Login again"));
 				}
-				vscode.window.showErrorMessage(vscode.l10n.t('Fetching pull requests failed: {0}', formatError(e)), ...actions).then(action => {
-					if (action && action === actions[0]) {
-						this._folderRepoManager.credentialStore.recreate(vscode.l10n.t('Your login session is no longer valid.'));
-					}
-				});
+				vscode.window
+					.showErrorMessage(
+						vscode.l10n.t(
+							"Fetching pull requests failed: {0}",
+							formatError(e),
+						),
+						...actions,
+					)
+					.then((action) => {
+						if (action && action === actions[0]) {
+							this._folderRepoManager.credentialStore.recreate(
+								vscode.l10n.t(
+									"Your login session is no longer valid.",
+								),
+							);
+						}
+					});
 				needLogin = e instanceof AuthenticationError;
 			}
 		}
 
 		if (this.prs && this.prs.length) {
 			const nodes: (PRNode | PRCategoryActionNode)[] = this.prs.map(
-				prItem => new PRNode(this, this._folderRepoManager, prItem, this.type === PRType.LocalPullRequest, this._notificationProvider),
+				(prItem) =>
+					new PRNode(
+						this,
+						this._folderRepoManager,
+						prItem,
+						this.type === PRType.LocalPullRequest,
+						this._notificationProvider,
+					),
 			);
 
 			if (hasMorePages) {
-				nodes.push(new PRCategoryActionNode(this, PRCategoryActionType.More, this));
+				nodes.push(
+					new PRCategoryActionNode(
+						this,
+						PRCategoryActionType.More,
+						this,
+					),
+				);
 			} else if (hasUnsearchedRepositories) {
-				nodes.push(new PRCategoryActionNode(this, PRCategoryActionType.TryOtherRemotes, this));
+				nodes.push(
+					new PRCategoryActionNode(
+						this,
+						PRCategoryActionType.TryOtherRemotes,
+						this,
+					),
+				);
 			}
 
 			this.children = nodes;
 
 			return nodes;
 		} else {
-			const category = needLogin ? PRCategoryActionType.Login : PRCategoryActionType.Empty;
+			const category = needLogin
+				? PRCategoryActionType.Login
+				: PRCategoryActionType.Empty;
 
 			const result = [new PRCategoryActionNode(this, category)];
 

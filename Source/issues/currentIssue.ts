@@ -3,31 +3,37 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as vscode from 'vscode';
-import { Branch, Repository } from '../api/api';
-import { GitErrorCodes } from '../api/api1';
-import { Disposable } from '../common/lifecycle';
-import { Remote } from '../common/remote';
+import * as vscode from "vscode";
+
+import { Branch, Repository } from "../api/api";
+import { GitErrorCodes } from "../api/api1";
+import { Disposable } from "../common/lifecycle";
+import { Remote } from "../common/remote";
 import {
 	ASSIGN_WHEN_WORKING,
 	ISSUE_BRANCH_TITLE,
 	ISSUES_SETTINGS_NAMESPACE,
 	USE_BRANCH_FOR_ISSUES,
 	WORKING_ISSUE_FORMAT_SCM,
-} from '../common/settingKeys';
-import { FolderRepositoryManager, PullRequestDefaults } from '../github/folderRepositoryManager';
-import { GithubItemStateEnum } from '../github/interface';
-import { IssueModel } from '../github/issueModel';
-import { variableSubstitution } from '../github/utils';
-import { IssueState, StateManager } from './stateManager';
+} from "../common/settingKeys";
+import {
+	FolderRepositoryManager,
+	PullRequestDefaults,
+} from "../github/folderRepositoryManager";
+import { GithubItemStateEnum } from "../github/interface";
+import { IssueModel } from "../github/issueModel";
+import { variableSubstitution } from "../github/utils";
+import { IssueState, StateManager } from "./stateManager";
 
 export class CurrentIssue extends Disposable {
 	private _branchName: string | undefined;
 	private user: string | undefined;
 	private repo: Repository | undefined;
 	private _repoDefaults: PullRequestDefaults | undefined;
-	private _onDidChangeCurrentIssueState: vscode.EventEmitter<void> = this._register(new vscode.EventEmitter());
-	public readonly onDidChangeCurrentIssueState: vscode.Event<void> = this._onDidChangeCurrentIssueState.event;
+	private _onDidChangeCurrentIssueState: vscode.EventEmitter<void> =
+		this._register(new vscode.EventEmitter());
+	public readonly onDidChangeCurrentIssueState: vscode.Event<void> =
+		this._onDidChangeCurrentIssueState.event;
 
 	constructor(
 		private issueModel: IssueModel,
@@ -51,7 +57,9 @@ export class CurrentIssue extends Disposable {
 					remote.name === repoRemote?.remoteName &&
 					remote.fetchUrl
 						?.toLowerCase()
-						.search(`${repoRemote.owner.toLowerCase()}/${repoRemote.repositoryName.toLowerCase()}`) !== -1
+						.search(
+							`${repoRemote.owner.toLowerCase()}/${repoRemote.repositoryName.toLowerCase()}`,
+						) !== -1
 				) {
 					this.repo = repo;
 
@@ -81,16 +89,30 @@ export class CurrentIssue extends Disposable {
 				await this.setCommitMessageAndGitEvent();
 				this._onDidChangeCurrentIssueState.fire();
 
-				const login = (await this.manager.getCurrentUser(this.issueModel.githubRepository)).login;
+				const login = (
+					await this.manager.getCurrentUser(
+						this.issueModel.githubRepository,
+					)
+				).login;
 
 				if (
-					vscode.workspace.getConfiguration(ISSUES_SETTINGS_NAMESPACE).get(ASSIGN_WHEN_WORKING) &&
-					!this.issueModel.assignees?.find(value => value.login === login)
+					vscode.workspace
+						.getConfiguration(ISSUES_SETTINGS_NAMESPACE)
+						.get(ASSIGN_WHEN_WORKING) &&
+					!this.issueModel.assignees?.find(
+						(value) => value.login === login,
+					)
 				) {
 					// Check that we have a repo open for this issue and only try to assign in that case.
-					if (this.manager.gitHubRepositories.find(
-						r => r.remote.owner === this.issueModel.remote.owner && r.remote.repositoryName === this.issueModel.remote.repositoryName,
-					)) {
+					if (
+						this.manager.gitHubRepositories.find(
+							(r) =>
+								r.remote.owner ===
+									this.issueModel.remote.owner &&
+								r.remote.repositoryName ===
+									this.issueModel.remote.repositoryName,
+						)
+					) {
 						await this.manager.assignIssue(this.issueModel, login);
 					}
 					await this.stateManager.refresh(this.manager);
@@ -99,14 +121,18 @@ export class CurrentIssue extends Disposable {
 			}
 		} catch (e) {
 			// leave repoDefaults undefined
-			vscode.window.showErrorMessage(vscode.l10n.t('There is no remote. Can\'t start working on an issue.'));
+			vscode.window.showErrorMessage(
+				vscode.l10n.t(
+					"There is no remote. Can't start working on an issue.",
+				),
+			);
 		}
 		return false;
 	}
 
 	public async stopWorking(checkoutDefaultBranch: boolean) {
 		if (this.repo) {
-			this.repo.inputBox.value = '';
+			this.repo.inputBox.value = "";
 		}
 		if (this._repoDefaults && checkoutDefaultBranch) {
 			try {
@@ -114,7 +140,9 @@ export class CurrentIssue extends Disposable {
 			} catch (e) {
 				if (e.gitErrorCode === GitErrorCodes.DirtyWorkTree) {
 					vscode.window.showErrorMessage(
-						vscode.l10n.t('Your local changes would be overwritten by checkout, please commit your changes or stash them before you switch branches'),
+						vscode.l10n.t(
+							"Your local changes would be overwritten by checkout, please commit your changes or stash them before you switch branches",
+						),
 					);
 				}
 				throw e;
@@ -146,7 +174,7 @@ export class CurrentIssue extends Disposable {
 			}
 			return true;
 		} catch (e) {
-			if (e.message !== 'User aborted') {
+			if (e.message !== "User aborted") {
 				vscode.window.showErrorMessage(
 					`Unable to checkout branch ${branch}. There may be file conflicts that prevent this branch change. Git error: ${e.error}`,
 				);
@@ -157,14 +185,17 @@ export class CurrentIssue extends Disposable {
 
 	private async getUser(): Promise<string> {
 		if (!this.user) {
-			this.user = await this.issueModel.githubRepository.getAuthenticatedUser();
+			this.user =
+				await this.issueModel.githubRepository.getAuthenticatedUser();
 		}
 		return this.user;
 	}
 
 	private async getBranchTitle(): Promise<string> {
 		return (
-			vscode.workspace.getConfiguration(ISSUES_SETTINGS_NAMESPACE).get<string>(ISSUE_BRANCH_TITLE) ??
+			vscode.workspace
+				.getConfiguration(ISSUES_SETTINGS_NAMESPACE)
+				.get<string>(ISSUE_BRANCH_TITLE) ??
 			this.getBasicBranchName(await this.getUser())
 		);
 	}
@@ -175,42 +206,66 @@ export class CurrentIssue extends Disposable {
 		const match = branch.match(VALID_BRANCH_CHARACTERS);
 
 		if (match && match.length > 0 && match[0] !== branch) {
-			return vscode.l10n.t('Branch name cannot contain a space or the following characters: \\@~^?*[');
+			return vscode.l10n.t(
+				"Branch name cannot contain a space or the following characters: \\@~^?*[",
+			);
 		}
 		return undefined;
 	}
 
 	private showBranchNameError(error: string) {
 		const editSetting = `Edit Setting`;
-		vscode.window.showErrorMessage(error, editSetting).then(result => {
+		vscode.window.showErrorMessage(error, editSetting).then((result) => {
 			if (result === editSetting) {
 				vscode.commands.executeCommand(
-					'workbench.action.openSettings',
+					"workbench.action.openSettings",
 					`${ISSUES_SETTINGS_NAMESPACE}.${ISSUE_BRANCH_TITLE}`,
 				);
 			}
 		});
 	}
 
-	private async offerNewBranch(branch: Branch, branchNameConfig: string, branchNameMatch: RegExpMatchArray | null | undefined): Promise<string> {
+	private async offerNewBranch(
+		branch: Branch,
+		branchNameConfig: string,
+		branchNameMatch: RegExpMatchArray | null | undefined,
+	): Promise<string> {
 		// Check if this branch has a merged PR associated with it.
 		// If so, offer to create a new branch.
-		const pr = await this.manager.getMatchingPullRequestMetadataFromGitHub(branch, branch.upstream?.remote, branch.upstream?.name);
+		const pr = await this.manager.getMatchingPullRequestMetadataFromGitHub(
+			branch,
+			branch.upstream?.remote,
+			branch.upstream?.name,
+		);
 
-		if (pr && (pr.model.state !== GithubItemStateEnum.Open)) {
-			const mergedMessage = vscode.l10n.t('The pull request for {0} has been merged. Do you want to create a new branch?', branch.name ?? 'unknown branch');
+		if (pr && pr.model.state !== GithubItemStateEnum.Open) {
+			const mergedMessage = vscode.l10n.t(
+				"The pull request for {0} has been merged. Do you want to create a new branch?",
+				branch.name ?? "unknown branch",
+			);
 
-			const closedMessage = vscode.l10n.t('The pull request for {0} has been closed. Do you want to create a new branch?', branch.name ?? 'unknown branch');
+			const closedMessage = vscode.l10n.t(
+				"The pull request for {0} has been closed. Do you want to create a new branch?",
+				branch.name ?? "unknown branch",
+			);
 
-			const createBranch = vscode.l10n.t('Create New Branch');
+			const createBranch = vscode.l10n.t("Create New Branch");
 
-			const createNew = await vscode.window.showInformationMessage(pr.model.state === GithubItemStateEnum.Merged ? mergedMessage : closedMessage,
+			const createNew = await vscode.window.showInformationMessage(
+				pr.model.state === GithubItemStateEnum.Merged
+					? mergedMessage
+					: closedMessage,
 				{
-					modal: true
-				}, createBranch);
+					modal: true,
+				},
+				createBranch,
+			);
 
 			if (createNew === createBranch) {
-				const number = (branchNameMatch?.length === 4 ? (Number(branchNameMatch[3]) + 1) : 1);
+				const number =
+					branchNameMatch?.length === 4
+						? Number(branchNameMatch[3]) + 1
+						: 1;
 
 				return `${branchNameConfig}_${number}`;
 			}
@@ -220,14 +275,20 @@ export class CurrentIssue extends Disposable {
 
 	private async createIssueBranch(silent: boolean): Promise<boolean> {
 		const createBranchConfig = this.shouldPromptForBranch
-			? 'prompt'
-			: vscode.workspace.getConfiguration(ISSUES_SETTINGS_NAMESPACE).get<string>(USE_BRANCH_FOR_ISSUES);
+			? "prompt"
+			: vscode.workspace
+					.getConfiguration(ISSUES_SETTINGS_NAMESPACE)
+					.get<string>(USE_BRANCH_FOR_ISSUES);
 
-		if (createBranchConfig === 'off') {
+		if (createBranchConfig === "off") {
 			return true;
 		}
-		const state: IssueState = this.stateManager.getSavedIssueState(this.issueModel.number);
-		this._branchName = this.shouldPromptForBranch ? undefined : state.branch;
+		const state: IssueState = this.stateManager.getSavedIssueState(
+			this.issueModel.number,
+		);
+		this._branchName = this.shouldPromptForBranch
+			? undefined
+			: state.branch;
 
 		const branchNameConfig = await variableSubstitution(
 			await this.getBranchTitle(),
@@ -236,9 +297,11 @@ export class CurrentIssue extends Disposable {
 			await this.getUser(),
 		);
 
-		const branchNameMatch = this._branchName?.match(new RegExp('^(' + branchNameConfig + ')(_)?(\\d*)'));
+		const branchNameMatch = this._branchName?.match(
+			new RegExp("^(" + branchNameConfig + ")(_)?(\\d*)"),
+		);
 
-		if ((createBranchConfig === 'on')) {
+		if (createBranchConfig === "on") {
 			const branch = await this.getBranch(this._branchName!);
 
 			if (!branch) {
@@ -246,13 +309,17 @@ export class CurrentIssue extends Disposable {
 					this._branchName = branchNameConfig;
 				}
 			} else if (!silent) {
-				this._branchName = await this.offerNewBranch(branch, branchNameConfig, branchNameMatch);
+				this._branchName = await this.offerNewBranch(
+					branch,
+					branchNameConfig,
+					branchNameMatch,
+				);
 			}
 		}
 		if (!this._branchName) {
 			this._branchName = await vscode.window.showInputBox({
 				value: branchNameConfig,
-				prompt: vscode.l10n.t('Enter the label for the new branch.'),
+				prompt: vscode.l10n.t("Enter the label for the new branch."),
 			});
 		}
 		if (!this._branchName) {
@@ -280,10 +347,16 @@ export class CurrentIssue extends Disposable {
 	}
 
 	public async getCommitMessage(): Promise<string | undefined> {
-		const configuration = vscode.workspace.getConfiguration(ISSUES_SETTINGS_NAMESPACE).get(WORKING_ISSUE_FORMAT_SCM);
+		const configuration = vscode.workspace
+			.getConfiguration(ISSUES_SETTINGS_NAMESPACE)
+			.get(WORKING_ISSUE_FORMAT_SCM);
 
-		if (typeof configuration === 'string') {
-			return variableSubstitution(configuration, this.issueModel, this._repoDefaults);
+		if (typeof configuration === "string") {
+			return variableSubstitution(
+				configuration,
+				this.issueModel,
+				this._repoDefaults,
+			);
 		}
 		return undefined;
 	}

@@ -3,16 +3,19 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as vscode from 'vscode';
-import { Disposable } from '../../common/lifecycle';
-import { CreatePullRequestActionContext, GitLensApi } from './gitlens';
+import * as vscode from "vscode";
+
+import { Disposable } from "../../common/lifecycle";
+import { CreatePullRequestActionContext, GitLensApi } from "./gitlens";
 
 export class GitLensIntegration extends Disposable {
 	private _extensionsDisposable: vscode.Disposable;
 
 	constructor() {
 		super();
-		this._extensionsDisposable = this._register(vscode.extensions.onDidChange(this.onExtensionsChanged, this));
+		this._extensionsDisposable = this._register(
+			vscode.extensions.onDidChange(this.onExtensionsChanged, this),
+		);
 		this.onExtensionsChanged();
 	}
 
@@ -21,17 +24,17 @@ export class GitLensIntegration extends Disposable {
 			return;
 		}
 		this._register(
-			api.registerActionRunner('createPullRequest', {
-				partnerId: 'ghpr',
-				name: 'GitHub Pull Requests and Issues',
-				label: 'Create Pull Request',
+			api.registerActionRunner("createPullRequest", {
+				partnerId: "ghpr",
+				name: "GitHub Pull Requests and Issues",
+				label: "Create Pull Request",
 				run: function (context: CreatePullRequestActionContext) {
 					// For now only work with branches that aren't remote
 					if (context.branch.isRemote) {
 						return;
 					}
 
-					vscode.commands.executeCommand('pr.create', {
+					vscode.commands.executeCommand("pr.create", {
 						repoPath: context.repoPath,
 						compareBranch: context.branch.name,
 					});
@@ -42,8 +45,12 @@ export class GitLensIntegration extends Disposable {
 
 	private async onExtensionsChanged() {
 		const extension =
-			vscode.extensions.getExtension<Promise<GitLensApi | undefined>>('eamodio.gitlens') ??
-			vscode.extensions.getExtension<Promise<GitLensApi | undefined>>('eamodio.gitlens-insiders');
+			vscode.extensions.getExtension<Promise<GitLensApi | undefined>>(
+				"eamodio.gitlens",
+			) ??
+			vscode.extensions.getExtension<Promise<GitLensApi | undefined>>(
+				"eamodio.gitlens-insiders",
+			);
 
 		if (extension) {
 			this._extensionsDisposable.dispose();

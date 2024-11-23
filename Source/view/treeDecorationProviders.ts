@@ -3,29 +3,45 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as vscode from 'vscode';
-import { Disposable, disposeAll } from '../common/lifecycle';
-import { Schemes, toResourceUri } from '../common/uri';
-import { FolderRepositoryManager } from '../github/folderRepositoryManager';
-import { PullRequestModel } from '../github/pullRequestModel';
-import { RepositoriesManager } from '../github/repositoriesManager';
+import * as vscode from "vscode";
 
-export abstract class TreeDecorationProvider extends Disposable implements vscode.FileDecorationProvider {
-	private _onDidChangeFileDecorations: vscode.EventEmitter<vscode.Uri | vscode.Uri[]> = this._register(new vscode.EventEmitter<
+import { Disposable, disposeAll } from "../common/lifecycle";
+import { Schemes, toResourceUri } from "../common/uri";
+import { FolderRepositoryManager } from "../github/folderRepositoryManager";
+import { PullRequestModel } from "../github/pullRequestModel";
+import { RepositoriesManager } from "../github/repositoriesManager";
+
+export abstract class TreeDecorationProvider
+	extends Disposable
+	implements vscode.FileDecorationProvider
+{
+	private _onDidChangeFileDecorations: vscode.EventEmitter<
 		vscode.Uri | vscode.Uri[]
-	>());
-	onDidChangeFileDecorations?: vscode.Event<vscode.Uri | vscode.Uri[] | undefined> | undefined = this._onDidChangeFileDecorations.event;
+	> = this._register(new vscode.EventEmitter<vscode.Uri | vscode.Uri[]>());
+	onDidChangeFileDecorations?:
+		| vscode.Event<vscode.Uri | vscode.Uri[] | undefined>
+		| undefined = this._onDidChangeFileDecorations.event;
 
 	constructor() {
 		super();
 		this._register(vscode.window.registerFileDecorationProvider(this));
 	}
 
-	abstract provideFileDecoration(uri: unknown, token: unknown): vscode.ProviderResult<vscode.FileDecoration>;
+	abstract provideFileDecoration(
+		uri: unknown,
+		token: unknown,
+	): vscode.ProviderResult<vscode.FileDecoration>;
 
-	abstract registerPullRequestPropertyChangedListeners(folderManager: FolderRepositoryManager, model: PullRequestModel): vscode.Disposable;
+	abstract registerPullRequestPropertyChangedListeners(
+		folderManager: FolderRepositoryManager,
+		model: PullRequestModel,
+	): vscode.Disposable;
 
-	protected _handlePullRequestPropertyChange(folderManager: FolderRepositoryManager, model: PullRequestModel, changed: { path: string }) {
+	protected _handlePullRequestPropertyChange(
+		folderManager: FolderRepositoryManager,
+		model: PullRequestModel,
+		changed: { path: string },
+	) {
 		const path = changed.path;
 
 		const uri = vscode.Uri.joinPath(folderManager.repository.rootUri, path);
@@ -33,10 +49,22 @@ export abstract class TreeDecorationProvider extends Disposable implements vscod
 		const fileChange = model.fileChanges.get(path);
 
 		if (fileChange) {
-			const fileChangeUri = toResourceUri(uri, model.number, path, fileChange.status, fileChange.previousFileName);
+			const fileChangeUri = toResourceUri(
+				uri,
+				model.number,
+				path,
+				fileChange.status,
+				fileChange.previousFileName,
+			);
 			this._onDidChangeFileDecorations.fire(fileChangeUri);
-			this._onDidChangeFileDecorations.fire(fileChangeUri.with({ scheme: folderManager.repository.rootUri.scheme }));
-			this._onDidChangeFileDecorations.fire(fileChangeUri.with({ scheme: Schemes.Pr, authority: '' }));
+			this._onDidChangeFileDecorations.fire(
+				fileChangeUri.with({
+					scheme: folderManager.repository.rootUri.scheme,
+				}),
+			);
+			this._onDidChangeFileDecorations.fire(
+				fileChangeUri.with({ scheme: Schemes.Pr, authority: "" }),
+			);
 		}
 	}
 }
@@ -57,21 +85,43 @@ export class TreeDecorationProviders extends Disposable {
 		this._registerListeners();
 	}
 
-	private _registerPullRequestPropertyListeners(folderManager: FolderRepositoryManager, model: PullRequestModel): vscode.Disposable[] {
-		return this._providers.map(provider => provider.registerPullRequestPropertyChangedListeners(folderManager, model));
+	private _registerPullRequestPropertyListeners(
+		folderManager: FolderRepositoryManager,
+		model: PullRequestModel,
+	): vscode.Disposable[] {
+		return this._providers.map((provider) =>
+			provider.registerPullRequestPropertyChangedListeners(
+				folderManager,
+				model,
+			),
+		);
 	}
 
-	private _registerPullRequestAddedListeners(folderManager: FolderRepositoryManager) {
-		folderManager.gitHubRepositories.forEach(gitHubRepo => {
-			this._pullRequestListeners.push(gitHubRepo.onDidAddPullRequest(model => {
-				this._pullRequestPropertyChangeListeners.push(...this._registerPullRequestPropertyListeners(folderManager, model));
-			}));
+	private _registerPullRequestAddedListeners(
+		folderManager: FolderRepositoryManager,
+	) {
+		folderManager.gitHubRepositories.forEach((gitHubRepo) => {
+			this._pullRequestListeners.push(
+				gitHubRepo.onDidAddPullRequest((model) => {
+					this._pullRequestPropertyChangeListeners.push(
+						...this._registerPullRequestPropertyListeners(
+							folderManager,
+							model,
+						),
+					);
+				}),
+			);
 
 			const models = Array.from(gitHubRepo.pullRequestModels.values());
 
-			const listeners = models.map(model => {
-				return this._registerPullRequestPropertyListeners(folderManager, model);
-			}).flat();
+			const listeners = models
+				.map((model) => {
+					return this._registerPullRequestPropertyListeners(
+						folderManager,
+						model,
+					);
+				})
+				.flat();
 			this._pullRequestPropertyChangeListeners.push(...listeners);
 		});
 	}
@@ -80,19 +130,22 @@ export class TreeDecorationProviders extends Disposable {
 		disposeAll(this._gitHubReposListeners);
 		disposeAll(this._pullRequestListeners);
 		disposeAll(this._pullRequestPropertyChangeListeners);
-		this._repositoriesManager.folderManagers.forEach(folderManager => {
-			this._gitHubReposListeners.push(folderManager.onDidChangeRepositories(() => {
-				this._registerPullRequestAddedListeners(folderManager);
-			}));
+		this._repositoriesManager.folderManagers.forEach((folderManager) => {
+			this._gitHubReposListeners.push(
+				folderManager.onDidChangeRepositories(() => {
+					this._registerPullRequestAddedListeners(folderManager);
+				}),
+			);
 		});
 	}
 
 	private _registerListeners() {
 		this._registerRepositoriesChangedListeners();
-		this._register(this._repositoriesManager.onDidChangeFolderRepositories(() => {
-			this._registerRepositoriesChangedListeners();
-		}));
-
+		this._register(
+			this._repositoriesManager.onDidChangeFolderRepositories(() => {
+				this._registerRepositoriesChangedListeners();
+			}),
+		);
 	}
 
 	override dispose() {

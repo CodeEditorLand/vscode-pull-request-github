@@ -2,10 +2,11 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import * as vscode from 'vscode';
-import { Disposable } from './lifecycle';
+import * as vscode from "vscode";
 
-export const PR_TREE = 'PullRequestTree';
+import { Disposable } from "./lifecycle";
+
+export const PR_TREE = "PullRequestTree";
 
 class Log extends Disposable {
 	private readonly _outputChannel: vscode.LogOutputChannel;
@@ -13,7 +14,11 @@ class Log extends Disposable {
 
 	constructor() {
 		super();
-		this._outputChannel = this._register(vscode.window.createOutputChannel('GitHub Pull Request', { log: true }));
+		this._outputChannel = this._register(
+			vscode.window.createOutputChannel("GitHub Pull Request", {
+				log: true,
+			}),
+		);
 	}
 
 	public startPerfMarker(marker: string) {
@@ -24,15 +29,17 @@ class Log extends Disposable {
 
 	public endPerfMarker(marker: string) {
 		const endTime = performance.now();
-		this._outputChannel.appendLine(`PERF_MARKER> End ${marker}: ${endTime - this._activePerfMarkers.get(marker)!} ms`);
+		this._outputChannel.appendLine(
+			`PERF_MARKER> End ${marker}: ${endTime - this._activePerfMarkers.get(marker)!} ms`,
+		);
 		this._activePerfMarkers.delete(marker);
 	}
 
 	private logString(message: any, component?: string): string {
-		if (typeof message !== 'string') {
+		if (typeof message !== "string") {
 			if (message instanceof Error) {
 				message = message.message;
-			} else if ('toString' in message) {
+			} else if ("toString" in message) {
 				message = message.toString();
 			} else {
 				message = JSON.stringify(message);

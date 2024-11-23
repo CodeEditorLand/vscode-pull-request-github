@@ -3,17 +3,24 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as vscode from 'vscode';
-import { GitFileChangeNode, RemoteFileChangeNode } from './treeNodes/fileChangeNode';
+import * as vscode from "vscode";
+
+import {
+	GitFileChangeNode,
+	RemoteFileChangeNode,
+} from "./treeNodes/fileChangeNode";
 
 export class ReviewModel {
 	private _localFileChanges: GitFileChangeNode[] | undefined;
-	private _onDidChangeLocalFileChanges: vscode.EventEmitter<void> = new vscode.EventEmitter();
-	public onDidChangeLocalFileChanges: vscode.Event<void> = this._onDidChangeLocalFileChanges.event;
+	private _onDidChangeLocalFileChanges: vscode.EventEmitter<void> =
+		new vscode.EventEmitter();
+	public onDidChangeLocalFileChanges: vscode.Event<void> =
+		this._onDidChangeLocalFileChanges.event;
 
-	private _obsoleteFileChanges: (GitFileChangeNode | RemoteFileChangeNode)[] = [];
+	private _obsoleteFileChanges: (GitFileChangeNode | RemoteFileChangeNode)[] =
+		[];
 
-	constructor() { }
+	constructor() {}
 
 	get hasLocalFileChanges() {
 		return !!this._localFileChanges;
@@ -32,7 +39,9 @@ export class ReviewModel {
 		return this._obsoleteFileChanges;
 	}
 
-	set obsoleteFileChanges(obsoleteFileChanges: (GitFileChangeNode | RemoteFileChangeNode)[]) {
+	set obsoleteFileChanges(
+		obsoleteFileChanges: (GitFileChangeNode | RemoteFileChangeNode)[],
+	) {
 		this._obsoleteFileChanges = obsoleteFileChanges;
 	}
 

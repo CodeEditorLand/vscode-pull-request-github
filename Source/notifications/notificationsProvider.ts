@@ -3,19 +3,27 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as vscode from 'vscode';
-import { AuthProvider } from '../common/authentication';
-import { Disposable } from '../common/lifecycle';
-import { EXPERIMENTAL_NOTIFICATIONS_PAGE_SIZE, PR_SETTINGS_NAMESPACE } from '../common/settingKeys';
-import { OctokitCommon } from '../github/common';
-import { CredentialStore, GitHub } from '../github/credentials';
-import { Issue, Notification, NotificationSubjectType } from '../github/interface';
-import { IssueModel } from '../github/issueModel';
-import { PullRequestModel } from '../github/pullRequestModel';
-import { RepositoriesManager } from '../github/repositoriesManager';
-import { hasEnterpriseUri, parseNotification } from '../github/utils';
-import { concatAsyncIterable } from '../lm/tools/toolsUtils';
-import { NotificationTreeItem } from './notificationItem';
+import * as vscode from "vscode";
+
+import { AuthProvider } from "../common/authentication";
+import { Disposable } from "../common/lifecycle";
+import {
+	EXPERIMENTAL_NOTIFICATIONS_PAGE_SIZE,
+	PR_SETTINGS_NAMESPACE,
+} from "../common/settingKeys";
+import { OctokitCommon } from "../github/common";
+import { CredentialStore, GitHub } from "../github/credentials";
+import {
+	Issue,
+	Notification,
+	NotificationSubjectType,
+} from "../github/interface";
+import { IssueModel } from "../github/issueModel";
+import { PullRequestModel } from "../github/pullRequestModel";
+import { RepositoriesManager } from "../github/repositoriesManager";
+import { hasEnterpriseUri, parseNotification } from "../github/utils";
+import { concatAsyncIterable } from "../lm/tools/toolsUtils";
+import { NotificationTreeItem } from "./notificationItem";
 
 export interface INotifications {
 	readonly notifications: Notification[];
@@ -31,48 +39,64 @@ export interface INotificationPriority {
 export class NotificationsProvider extends Disposable {
 	private _authProvider: AuthProvider | undefined;
 
-
 	constructor(
 		private readonly _credentialStore: CredentialStore,
-		private readonly _repositoriesManager: RepositoriesManager
+		private readonly _repositoriesManager: RepositoriesManager,
 	) {
 		super();
 
-		if (_credentialStore.isAuthenticated(AuthProvider.githubEnterprise) && hasEnterpriseUri()) {
+		if (
+			_credentialStore.isAuthenticated(AuthProvider.githubEnterprise) &&
+			hasEnterpriseUri()
+		) {
 			this._authProvider = AuthProvider.githubEnterprise;
 		} else if (_credentialStore.isAuthenticated(AuthProvider.github)) {
 			this._authProvider = AuthProvider.github;
 		}
 		this._register(
-			_credentialStore.onDidChangeSessions(_ => {
-				if (_credentialStore.isAuthenticated(AuthProvider.githubEnterprise) && hasEnterpriseUri()) {
+			_credentialStore.onDidChangeSessions((_) => {
+				if (
+					_credentialStore.isAuthenticated(
+						AuthProvider.githubEnterprise,
+					) &&
+					hasEnterpriseUri()
+				) {
 					this._authProvider = AuthProvider.githubEnterprise;
 				}
 				if (_credentialStore.isAuthenticated(AuthProvider.github)) {
 					this._authProvider = AuthProvider.github;
 				}
-			})
+			}),
 		);
 	}
 
 	private _getGitHub(): GitHub | undefined {
-		return (this._authProvider !== undefined) ?
-			this._credentialStore.getHub(this._authProvider) :
-			undefined;
+		return this._authProvider !== undefined
+			? this._credentialStore.getHub(this._authProvider)
+			: undefined;
 	}
 
-	public async markAsRead(notificationIdentifier: { threadId: string, notificationKey: string }): Promise<void> {
+	public async markAsRead(notificationIdentifier: {
+		threadId: string;
+		notificationKey: string;
+	}): Promise<void> {
 		const gitHub = this._getGitHub();
 
 		if (gitHub === undefined) {
 			return undefined;
 		}
-		await gitHub.octokit.call(gitHub.octokit.api.activity.markThreadAsRead, {
-			thread_id: Number(notificationIdentifier.threadId)
-		});
+		await gitHub.octokit.call(
+			gitHub.octokit.api.activity.markThreadAsRead,
+			{
+				thread_id: Number(notificationIdentifier.threadId),
+			},
+		);
 	}
 
-	public async getNotifications(before: string, page: number): Promise<INotifications | undefined> {
+	public async getNotifications(
+		before: string,
+		page: number,
+	): Promise<INotifications | undefined> {
 		const gitHub = this._getGitHub();
 
 		if (gitHub === undefined) {
@@ -82,82 +106,144 @@ export class NotificationsProvider extends Disposable {
 			return undefined;
 		}
 
-		const pageSize = vscode.workspace.getConfiguration(PR_SETTINGS_NAMESPACE).get<number>(EXPERIMENTAL_NOTIFICATIONS_PAGE_SIZE, 50);
+		const pageSize = vscode.workspace
+			.getConfiguration(PR_SETTINGS_NAMESPACE)
+			.get<number>(EXPERIMENTAL_NOTIFICATIONS_PAGE_SIZE, 50);
 
-		const { data, headers } = await gitHub.octokit.call(gitHub.octokit.api.activity.listNotificationsForAuthenticatedUser, {
-			all: false,
-			before: before,
-			page: page,
-			per_page: pageSize
-		});
+		const { data, headers } = await gitHub.octokit.call(
+			gitHub.octokit.api.activity.listNotificationsForAuthenticatedUser,
+			{
+				all: false,
+				before: before,
+				page: page,
+				per_page: pageSize,
+			},
+		);
 
 		const notifications = data
-			.map((notification: OctokitCommon.Notification) => parseNotification(notification))
-			.filter(notification => !!notification) as Notification[];
+			.map((notification: OctokitCommon.Notification) =>
+				parseNotification(notification),
+			)
+			.filter((notification) => !!notification) as Notification[];
 
-		return { notifications, hasNextPage: headers.link?.includes(`rel="next"`) === true };
+		return {
+			notifications,
+			hasNextPage: headers.link?.includes(`rel="next"`) === true,
+		};
 	}
 
-	async getNotificationModel(notification: Notification): Promise<IssueModel<Issue> | undefined> {
+	async getNotificationModel(
+		notification: Notification,
+	): Promise<IssueModel<Issue> | undefined> {
 		const url = notification.subject.url;
 
-		if (!(typeof url === 'string')) {
+		if (!(typeof url === "string")) {
 			return undefined;
 		}
-		const issueOrPrNumber = url.split('/').pop();
+		const issueOrPrNumber = url.split("/").pop();
 
 		if (issueOrPrNumber === undefined) {
 			return undefined;
 		}
-		const folderManager = this._repositoriesManager.getManagerForRepository(notification.owner, notification.name) ?? this._repositoriesManager.folderManagers[0];
+		const folderManager =
+			this._repositoriesManager.getManagerForRepository(
+				notification.owner,
+				notification.name,
+			) ?? this._repositoriesManager.folderManagers[0];
 
-		const model = notification.subject.type === NotificationSubjectType.Issue ?
-			await folderManager.resolveIssue(notification.owner, notification.name, parseInt(issueOrPrNumber), true) :
-			await folderManager.resolvePullRequest(notification.owner, notification.name, parseInt(issueOrPrNumber));
+		const model =
+			notification.subject.type === NotificationSubjectType.Issue
+				? await folderManager.resolveIssue(
+						notification.owner,
+						notification.name,
+						parseInt(issueOrPrNumber),
+						true,
+					)
+				: await folderManager.resolvePullRequest(
+						notification.owner,
+						notification.name,
+						parseInt(issueOrPrNumber),
+					);
 
 		return model;
 	}
 
-	async getNotificationsPriority(notifications: NotificationTreeItem[]): Promise<INotificationPriority[]> {
+	async getNotificationsPriority(
+		notifications: NotificationTreeItem[],
+	): Promise<INotificationPriority[]> {
 		const notificationBatchSize = 5;
 
 		const notificationBatches: NotificationTreeItem[][] = [];
 
 		for (let i = 0; i < notifications.length; i += notificationBatchSize) {
-			notificationBatches.push(notifications.slice(i, i + notificationBatchSize));
+			notificationBatches.push(
+				notifications.slice(i, i + notificationBatchSize),
+			);
 		}
 
-		const models = await vscode.lm.selectChatModels({ vendor: 'copilot', family: 'gpt-4o' });
+		const models = await vscode.lm.selectChatModels({
+			vendor: "copilot",
+			family: "gpt-4o",
+		});
 
-		const prioritizedBatches = await Promise.all(notificationBatches.map(batch => this._prioritizeNotificationBatch(batch, models[0])));
+		const prioritizedBatches = await Promise.all(
+			notificationBatches.map((batch) =>
+				this._prioritizeNotificationBatch(batch, models[0]),
+			),
+		);
 
 		return prioritizedBatches.flat();
 	}
 
-	private async _prioritizeNotificationBatch(notifications: NotificationTreeItem[], model: vscode.LanguageModelChat): Promise<INotificationPriority[]> {
+	private async _prioritizeNotificationBatch(
+		notifications: NotificationTreeItem[],
+		model: vscode.LanguageModelChat,
+	): Promise<INotificationPriority[]> {
 		try {
-			const userLogin = (await this._credentialStore.getCurrentUser(AuthProvider.github)).login;
+			const userLogin = (
+				await this._credentialStore.getCurrentUser(AuthProvider.github)
+			).login;
 
-			const messages = [vscode.LanguageModelChatMessage.User(getPrioritizeNotificationsInstructions(userLogin))];
+			const messages = [
+				vscode.LanguageModelChatMessage.User(
+					getPrioritizeNotificationsInstructions(userLogin),
+				),
+			];
 
-			for (const [notificationIndex, notification] of notifications.entries()) {
+			for (const [
+				notificationIndex,
+				notification,
+			] of notifications.entries()) {
 				const issueModel = notification.model;
 
 				if (!issueModel) {
 					continue;
 				}
-				let notificationMessage = this._getBasePrompt(issueModel, notificationIndex);
+				let notificationMessage = this._getBasePrompt(
+					issueModel,
+					notificationIndex,
+				);
 				notificationMessage += await this._getLabelsPrompt(issueModel);
-				notificationMessage += await this._getCommentsPrompt(issueModel);
-				messages.push(vscode.LanguageModelChatMessage.User(notificationMessage));
+				notificationMessage +=
+					await this._getCommentsPrompt(issueModel);
+				messages.push(
+					vscode.LanguageModelChatMessage.User(notificationMessage),
+				);
 			}
-			messages.push(vscode.LanguageModelChatMessage.User('Please provide the priority for each notification in a separate text code block. Remember to place the title and the reasoning outside of the text code block.'));
+			messages.push(
+				vscode.LanguageModelChatMessage.User(
+					"Please provide the priority for each notification in a separate text code block. Remember to place the title and the reasoning outside of the text code block.",
+				),
+			);
 
 			const response = await model.sendRequest(messages, {});
 
 			const responseText = await concatAsyncIterable(response.text);
 
-			return this._updateNotificationsWithPriorityFromLLM(notifications, responseText);
+			return this._updateNotificationsWithPriorityFromLLM(
+				notifications,
+				responseText,
+			);
 		} catch (e) {
 			console.log(e);
 
@@ -165,14 +251,17 @@ export class NotificationsProvider extends Disposable {
 		}
 	}
 
-	private _getBasePrompt(model: IssueModel<Issue> | PullRequestModel, notificationIndex: number): string {
+	private _getBasePrompt(
+		model: IssueModel<Issue> | PullRequestModel,
+		notificationIndex: number,
+	): string {
 		const assignees = model.assignees;
 
 		return `
 The following is the data for notification ${notificationIndex + 1}:
 • Title: ${model.title}
 • Author: ${model.author.login}
-• Assignees: ${assignees?.map(assignee => assignee.login).join(', ') || 'none'}
+• Assignees: ${assignees?.map((assignee) => assignee.login).join(", ") || "none"}
 • Body:
 
 ${model.body}
@@ -184,27 +273,33 @@ ${model.body}
 • Updated At: ${model.updatedAt}`;
 	}
 
-	private async _getLabelsPrompt(model: IssueModel<Issue> | PullRequestModel): Promise<string> {
+	private async _getLabelsPrompt(
+		model: IssueModel<Issue> | PullRequestModel,
+	): Promise<string> {
 		const labels = model.item.labels;
 
 		if (!labels) {
-			return '';
+			return "";
 		}
-		let labelsMessage = '';
+		let labelsMessage = "";
 
 		if (labels.length > 0) {
-			const labelListAsString = labels.map(label => label.name).join(', ');
+			const labelListAsString = labels
+				.map((label) => label.name)
+				.join(", ");
 			labelsMessage = `
 • Labels: ${labelListAsString}`;
 		}
 		return labelsMessage;
 	}
 
-	private async _getCommentsPrompt(model: IssueModel<Issue> | PullRequestModel): Promise<string> {
+	private async _getCommentsPrompt(
+		model: IssueModel<Issue> | PullRequestModel,
+	): Promise<string> {
 		const issueComments = model.item.comments;
 
 		if (!issueComments || issueComments.length === 0) {
-			return '';
+			return "";
 		}
 		let commentsMessage = `
 
@@ -227,7 +322,10 @@ ${comment.body}
 		return commentsMessage;
 	}
 
-	private _updateNotificationsWithPriorityFromLLM(notifications: NotificationTreeItem[], text: string): INotificationPriority[] {
+	private _updateNotificationsWithPriorityFromLLM(
+		notifications: NotificationTreeItem[],
+		text: string,
+	): INotificationPriority[] {
 		const regexReasoning = /```text\s*[\s\S]+?\s*=\s*([\S]+?)\s*```/gm;
 
 		const regexPriorityReasoning = /```(?!text)([\s\S]+?)(###|$)/g;
@@ -238,13 +336,15 @@ ${comment.body}
 			const execResultForPriority = regexReasoning.exec(text);
 
 			if (execResultForPriority) {
-				const execResultForPriorityReasoning = regexPriorityReasoning.exec(text);
+				const execResultForPriorityReasoning =
+					regexPriorityReasoning.exec(text);
 
 				updates.push({
 					key: notifications[i].notification.key,
 					priority: execResultForPriority[1],
-					priorityReasoning: execResultForPriorityReasoning ?
-						execResultForPriorityReasoning[1].trim() : undefined
+					priorityReasoning: execResultForPriorityReasoning
+						? execResultForPriorityReasoning[1].trim()
+						: undefined,
 				});
 			}
 		}

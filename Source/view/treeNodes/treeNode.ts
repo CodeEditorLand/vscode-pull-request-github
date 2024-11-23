@@ -3,12 +3,20 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as vscode from 'vscode';
-import { Disposable, disposeAll } from '../../common/lifecycle';
-import Logger from '../../common/logger';
+import * as vscode from "vscode";
+
+import { Disposable, disposeAll } from "../../common/lifecycle";
+import Logger from "../../common/logger";
 
 export interface BaseTreeNode {
-	reveal(element: TreeNode, options?: { select?: boolean; focus?: boolean; expand?: boolean | number }): Thenable<void>;
+	reveal(
+		element: TreeNode,
+		options?: {
+			select?: boolean;
+			focus?: boolean;
+			expand?: boolean | number;
+		},
+	): Thenable<void>;
 	refresh(treeNode?: TreeNode): void;
 	children: TreeNode[] | undefined;
 	view: vscode.TreeView<TreeNode>;
@@ -37,12 +45,16 @@ export abstract class TreeNode extends Disposable {
 
 	async reveal(
 		treeNode: TreeNode,
-		options?: { select?: boolean; focus?: boolean; expand?: boolean | number },
+		options?: {
+			select?: boolean;
+			focus?: boolean;
+			expand?: boolean | number;
+		},
 	): Promise<void> {
 		try {
 			await this.parent.reveal(treeNode || this, options);
 		} catch (e) {
-			Logger.error(e, 'TreeNode');
+			Logger.error(e, "TreeNode");
 		}
 	}
 
@@ -64,7 +76,7 @@ export abstract class TreeNode extends Disposable {
 		return [];
 	}
 
-	updateFromCheckboxChanged(_newState: vscode.TreeItemCheckboxState): void { }
+	updateFromCheckboxChanged(_newState: vscode.TreeItemCheckboxState): void {}
 
 	override dispose(): void {
 		super.dispose();
@@ -76,7 +88,7 @@ export abstract class TreeNode extends Disposable {
 }
 
 export class LabelOnlyNode extends TreeNode {
-	public override readonly label: string = '';
+	public override readonly label: string = "";
 
 	constructor(parent: TreeNodeParent, label: string) {
 		super(parent);
@@ -85,6 +97,4 @@ export class LabelOnlyNode extends TreeNode {
 	getTreeItem(): vscode.TreeItem {
 		return new vscode.TreeItem(this.label);
 	}
-
 }
-

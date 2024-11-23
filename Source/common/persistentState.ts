@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as vscode from 'vscode';
+import * as vscode from "vscode";
 
 export type GlobalStateContext = { globalState: vscode.Memento };
 
@@ -17,14 +17,14 @@ export function init(ctx: GlobalStateContext) {
 
 export const fetch = (scope: string, key: string): unknown => {
 	if (!defaultStorage) {
-		throw new Error('Persistent store not initialized.');
+		throw new Error("Persistent store not initialized.");
 	}
-	return defaultStorage.get(scope + ':' + key, MISSING);
+	return defaultStorage.get(scope + ":" + key, MISSING);
 };
 
 export const store = (scope: string, key: string, value: any) => {
 	if (!defaultStorage) {
-		throw new Error('Persistent store not initialized.');
+		throw new Error("Persistent store not initialized.");
 	}
-	return defaultStorage.update(scope + ':' + key, value);
+	return defaultStorage.update(scope + ":" + key, value);
 };

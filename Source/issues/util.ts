@@ -3,30 +3,45 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { URL } from 'url';
-import LRUCache from 'lru-cache';
-import * as marked from 'marked';
-import 'url-search-params-polyfill';
-import * as vscode from 'vscode';
-import { Ref, Remote, Repository, UpstreamRef } from '../api/api';
-import { GitApiImpl } from '../api/api1';
-import Logger from '../common/logger';
-import { Protocol } from '../common/protocol';
-import { fromReviewUri, Schemes } from '../common/uri';
-import { FolderRepositoryManager, NoGitHubReposError, PullRequestDefaults } from '../github/folderRepositoryManager';
-import { GithubItemStateEnum, User } from '../github/interface';
-import { IssueModel } from '../github/issueModel';
-import { PullRequestModel } from '../github/pullRequestModel';
-import { RepositoriesManager } from '../github/repositoriesManager';
-import { getEnterpriseUri, getIssueNumberLabelFromParsed, getRepositoryForFile, ISSUE_OR_URL_EXPRESSION, makeLabel, ParsedIssue, parseIssueExpressionOutput } from '../github/utils';
-import { ReviewManager } from '../view/reviewManager';
-import { CODE_PERMALINK, findCodeLinkLocally } from './issueLinkLookup';
-import { StateManager } from './stateManager';
+import { URL } from "url";
+import LRUCache from "lru-cache";
+import * as marked from "marked";
+
+import "url-search-params-polyfill";
+
+import * as vscode from "vscode";
+
+import { Ref, Remote, Repository, UpstreamRef } from "../api/api";
+import { GitApiImpl } from "../api/api1";
+import Logger from "../common/logger";
+import { Protocol } from "../common/protocol";
+import { fromReviewUri, Schemes } from "../common/uri";
+import {
+	FolderRepositoryManager,
+	NoGitHubReposError,
+	PullRequestDefaults,
+} from "../github/folderRepositoryManager";
+import { GithubItemStateEnum, User } from "../github/interface";
+import { IssueModel } from "../github/issueModel";
+import { PullRequestModel } from "../github/pullRequestModel";
+import { RepositoriesManager } from "../github/repositoriesManager";
+import {
+	getEnterpriseUri,
+	getIssueNumberLabelFromParsed,
+	getRepositoryForFile,
+	ISSUE_OR_URL_EXPRESSION,
+	makeLabel,
+	ParsedIssue,
+	parseIssueExpressionOutput,
+} from "../github/utils";
+import { ReviewManager } from "../view/reviewManager";
+import { CODE_PERMALINK, findCodeLinkLocally } from "./issueLinkLookup";
+import { StateManager } from "./stateManager";
 
 export const USER_EXPRESSION: RegExp = /\@([^\s]+)/;
 
 export const MAX_LINE_LENGTH = 150;
-export const PERMALINK_COMPONENT = 'Permalink';
+export const PERMALINK_COMPONENT = "Permalink";
 
 export async function getIssue(
 	stateManager: StateManager,
@@ -34,7 +49,9 @@ export async function getIssue(
 	issueValue: string,
 	parsed: ParsedIssue,
 ): Promise<IssueModel | undefined> {
-	const alreadyResolved = stateManager.resolvedIssues.get(manager.repository.rootUri.path)?.get(issueValue);
+	const alreadyResolved = stateManager.resolvedIssues
+		.get(manager.repository.rootUri.path)
+		?.get(issueValue);
 
 	if (alreadyResolved) {
 		return alreadyResolved;
@@ -49,7 +66,9 @@ export async function getIssue(
 
 		for (const remote of remotes) {
 			if (!parsed) {
-				const tryParse = parseIssueExpressionOutput(issueValue.match(ISSUE_OR_URL_EXPRESSION));
+				const tryParse = parseIssueExpressionOutput(
+					issueValue.match(ISSUE_OR_URL_EXPRESSION),
+				);
 
 				if (tryParse && (!tryParse.name || !tryParse.owner)) {
 					owner = remote.owner;
@@ -62,21 +81,36 @@ export async function getIssue(
 			}
 
 			if (owner && name && issueNumber !== undefined) {
-				let issue = await manager.resolveIssue(owner, name, issueNumber, !!parsed.commentNumber);
+				let issue = await manager.resolveIssue(
+					owner,
+					name,
+					issueNumber,
+					!!parsed.commentNumber,
+				);
 
 				if (!issue) {
-					issue = await manager.resolvePullRequest(owner, name, issueNumber);
+					issue = await manager.resolvePullRequest(
+						owner,
+						name,
+						issueNumber,
+					);
 				}
 				if (issue) {
 					let cached: LRUCache<string, IssueModel>;
 
-					if (!stateManager.resolvedIssues.has(manager.repository.rootUri.path)) {
+					if (
+						!stateManager.resolvedIssues.has(
+							manager.repository.rootUri.path,
+						)
+					) {
 						stateManager.resolvedIssues.set(
 							manager.repository.rootUri.path,
 							(cached = new LRUCache<string, IssueModel>(50)),
 						);
 					} else {
-						cached = stateManager.resolvedIssues.get(manager.repository.rootUri.path)!;
+						cached = stateManager.resolvedIssues.get(
+							manager.repository.rootUri.path,
+						)!;
 					}
 					cached.set(issueValue, issue);
 
@@ -88,11 +122,21 @@ export async function getIssue(
 	return undefined;
 }
 
-function repoCommitDate(user: User, repoNameWithOwner: string): string | undefined {
+function repoCommitDate(
+	user: User,
+	repoNameWithOwner: string,
+): string | undefined {
 	let date: string | undefined = undefined;
-	user.commitContributions.forEach(element => {
-		if (repoNameWithOwner.toLowerCase() === element.repoNameWithOwner.toLowerCase()) {
-			date = element.createdAt.toLocaleString('default', { day: 'numeric', month: 'short', year: 'numeric' });
+	user.commitContributions.forEach((element) => {
+		if (
+			repoNameWithOwner.toLowerCase() ===
+			element.repoNameWithOwner.toLowerCase()
+		) {
+			date = element.createdAt.toLocaleString("default", {
+				day: "numeric",
+				month: "short",
+				year: "numeric",
+			});
 		}
 	});
 
@@ -104,29 +148,41 @@ export class UserCompletion extends vscode.CompletionItem {
 	uri: vscode.Uri;
 }
 
-export function userMarkdown(origin: PullRequestDefaults, user: User): vscode.MarkdownString {
-	const markdown: vscode.MarkdownString = new vscode.MarkdownString(undefined, true);
+export function userMarkdown(
+	origin: PullRequestDefaults,
+	user: User,
+): vscode.MarkdownString {
+	const markdown: vscode.MarkdownString = new vscode.MarkdownString(
+		undefined,
+		true,
+	);
 	markdown.appendMarkdown(
-		`![Avatar](${user.avatarUrl}|height=50,width=50) ${user.name ? `**${user.name}** ` : ''}[${user.login}](${user.url})`,
+		`![Avatar](${user.avatarUrl}|height=50,width=50) ${user.name ? `**${user.name}** ` : ""}[${user.login}](${user.url})`,
 	);
 
 	if (user.bio) {
-		markdown.appendText('  \r\n' + user.bio.replace(/\r\n/g, ' '));
+		markdown.appendText("  \r\n" + user.bio.replace(/\r\n/g, " "));
 	}
 
-	const date = repoCommitDate(user, origin.owner + '/' + origin.repo);
+	const date = repoCommitDate(user, origin.owner + "/" + origin.repo);
 
 	if (user.location || date) {
-		markdown.appendMarkdown('  \r\n\r\n---');
+		markdown.appendMarkdown("  \r\n\r\n---");
 	}
 	if (user.location) {
-		markdown.appendMarkdown(`  \r\n${vscode.l10n.t('{0} {1}', '$(location)', user.location)}`);
+		markdown.appendMarkdown(
+			`  \r\n${vscode.l10n.t("{0} {1}", "$(location)", user.location)}`,
+		);
 	}
 	if (date) {
-		markdown.appendMarkdown(`  \r\n${vscode.l10n.t('{0} Committed to this repository on {1}', '$(git-commit)', date)}`);
+		markdown.appendMarkdown(
+			`  \r\n${vscode.l10n.t("{0} Committed to this repository on {1}", "$(git-commit)", date)}`,
+		);
 	}
 	if (user.company) {
-		markdown.appendMarkdown(`  \r\n${vscode.l10n.t({ message: '{0} Member of {1}', args: ['$(jersey)', user.company], comment: ['An organization that the user is a member of.', 'The first placeholder is an icon and shouldn\'t be localized.', 'The second placeholder is the name of the organization.'] })}`);
+		markdown.appendMarkdown(
+			`  \r\n${vscode.l10n.t({ message: "{0} Member of {1}", args: ["$(jersey)", user.company], comment: ["An organization that the user is a member of.", "The first placeholder is an icon and shouldn't be localized.", "The second placeholder is the name of the organization."] })}`,
+		);
 	}
 	return markdown;
 }
@@ -143,78 +199,105 @@ async function findAndModifyString(
 	while (searchResult >= 0 && searchResult < text.length) {
 		let newBodyFirstPart: string | undefined;
 
-		if (searchResult === 0 || text.charAt(searchResult - 1) !== '&') {
+		if (searchResult === 0 || text.charAt(searchResult - 1) !== "&") {
 			const match = text.substring(searchResult).match(find)!;
 
 			if (match) {
 				const transformed = await transformer(match);
 
 				if (transformed) {
-					newBodyFirstPart = text.slice(0, searchResult) + transformed;
-					text = newBodyFirstPart + text.slice(searchResult + match[0].length);
+					newBodyFirstPart =
+						text.slice(0, searchResult) + transformed;
+					text =
+						newBodyFirstPart +
+						text.slice(searchResult + match[0].length);
 				}
 			}
 		}
-		position = newBodyFirstPart ? newBodyFirstPart.length : searchResult + 1;
+		position = newBodyFirstPart
+			? newBodyFirstPart.length
+			: searchResult + 1;
 
 		const newSearchResult = text.substring(position).search(find);
-		searchResult = newSearchResult > 0 ? position + newSearchResult : newSearchResult;
+		searchResult =
+			newSearchResult > 0 ? position + newSearchResult : newSearchResult;
 	}
 	return text;
 }
 
 function findLinksInIssue(body: string, issue: IssueModel): Promise<string> {
-	return findAndModifyString(body, ISSUE_OR_URL_EXPRESSION, async (match: RegExpMatchArray) => {
-		const tryParse = parseIssueExpressionOutput(match);
+	return findAndModifyString(
+		body,
+		ISSUE_OR_URL_EXPRESSION,
+		async (match: RegExpMatchArray) => {
+			const tryParse = parseIssueExpressionOutput(match);
 
-		if (tryParse) {
-			const issueNumberLabel = getIssueNumberLabelFromParsed(tryParse); // get label before setting owner and name.
-			if (!tryParse.owner || !tryParse.name) {
-				tryParse.owner = issue.remote.owner;
+			if (tryParse) {
+				const issueNumberLabel =
+					getIssueNumberLabelFromParsed(tryParse); // get label before setting owner and name.
+				if (!tryParse.owner || !tryParse.name) {
+					tryParse.owner = issue.remote.owner;
 
-				tryParse.name = issue.remote.repositoryName;
+					tryParse.name = issue.remote.repositoryName;
+				}
+				return `[${issueNumberLabel}](https://github.com/${tryParse.owner}/${tryParse.name}/issues/${tryParse.issueNumber})`;
 			}
-			return `[${issueNumberLabel}](https://github.com/${tryParse.owner}/${tryParse.name}/issues/${tryParse.issueNumber})`;
-		}
-		return undefined;
-	});
+			return undefined;
+		},
+	);
 }
 
-async function findCodeLinksInIssue(body: string, repositoriesManager: RepositoriesManager) {
-	return findAndModifyString(body, CODE_PERMALINK, async (match: RegExpMatchArray) => {
-		const codeLink = await findCodeLinkLocally(match, repositoriesManager);
-
-		if (codeLink) {
-			Logger.trace('finding code links in issue', 'Issues');
-
-			const textDocument = await vscode.workspace.openTextDocument(codeLink?.file);
-
-			const endingTextDocumentLine = textDocument.lineAt(
-				codeLink.end < textDocument.lineCount ? codeLink.end : textDocument.lineCount - 1,
+async function findCodeLinksInIssue(
+	body: string,
+	repositoriesManager: RepositoriesManager,
+) {
+	return findAndModifyString(
+		body,
+		CODE_PERMALINK,
+		async (match: RegExpMatchArray) => {
+			const codeLink = await findCodeLinkLocally(
+				match,
+				repositoriesManager,
 			);
 
-			const query = [
-				codeLink.file,
-				{
-					selection: {
-						start: {
-							line: codeLink.start,
-							character: 0,
-						},
-						end: {
-							line: codeLink.end,
-							character: endingTextDocumentLine.text.length,
+			if (codeLink) {
+				Logger.trace("finding code links in issue", "Issues");
+
+				const textDocument = await vscode.workspace.openTextDocument(
+					codeLink?.file,
+				);
+
+				const endingTextDocumentLine = textDocument.lineAt(
+					codeLink.end < textDocument.lineCount
+						? codeLink.end
+						: textDocument.lineCount - 1,
+				);
+
+				const query = [
+					codeLink.file,
+					{
+						selection: {
+							start: {
+								line: codeLink.start,
+								character: 0,
+							},
+							end: {
+								line: codeLink.end,
+								character: endingTextDocumentLine.text.length,
+							},
 						},
 					},
-				},
-			];
+				];
 
-			const openCommand = vscode.Uri.parse(`command:vscode.open?${encodeURIComponent(JSON.stringify(query))}`);
+				const openCommand = vscode.Uri.parse(
+					`command:vscode.open?${encodeURIComponent(JSON.stringify(query))}`,
+				);
 
-			return `[${match[0]}](${openCommand} "Open ${codeLink.file.fsPath}")`;
-		}
-		return undefined;
-	});
+				return `[${match[0]}](${openCommand} "Open ${codeLink.file.fsPath}")`;
+			}
+			return undefined;
+		},
+	);
 }
 
 export const ISSUE_BODY_LENGTH: number = 200;
@@ -224,18 +307,24 @@ export async function issueMarkdown(
 	repositoriesManager: RepositoriesManager,
 	commentNumber?: number,
 ): Promise<vscode.MarkdownString> {
-	const markdown: vscode.MarkdownString = new vscode.MarkdownString(undefined, true);
+	const markdown: vscode.MarkdownString = new vscode.MarkdownString(
+		undefined,
+		true,
+	);
 	markdown.supportHtml = true;
 
 	const date = new Date(issue.createdAt);
 
 	const ownerName = `${issue.remote.owner}/${issue.remote.repositoryName}`;
 	markdown.appendMarkdown(
-		`[${ownerName}](https://github.com/${ownerName}) on ${date.toLocaleString('default', {
-			day: 'numeric',
-			month: 'short',
-			year: 'numeric',
-		})}  \n`,
+		`[${ownerName}](https://github.com/${ownerName}) on ${date.toLocaleString(
+			"default",
+			{
+				day: "numeric",
+				month: "short",
+				year: "numeric",
+			},
+		)}  \n`,
 	);
 
 	const title = marked
@@ -250,16 +339,19 @@ export async function issueMarkdown(
 	let body = marked.parse(issue.body, {
 		renderer: new PlainTextRenderer(),
 	});
-	markdown.appendMarkdown('  \n');
-	body = body.length > ISSUE_BODY_LENGTH ? body.substr(0, ISSUE_BODY_LENGTH) + '...' : body;
+	markdown.appendMarkdown("  \n");
+	body =
+		body.length > ISSUE_BODY_LENGTH
+			? body.substr(0, ISSUE_BODY_LENGTH) + "..."
+			: body;
 	body = await findLinksInIssue(body, issue);
 	body = await findCodeLinksInIssue(body, repositoriesManager);
 
-	markdown.appendMarkdown(body + '  \n');
-	markdown.appendMarkdown('&nbsp;  \n');
+	markdown.appendMarkdown(body + "  \n");
+	markdown.appendMarkdown("&nbsp;  \n");
 
 	if (issue.item.labels.length > 0) {
-		issue.item.labels.forEach(label => {
+		issue.item.labels.forEach((label) => {
 			markdown.appendMarkdown(
 				`[${makeLabel(label)}](https://github.com/${ownerName}/labels/${encodeURIComponent(
 					label.name,
@@ -271,16 +363,16 @@ export async function issueMarkdown(
 	if (issue.item.comments && commentNumber) {
 		for (const comment of issue.item.comments) {
 			if (comment.databaseId === commentNumber) {
-				markdown.appendMarkdown('  \r\n\r\n---\r\n');
-				markdown.appendMarkdown('&nbsp;  \n');
+				markdown.appendMarkdown("  \r\n\r\n---\r\n");
+				markdown.appendMarkdown("&nbsp;  \n");
 				markdown.appendMarkdown(
 					`![Avatar](${comment.author.avatarUrl}|height=15,width=15) &nbsp;&nbsp;**${comment.author.login}** commented`,
 				);
-				markdown.appendMarkdown('&nbsp;  \n');
+				markdown.appendMarkdown("&nbsp;  \n");
 
 				let commentText = marked.parse(
 					comment.body.length > ISSUE_BODY_LENGTH
-						? comment.body.substr(0, ISSUE_BODY_LENGTH) + '...'
+						? comment.body.substr(0, ISSUE_BODY_LENGTH) + "..."
 						: comment.body,
 					{ renderer: new PlainTextRenderer() },
 				);
@@ -295,13 +387,17 @@ export async function issueMarkdown(
 function getIconString(issue: IssueModel) {
 	switch (issue.state) {
 		case GithubItemStateEnum.Open: {
-			return issue instanceof PullRequestModel ? '$(git-pull-request)' : '$(issues)';
+			return issue instanceof PullRequestModel
+				? "$(git-pull-request)"
+				: "$(issues)";
 		}
 		case GithubItemStateEnum.Closed: {
-			return issue instanceof PullRequestModel ? '$(git-pull-request)' : '$(issue-closed)';
+			return issue instanceof PullRequestModel
+				? "$(git-pull-request)"
+				: "$(issue-closed)";
 		}
 		case GithubItemStateEnum.Merged:
-			return '$(git-merge)';
+			return "$(git-merge)";
 	}
 }
 
@@ -328,13 +424,13 @@ export interface NewIssue {
 }
 
 export interface IssueTemplate {
-	name: string | undefined,
-	about: string | undefined,
-	title: string | undefined,
-	body: string | undefined
+	name: string | undefined;
+	about: string | undefined;
+	title: string | undefined;
+	body: string | undefined;
 }
 
-const HEAD = 'HEAD';
+const HEAD = "HEAD";
 
 const UPSTREAM = 1;
 
@@ -345,14 +441,19 @@ const ORIGIN = 3;
 const OTHER = 4;
 
 const REMOTE_CONVENTIONS = new Map([
-	['upstream', UPSTREAM],
-	['ups', UPS],
-	['origin', ORIGIN],
+	["upstream", UPSTREAM],
+	["ups", UPS],
+	["origin", ORIGIN],
 ]);
 
-async function getUpstream(repositoriesManager: RepositoriesManager, repository: Repository, commitHash: string): Promise<Remote | undefined> {
+async function getUpstream(
+	repositoriesManager: RepositoriesManager,
+	repository: Repository,
+	commitHash: string,
+): Promise<Remote | undefined> {
 	const currentRemoteName: string | undefined =
-		repository.state.HEAD?.upstream && !REMOTE_CONVENTIONS.has(repository.state.HEAD.upstream.remote)
+		repository.state.HEAD?.upstream &&
+		!REMOTE_CONVENTIONS.has(repository.state.HEAD.upstream.remote)
 			? repository.state.HEAD.upstream.remote
 			: undefined;
 
@@ -363,24 +464,25 @@ async function getUpstream(repositoriesManager: RepositoriesManager, repository:
 	// which makes it much faster.
 	// To do this, create very specific remote+branch patterns to look for and sort from "best" to "worst".
 	// Then, call getBranches with each pattern until one of them succeeds.
-	const remoteNames: { name: string; remote?: Remote }[] = repository.state.remotes
-		.map(remote => {
-			return { name: remote.name, remote };
-		})
-		.filter(value => {
-			// While we're already here iterating through all values, find the current remote for use later.
-			if (value.name === currentRemoteName) {
-				currentRemote = value.remote;
-			}
-			return REMOTE_CONVENTIONS.has(value.name);
-		})
-		.sort((a, b): number => {
-			const aVal = REMOTE_CONVENTIONS.get(a.name) ?? OTHER;
+	const remoteNames: { name: string; remote?: Remote }[] =
+		repository.state.remotes
+			.map((remote) => {
+				return { name: remote.name, remote };
+			})
+			.filter((value) => {
+				// While we're already here iterating through all values, find the current remote for use later.
+				if (value.name === currentRemoteName) {
+					currentRemote = value.remote;
+				}
+				return REMOTE_CONVENTIONS.has(value.name);
+			})
+			.sort((a, b): number => {
+				const aVal = REMOTE_CONVENTIONS.get(a.name) ?? OTHER;
 
-			const bVal = REMOTE_CONVENTIONS.get(b.name) ?? OTHER;
+				const bVal = REMOTE_CONVENTIONS.get(b.name) ?? OTHER;
 
-			return aVal - bVal;
-		});
+				return aVal - bVal;
+			});
 
 	if (currentRemoteName) {
 		remoteNames.push({ name: currentRemoteName, remote: currentRemote });
@@ -394,7 +496,9 @@ async function getUpstream(repositoriesManager: RepositoriesManager, repository:
 	let defaultBranch: PullRequestDefaults | undefined;
 
 	try {
-		defaultBranch = await repositoriesManager.getManagerForFile(repository.rootUri)?.getPullRequestDefaults();
+		defaultBranch = await repositoriesManager
+			.getManagerForFile(repository.rootUri)
+			?.getPullRequestDefaults();
 	} catch (e) {
 		if (!(e instanceof NoGitHubReposError)) {
 			throw e;
@@ -407,8 +511,16 @@ async function getUpstream(repositoriesManager: RepositoriesManager, repository:
 
 	let bestRemote: Remote | undefined;
 
-	for (let branchIndex = 0; branchIndex < branchNames.length && !bestRef; branchIndex++) {
-		for (let remoteIndex = 0; remoteIndex < remoteNames.length && !bestRef; remoteIndex++) {
+	for (
+		let branchIndex = 0;
+		branchIndex < branchNames.length && !bestRef;
+		branchIndex++
+	) {
+		for (
+			let remoteIndex = 0;
+			remoteIndex < remoteNames.length && !bestRef;
+			remoteIndex++
+		) {
 			try {
 				const remotes = (
 					await repository.getBranches({
@@ -417,7 +529,7 @@ async function getUpstream(repositoriesManager: RepositoriesManager, repository:
 						pattern: `remotes/${remoteNames[remoteIndex].name}/${branchNames[branchIndex]}`,
 						count: 1,
 					})
-				).filter(value => value.remote && value.name);
+				).filter((value) => value.remote && value.name);
 
 				if (remotes && remotes.length > 0) {
 					bestRef = remotes[0];
@@ -432,17 +544,30 @@ async function getUpstream(repositoriesManager: RepositoriesManager, repository:
 	return bestRemote;
 }
 
-function extractContext(context: LinkContext): { fileUri: vscode.Uri | undefined, lineNumber: number | undefined } {
+function extractContext(context: LinkContext): {
+	fileUri: vscode.Uri | undefined;
+	lineNumber: number | undefined;
+} {
 	if (context instanceof vscode.Uri) {
 		return { fileUri: context, lineNumber: undefined };
-	} else if (context !== undefined && 'lineNumber' in context && 'uri' in context) {
+	} else if (
+		context !== undefined &&
+		"lineNumber" in context &&
+		"uri" in context
+	) {
 		return { fileUri: context.uri, lineNumber: context.lineNumber };
 	} else {
 		return { fileUri: undefined, lineNumber: undefined };
 	}
 }
 
-function getFileAndPosition(context: LinkContext, positionInfo?: NewIssue): { uri: vscode.Uri | undefined, range: vscode.Range | vscode.NotebookRange | undefined } {
+function getFileAndPosition(
+	context: LinkContext,
+	positionInfo?: NewIssue,
+): {
+	uri: vscode.Uri | undefined;
+	range: vscode.Range | vscode.NotebookRange | undefined;
+} {
 	Logger.debug(`getting file and position`, PERMALINK_COMPONENT);
 
 	let uri: vscode.Uri;
@@ -454,9 +579,22 @@ function getFileAndPosition(context: LinkContext, positionInfo?: NewIssue): { ur
 	if (fileUri) {
 		uri = fileUri;
 
-		if (vscode.window.activeTextEditor?.document.uri.fsPath === uri.fsPath && !vscode.window.activeNotebookEditor) {
-			if (lineNumber !== undefined && (vscode.window.activeTextEditor.selection.isEmpty || !vscode.window.activeTextEditor.selection.contains(new vscode.Position(lineNumber - 1, 0)))) {
-				range = new vscode.Range(new vscode.Position(lineNumber - 1, 0), new vscode.Position(lineNumber - 1, 1));
+		if (
+			vscode.window.activeTextEditor?.document.uri.fsPath ===
+				uri.fsPath &&
+			!vscode.window.activeNotebookEditor
+		) {
+			if (
+				lineNumber !== undefined &&
+				(vscode.window.activeTextEditor.selection.isEmpty ||
+					!vscode.window.activeTextEditor.selection.contains(
+						new vscode.Position(lineNumber - 1, 0),
+					))
+			) {
+				range = new vscode.Range(
+					new vscode.Position(lineNumber - 1, 0),
+					new vscode.Position(lineNumber - 1, 1),
+				);
 			} else {
 				range = vscode.window.activeTextEditor.selection;
 			}
@@ -467,7 +605,11 @@ function getFileAndPosition(context: LinkContext, positionInfo?: NewIssue): { ur
 	} else if (!positionInfo && vscode.window.activeNotebookEditor) {
 		uri = vscode.window.activeNotebookEditor.notebook.uri;
 		range = vscode.window.activeNotebookEditor.selection;
-	} else if (!positionInfo && vscode.window.tabGroups.activeTabGroup.activeTab?.input instanceof vscode.TabInputCustom) {
+	} else if (
+		!positionInfo &&
+		vscode.window.tabGroups.activeTabGroup.activeTab?.input instanceof
+			vscode.TabInputCustom
+	) {
 		uri = vscode.window.tabGroups.activeTabGroup.activeTab.input.uri;
 	} else if (positionInfo) {
 		uri = positionInfo.document.uri;
@@ -475,7 +617,10 @@ function getFileAndPosition(context: LinkContext, positionInfo?: NewIssue): { ur
 	} else {
 		return { uri: undefined, range: undefined };
 	}
-	Logger.debug(`got file and position: ${uri.fsPath} ${range?.start ? (range.start instanceof vscode.Position ? `${range.start.line}:${range.start.character}` : range.start) : 'unknown'}`, PERMALINK_COMPONENT);
+	Logger.debug(
+		`got file and position: ${uri.fsPath} ${range?.start ? (range.start instanceof vscode.Position ? `${range.start.line}:${range.start.character}` : range.start) : "unknown"}`,
+		PERMALINK_COMPONENT,
+	);
 
 	return { uri, range };
 }
@@ -491,25 +636,31 @@ export function getSimpleUpstream(repository: Repository) {
 
 	for (const remote of repository.state.remotes) {
 		// If we don't have an upstream, then just use the first remote.
-		if (!upstream || (upstream.remote === remote.name)) {
+		if (!upstream || upstream.remote === remote.name) {
 			return remote;
 		}
 	}
 }
 
-export async function getBestPossibleUpstream(repositoriesManager: RepositoriesManager, repository: Repository, commitHash: string | undefined): Promise<Remote | undefined> {
-	const fallbackUpstream = new Promise<Remote | undefined>(resolve => {
+export async function getBestPossibleUpstream(
+	repositoriesManager: RepositoriesManager,
+	repository: Repository,
+	commitHash: string | undefined,
+): Promise<Remote | undefined> {
+	const fallbackUpstream = new Promise<Remote | undefined>((resolve) => {
 		resolve(getSimpleUpstream(repository));
 	});
 
-	let upstream: Remote | undefined = commitHash ? await Promise.race([
-		getUpstream(repositoriesManager, repository, commitHash),
-		new Promise<Remote | undefined>(resolve => {
-			setTimeout(() => {
-				resolve(fallbackUpstream);
-			}, 1500);
-		}),
-	]) : await fallbackUpstream;
+	let upstream: Remote | undefined = commitHash
+		? await Promise.race([
+				getUpstream(repositoriesManager, repository, commitHash),
+				new Promise<Remote | undefined>((resolve) => {
+					setTimeout(() => {
+						resolve(fallbackUpstream);
+					}, 1500);
+				}),
+			])
+		: await fallbackUpstream;
 
 	if (!upstream || !upstream.fetchUrl) {
 		// Check fallback
@@ -522,12 +673,20 @@ export async function getBestPossibleUpstream(repositoriesManager: RepositoriesM
 	return upstream;
 }
 
-export function getOwnerAndRepo(repositoriesManager: RepositoriesManager, repository: Repository, upstream: Remote & { fetchUrl: string }): string {
-	const folderManager = repositoriesManager.getManagerForFile(repository.rootUri);
+export function getOwnerAndRepo(
+	repositoriesManager: RepositoriesManager,
+	repository: Repository,
+	upstream: Remote & { fetchUrl: string },
+): string {
+	const folderManager = repositoriesManager.getManagerForFile(
+		repository.rootUri,
+	);
 	// Find the GitHub repository that matches the chosen upstream remote
-	const githubRepository = folderManager?.gitHubRepositories.find(githubRepository => {
-		return githubRepository.remote.remoteName === upstream.name;
-	});
+	const githubRepository = folderManager?.gitHubRepositories.find(
+		(githubRepository) => {
+			return githubRepository.remote.remoteName === upstream.name;
+		},
+	);
 
 	if (githubRepository) {
 		return `${githubRepository.remote.owner}/${githubRepository.remote.repositoryName}`;
@@ -542,96 +701,159 @@ export async function createGithubPermalink(
 	includeRange: boolean,
 	includeFile: boolean,
 	positionInfo?: NewIssue,
-	context?: LinkContext
+	context?: LinkContext,
 ): Promise<PermalinkInfo> {
-	return vscode.window.withProgress({ location: vscode.ProgressLocation.Window }, async (progress) => {
-		progress.report({ message: vscode.l10n.t('Creating permalink...') });
+	return vscode.window.withProgress(
+		{ location: vscode.ProgressLocation.Window },
+		async (progress) => {
+			progress.report({
+				message: vscode.l10n.t("Creating permalink..."),
+			});
 
-		const { uri, range } = getFileAndPosition(context, positionInfo);
+			const { uri, range } = getFileAndPosition(context, positionInfo);
 
-		if (!uri) {
-			return { permalink: undefined, error: vscode.l10n.t('No active text editor position to create permalink from.'), originalFile: undefined };
-		}
-
-		const repository = getRepositoryForFile(gitAPI, uri);
-
-		if (!repository) {
-			return { permalink: undefined, error: vscode.l10n.t('The current file isn\'t part of repository.'), originalFile: uri };
-		}
-
-		let commitHash: string | undefined;
-
-		if (uri.scheme === Schemes.Review) {
-			commitHash = fromReviewUri(uri.query).commit;
-		}
-
-		if (!commitHash) {
-			try {
-				const log = await repository.log({ maxEntries: 1, path: uri.fsPath });
-
-				if (log.length === 0) {
-					return { permalink: undefined, error: vscode.l10n.t('No branch on a remote contains the most recent commit for the file.'), originalFile: uri };
-				}
-				// Now that we know that the file existed at some point in the repo, use the head commit to construct the URI.
-				if (repository.state.HEAD?.commit && (log[0].hash !== repository.state.HEAD?.commit)) {
-					commitHash = repository.state.HEAD.commit;
-				} else {
-					commitHash = log[0].hash;
-				}
-			} catch (e) {
-				commitHash = repository.state.HEAD?.commit;
+			if (!uri) {
+				return {
+					permalink: undefined,
+					error: vscode.l10n.t(
+						"No active text editor position to create permalink from.",
+					),
+					originalFile: undefined,
+				};
 			}
-		}
 
-		Logger.debug(`commit hash: ${commitHash}`, PERMALINK_COMPONENT);
+			const repository = getRepositoryForFile(gitAPI, uri);
 
-		const rawUpstream = await getBestPossibleUpstream(repositoriesManager, repository, commitHash);
+			if (!repository) {
+				return {
+					permalink: undefined,
+					error: vscode.l10n.t(
+						"The current file isn't part of repository.",
+					),
+					originalFile: uri,
+				};
+			}
 
-		if (!rawUpstream || !rawUpstream.fetchUrl) {
-			return { permalink: undefined, error: vscode.l10n.t('The selection may not exist on any remote.'), originalFile: uri };
-		}
-		const upstream: Remote & { fetchUrl: string } = rawUpstream as any;
+			let commitHash: string | undefined;
 
-		Logger.debug(`upstream: ${upstream.fetchUrl}`, PERMALINK_COMPONENT);
+			if (uri.scheme === Schemes.Review) {
+				commitHash = fromReviewUri(uri.query).commit;
+			}
 
-		const encodedPathSegment = encodeURIComponentExceptSlashes(uri.path.substring(repository.rootUri.path.length));
+			if (!commitHash) {
+				try {
+					const log = await repository.log({
+						maxEntries: 1,
+						path: uri.fsPath,
+					});
 
-		const originOfFetchUrl = getUpstreamOrigin(rawUpstream).replace(/\/$/, '');
+					if (log.length === 0) {
+						return {
+							permalink: undefined,
+							error: vscode.l10n.t(
+								"No branch on a remote contains the most recent commit for the file.",
+							),
+							originalFile: uri,
+						};
+					}
+					// Now that we know that the file existed at some point in the repo, use the head commit to construct the URI.
+					if (
+						repository.state.HEAD?.commit &&
+						log[0].hash !== repository.state.HEAD?.commit
+					) {
+						commitHash = repository.state.HEAD.commit;
+					} else {
+						commitHash = log[0].hash;
+					}
+				} catch (e) {
+					commitHash = repository.state.HEAD?.commit;
+				}
+			}
 
-		const result = {
-			permalink: (`${originOfFetchUrl}/${getOwnerAndRepo(repositoriesManager, repository, upstream)}/blob/${commitHash
-				}${includeFile ? `${encodedPathSegment}${includeRange ? rangeString(range) : ''}` : ''}`),
-			error: undefined,
-			originalFile: uri
-		};
-		Logger.debug(`permalink generated: ${result.permalink}`, PERMALINK_COMPONENT);
+			Logger.debug(`commit hash: ${commitHash}`, PERMALINK_COMPONENT);
 
-		return result;
-	});
+			const rawUpstream = await getBestPossibleUpstream(
+				repositoriesManager,
+				repository,
+				commitHash,
+			);
+
+			if (!rawUpstream || !rawUpstream.fetchUrl) {
+				return {
+					permalink: undefined,
+					error: vscode.l10n.t(
+						"The selection may not exist on any remote.",
+					),
+					originalFile: uri,
+				};
+			}
+			const upstream: Remote & { fetchUrl: string } = rawUpstream as any;
+
+			Logger.debug(`upstream: ${upstream.fetchUrl}`, PERMALINK_COMPONENT);
+
+			const encodedPathSegment = encodeURIComponentExceptSlashes(
+				uri.path.substring(repository.rootUri.path.length),
+			);
+
+			const originOfFetchUrl = getUpstreamOrigin(rawUpstream).replace(
+				/\/$/,
+				"",
+			);
+
+			const result = {
+				permalink: `${originOfFetchUrl}/${getOwnerAndRepo(repositoriesManager, repository, upstream)}/blob/${
+					commitHash
+				}${includeFile ? `${encodedPathSegment}${includeRange ? rangeString(range) : ""}` : ""}`,
+				error: undefined,
+				originalFile: uri,
+			};
+			Logger.debug(
+				`permalink generated: ${result.permalink}`,
+				PERMALINK_COMPONENT,
+			);
+
+			return result;
+		},
+	);
 }
 
-export function getUpstreamOrigin(upstream: Remote, resultHost: string = 'github.com') {
+export function getUpstreamOrigin(
+	upstream: Remote,
+	resultHost: string = "github.com",
+) {
 	const enterpriseUri = getEnterpriseUri();
 
 	let fetchUrl = upstream.fetchUrl;
 
 	if (enterpriseUri && fetchUrl) {
 		// upstream's origin by https
-		if (fetchUrl.startsWith('https://') && !fetchUrl.startsWith('https://github.com/')) {
+		if (
+			fetchUrl.startsWith("https://") &&
+			!fetchUrl.startsWith("https://github.com/")
+		) {
 			const host = new URL(fetchUrl).host;
 
-			if (host.startsWith(enterpriseUri.authority) || !host.includes('github.com')) {
+			if (
+				host.startsWith(enterpriseUri.authority) ||
+				!host.includes("github.com")
+			) {
 				resultHost = enterpriseUri.authority;
 			}
 		}
-		if (fetchUrl.startsWith('ssh://')) {
-			fetchUrl = fetchUrl.substr('ssh://'.length);
+		if (fetchUrl.startsWith("ssh://")) {
+			fetchUrl = fetchUrl.substr("ssh://".length);
 		}
 		// upstream's origin by ssh
-		if (fetchUrl.startsWith('git@') && !fetchUrl.startsWith('git@github.com')) {
-			const host = fetchUrl.split('@')[1]?.split(':')[0];
+		if (
+			fetchUrl.startsWith("git@") &&
+			!fetchUrl.startsWith("git@github.com")
+		) {
+			const host = fetchUrl.split("@")[1]?.split(":")[0];
 
-			if (host.startsWith(enterpriseUri.authority) || !host.includes('github.com')) {
+			if (
+				host.startsWith(enterpriseUri.authority) ||
+				!host.includes("github.com")
+			) {
 				resultHost = enterpriseUri.authority;
 			}
 		}
@@ -646,12 +868,17 @@ export function encodeURIComponentExceptSlashes(path: string) {
 	// Additonally, if we feed the full path into encodeURIComponent(),
 	// this will also encode the path separators, leading to an invalid path.
 	// Therefore, split on the path separator and encode each segment individually.
-	return path.split('/').map((segment) => encodeURIComponent(segment)).join('/');
+	return path
+		.split("/")
+		.map((segment) => encodeURIComponent(segment))
+		.join("/");
 }
 
-export function rangeString(range: vscode.Range | vscode.NotebookRange | undefined) {
-	if (!range || (range instanceof vscode.NotebookRange)) {
-		return '';
+export function rangeString(
+	range: vscode.Range | vscode.NotebookRange | undefined,
+) {
+	if (!range || range instanceof vscode.NotebookRange) {
+		return "";
 	}
 	let hash = `#L${range.start.line + 1}`;
 
@@ -670,17 +897,29 @@ export type LinkContext = vscode.Uri | EditorLineNumberContext | undefined;
 export async function createGitHubLink(
 	managers: RepositoriesManager,
 	context: LinkContext,
-	includeRange?: boolean
+	includeRange?: boolean,
 ): Promise<PermalinkInfo> {
 	const { uri, range } = getFileAndPosition(context);
 
 	if (!uri) {
-		return { permalink: undefined, error: vscode.l10n.t('No active text editor position to create permalink from.'), originalFile: undefined };
+		return {
+			permalink: undefined,
+			error: vscode.l10n.t(
+				"No active text editor position to create permalink from.",
+			),
+			originalFile: undefined,
+		};
 	}
 	const folderManager = managers.getManagerForFile(uri);
 
 	if (!folderManager) {
-		return { permalink: undefined, error: vscode.l10n.t('Current file does not belong to an open repository.'), originalFile: undefined };
+		return {
+			permalink: undefined,
+			error: vscode.l10n.t(
+				"Current file does not belong to an open repository.",
+			),
+			originalFile: undefined,
+		};
 	}
 	let branchName = folderManager.repository.state.HEAD?.name;
 
@@ -694,39 +933,57 @@ export async function createGitHubLink(
 	const upstream = getSimpleUpstream(folderManager.repository);
 
 	if (!upstream?.fetchUrl) {
-		return { permalink: undefined, error: vscode.l10n.t('Repository does not have any remotes.'), originalFile: undefined };
+		return {
+			permalink: undefined,
+			error: vscode.l10n.t("Repository does not have any remotes."),
+			originalFile: undefined,
+		};
 	}
-	const pathSegment = uri.path.substring(folderManager.repository.rootUri.path.length);
+	const pathSegment = uri.path.substring(
+		folderManager.repository.rootUri.path.length,
+	);
 
-	const originOfFetchUrl = getUpstreamOrigin(upstream).replace(/\/$/, '');
+	const originOfFetchUrl = getUpstreamOrigin(upstream).replace(/\/$/, "");
 
-	const encodedBranchAndFilePath = encodeURIComponentExceptSlashes(`${branchName}${pathSegment}`);
+	const encodedBranchAndFilePath = encodeURIComponentExceptSlashes(
+		`${branchName}${pathSegment}`,
+	);
 
 	return {
-		permalink: (`${originOfFetchUrl}/${new Protocol(upstream.fetchUrl).nameWithOwner}/blob/${encodedBranchAndFilePath
-			}${includeRange ? rangeString(range) : ''}`),
+		permalink: `${originOfFetchUrl}/${new Protocol(upstream.fetchUrl).nameWithOwner}/blob/${
+			encodedBranchAndFilePath
+		}${includeRange ? rangeString(range) : ""}`,
 		error: undefined,
-		originalFile: uri
+		originalFile: uri,
 	};
 }
 
-async function commitWithDefault(manager: FolderRepositoryManager, stateManager: StateManager, all: boolean) {
-	const message = await stateManager.currentIssue(manager.repository.rootUri)?.getCommitMessage();
+async function commitWithDefault(
+	manager: FolderRepositoryManager,
+	stateManager: StateManager,
+	all: boolean,
+) {
+	const message = await stateManager
+		.currentIssue(manager.repository.rootUri)
+		?.getCommitMessage();
 
 	if (message) {
 		return manager.repository.commit(message, { all });
 	}
 }
 
-const commitStaged = vscode.l10n.t('Commit Staged');
+const commitStaged = vscode.l10n.t("Commit Staged");
 
-const commitAll = vscode.l10n.t('Commit All');
+const commitAll = vscode.l10n.t("Commit All");
 export async function pushAndCreatePR(
 	manager: FolderRepositoryManager,
 	reviewManager: ReviewManager,
 	stateManager: StateManager,
 ): Promise<boolean> {
-	if (manager.repository.state.workingTreeChanges.length > 0 || manager.repository.state.indexChanges.length > 0) {
+	if (
+		manager.repository.state.workingTreeChanges.length > 0 ||
+		manager.repository.state.indexChanges.length > 0
+	) {
 		const responseOptions: string[] = [];
 
 		if (manager.repository.state.indexChanges) {
@@ -736,7 +993,9 @@ export async function pushAndCreatePR(
 			responseOptions.push(commitAll);
 		}
 		const changesResponse = await vscode.window.showInformationMessage(
-			vscode.l10n.t('There are uncommitted changes. Do you want to commit them with the default commit message?'),
+			vscode.l10n.t(
+				"There are uncommitted changes. Do you want to commit them with the default commit message?",
+			),
 			{ modal: true },
 			...responseOptions,
 		);
@@ -769,18 +1028,24 @@ export async function pushAndCreatePR(
 			remote = manager.repository.state.remotes[0].name;
 		} else if (manager.repository.state.remotes.length > 1) {
 			remote = await vscode.window.showQuickPick(
-				manager.repository.state.remotes.map(value => value.name),
-				{ placeHolder: vscode.l10n.t('Remote to push to') },
+				manager.repository.state.remotes.map((value) => value.name),
+				{ placeHolder: vscode.l10n.t("Remote to push to") },
 			);
 		}
 		if (remote) {
-			await manager.repository.push(remote, manager.repository.state.HEAD?.name, true);
+			await manager.repository.push(
+				remote,
+				manager.repository.state.HEAD?.name,
+				true,
+			);
 			await reviewManager.createPullRequest(undefined);
 
 			return true;
 		} else {
 			vscode.window.showWarningMessage(
-				vscode.l10n.t('The current repository has no remotes to push to. Please set up a remote and try again.'),
+				vscode.l10n.t(
+					"The current repository has no remotes to push to. Please set up a remote and try again.",
+				),
 			);
 
 			return false;
@@ -788,9 +1053,18 @@ export async function pushAndCreatePR(
 	}
 }
 
-export async function isComment(document: vscode.TextDocument, position: vscode.Position): Promise<boolean> {
-	if (document.languageId !== 'markdown' && document.languageId !== 'plaintext') {
-		const tokenInfo = await vscode.languages.getTokenInformationAtPosition(document, position);
+export async function isComment(
+	document: vscode.TextDocument,
+	position: vscode.Position,
+): Promise<boolean> {
+	if (
+		document.languageId !== "markdown" &&
+		document.languageId !== "plaintext"
+	) {
+		const tokenInfo = await vscode.languages.getTokenInformationAtPosition(
+			document,
+			position,
+		);
 
 		if (tokenInfo.type !== vscode.StandardTokenType.Comment) {
 			return false;
@@ -799,7 +1073,10 @@ export async function isComment(document: vscode.TextDocument, position: vscode.
 	return true;
 }
 
-export async function shouldShowHover(document: vscode.TextDocument, position: vscode.Position): Promise<boolean> {
+export async function shouldShowHover(
+	document: vscode.TextDocument,
+	position: vscode.Position,
+): Promise<boolean> {
 	if (document.lineAt(position.line).range.end.character > 10000) {
 		return false;
 	}
@@ -807,14 +1084,16 @@ export async function shouldShowHover(document: vscode.TextDocument, position: v
 	return isComment(document, position);
 }
 
-export function getRootUriFromScmInputUri(uri: vscode.Uri): vscode.Uri | undefined {
-	const rootUri = new URLSearchParams(uri.query).get('rootUri');
+export function getRootUriFromScmInputUri(
+	uri: vscode.Uri,
+): vscode.Uri | undefined {
+	const rootUri = new URLSearchParams(uri.query).get("rootUri");
 
 	return rootUri ? vscode.Uri.parse(rootUri) : undefined;
 }
 
 export function escapeMarkdown(text: string): string {
-	return text.replace(/([_~*])/g, '\\$1');
+	return text.replace(/([_~*])/g, "\\$1");
 }
 
 export class PlainTextRenderer extends marked.Renderer {
@@ -825,28 +1104,33 @@ export class PlainTextRenderer extends marked.Renderer {
 		return quote;
 	}
 	override html(_html: string): string {
-		return '';
+		return "";
 	}
-	override heading(text: string, _level: 1 | 2 | 3 | 4 | 5 | 6, _raw: string, _slugger: marked.Slugger): string {
-		return text + ' ';
+	override heading(
+		text: string,
+		_level: 1 | 2 | 3 | 4 | 5 | 6,
+		_raw: string,
+		_slugger: marked.Slugger,
+	): string {
+		return text + " ";
 	}
 	override hr(): string {
-		return '';
+		return "";
 	}
 	override list(body: string, _ordered: boolean, _start: number): string {
 		return body;
 	}
 	override listitem(text: string): string {
-		return ' ' + text;
+		return " " + text;
 	}
 	override checkbox(_checked: boolean): string {
-		return '';
+		return "";
 	}
 	override paragraph(text: string): string {
-		return text.replace(/\</g, '\\\<').replace(/\>/g, '\\\>') + ' ';
+		return text.replace(/\</g, "\\<").replace(/\>/g, "\\>") + " ";
 	}
 	override table(header: string, body: string): string {
-		return header + ' ' + body;
+		return header + " " + body;
 	}
 	override tablerow(content: string): string {
 		return content;
@@ -855,7 +1139,7 @@ export class PlainTextRenderer extends marked.Renderer {
 		content: string,
 		_flags: {
 			header: boolean;
-			align: 'center' | 'left' | 'right' | null;
+			align: "center" | "left" | "right" | null;
 		},
 	): string {
 		return content;
@@ -870,18 +1154,18 @@ export class PlainTextRenderer extends marked.Renderer {
 		return `\\\`${code}\\\``;
 	}
 	override br(): string {
-		return ' ';
+		return " ";
 	}
 	override del(text: string): string {
 		return text;
 	}
 	override image(_href: string, _title: string, _text: string): string {
-		return '';
+		return "";
 	}
 	override text(text: string): string {
 		return text;
 	}
 	override link(href: string, title: string, text: string): string {
-		return text + ' ';
+		return text + " ";
 	}
 }

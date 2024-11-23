@@ -3,11 +3,12 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as vscode from 'vscode';
-import { commands } from './executeCommands';
-import { Disposable } from './lifecycle';
+import * as vscode from "vscode";
 
-export const PULL_REQUEST_OVERVIEW_VIEW_TYPE = 'PullRequestOverview';
+import { commands } from "./executeCommands";
+import { Disposable } from "./lifecycle";
+
+export const PULL_REQUEST_OVERVIEW_VIEW_TYPE = "PullRequestOverview";
 
 export interface IRequestMessage<T> {
 	req: string;
@@ -22,9 +23,10 @@ export interface IReplyMessage {
 }
 
 export function getNonce() {
-	let text = '';
+	let text = "";
 
-	const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+	const possible =
+		"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
 	for (let i = 0; i < 32; i++) {
 		text += possible.charAt(Math.floor(Math.random() * possible.length));
@@ -36,13 +38,15 @@ export class WebviewBase extends Disposable {
 	protected _webview?: vscode.Webview;
 
 	private _waitForReady: Promise<void>;
-	private _onIsReady: vscode.EventEmitter<void> = this._register(new vscode.EventEmitter());
+	private _onIsReady: vscode.EventEmitter<void> = this._register(
+		new vscode.EventEmitter(),
+	);
 
-	protected readonly MESSAGE_UNHANDLED: string = 'message not handled';
+	protected readonly MESSAGE_UNHANDLED: string = "message not handled";
 
 	constructor() {
 		super();
-		this._waitForReady = new Promise(resolve => {
+		this._waitForReady = new Promise((resolve) => {
 			const disposable = this._onIsReady.event(() => {
 				disposable.dispose();
 				resolve();
@@ -52,18 +56,23 @@ export class WebviewBase extends Disposable {
 
 	public initialize(): void {
 		const disposable = this._webview?.onDidReceiveMessage(
-			async message => {
-				await this._onDidReceiveMessage(message as IRequestMessage<any>);
-			});
+			async (message) => {
+				await this._onDidReceiveMessage(
+					message as IRequestMessage<any>,
+				);
+			},
+		);
 
 		if (disposable) {
 			this._register(disposable);
 		}
 	}
 
-	protected async _onDidReceiveMessage(message: IRequestMessage<any>): Promise<any> {
+	protected async _onDidReceiveMessage(
+		message: IRequestMessage<any>,
+	): Promise<any> {
 		switch (message.command) {
-			case 'ready':
+			case "ready":
 				this._onIsReady.fire();
 
 				return;
@@ -82,7 +91,10 @@ export class WebviewBase extends Disposable {
 		});
 	}
 
-	protected async _replyMessage(originalMessage: IRequestMessage<any>, message: any) {
+	protected async _replyMessage(
+		originalMessage: IRequestMessage<any>,
+		message: any,
+	) {
 		const reply: IReplyMessage = {
 			seq: originalMessage.req,
 			res: message,
@@ -90,7 +102,10 @@ export class WebviewBase extends Disposable {
 		this._webview?.postMessage(reply);
 	}
 
-	protected async _throwError(originalMessage: IRequestMessage<any> | undefined, error: any) {
+	protected async _throwError(
+		originalMessage: IRequestMessage<any> | undefined,
+		error: any,
+	) {
 		const reply: IReplyMessage = {
 			seq: originalMessage?.req,
 			err: error,
@@ -103,15 +118,15 @@ export class WebviewViewBase extends WebviewBase {
 	public readonly viewType: string;
 	protected _view?: vscode.WebviewView;
 
-	constructor(
-		protected readonly _extensionUri: vscode.Uri) {
+	constructor(protected readonly _extensionUri: vscode.Uri) {
 		super();
 	}
 
 	protected resolveWebviewView(
 		webviewView: vscode.WebviewView,
 		_context: vscode.WebviewViewResolveContext,
-		_token: vscode.CancellationToken) {
+		_token: vscode.CancellationToken,
+	) {
 		this._view = webviewView;
 		this._webview = webviewView.webview;
 
@@ -122,10 +137,12 @@ export class WebviewViewBase extends WebviewBase {
 
 			localResourceRoots: [this._extensionUri],
 		};
-		this._register(this._view.onDidDispose(() => {
-			this._webview = undefined;
-			this._view = undefined;
-		}));
+		this._register(
+			this._view.onDidDispose(() => {
+				this._webview = undefined;
+				this._view = undefined;
+			}),
+		);
 	}
 
 	public show() {

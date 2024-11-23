@@ -2,34 +2,49 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-'use strict';
+"use strict";
 
-import * as vscode from 'vscode';
-import { FetchNotificationResult } from './fetchNotificationTool';
-import { concatAsyncIterable, TOOL_COMMAND_RESULT } from './toolsUtils';
+import * as vscode from "vscode";
 
-export class NotificationSummarizationTool implements vscode.LanguageModelTool<FetchNotificationResult> {
-	public static readonly toolId = 'github-pull-request_notification_summarize';
+import { FetchNotificationResult } from "./fetchNotificationTool";
+import { concatAsyncIterable, TOOL_COMMAND_RESULT } from "./toolsUtils";
 
-	async prepareInvocation(options: vscode.LanguageModelToolInvocationPrepareOptions<FetchNotificationResult>): Promise<vscode.PreparedToolInvocation> {
+export class NotificationSummarizationTool
+	implements vscode.LanguageModelTool<FetchNotificationResult>
+{
+	public static readonly toolId =
+		"github-pull-request_notification_summarize";
+
+	async prepareInvocation(
+		options: vscode.LanguageModelToolInvocationPrepareOptions<FetchNotificationResult>,
+	): Promise<vscode.PreparedToolInvocation> {
 		const parameters = options.input;
 
 		if (!parameters.itemType || !parameters.itemNumber) {
 			return {
-				invocationMessage: vscode.l10n.t('Summarizing notification')
+				invocationMessage: vscode.l10n.t("Summarizing notification"),
 			};
 		}
-		const type = parameters.itemType === 'issue' ? 'issues' : 'pull';
+		const type = parameters.itemType === "issue" ? "issues" : "pull";
 
 		const url = `https://github.com/${parameters.owner}/${parameters.repo}/${type}/${parameters.itemNumber}`;
 
 		return {
-			invocationMessage: new vscode.MarkdownString(vscode.l10n.t('Summarizing item [#{0}]({1})', parameters.itemNumber, url))
+			invocationMessage: new vscode.MarkdownString(
+				vscode.l10n.t(
+					"Summarizing item [#{0}]({1})",
+					parameters.itemNumber,
+					url,
+				),
+			),
 		};
 	}
 
-	async invoke(options: vscode.LanguageModelToolInvocationOptions<FetchNotificationResult>, _token: vscode.CancellationToken): Promise<vscode.LanguageModelToolResult | undefined> {
-		let notificationInfo: string = '';
+	async invoke(
+		options: vscode.LanguageModelToolInvocationOptions<FetchNotificationResult>,
+		_token: vscode.CancellationToken,
+	): Promise<vscode.LanguageModelToolResult | undefined> {
+		let notificationInfo: string = "";
 
 		const lastReadAt = options.input.lastReadAt;
 
@@ -73,8 +88,8 @@ Body: ${comment.body}
 			}
 		}
 		const models = await vscode.lm.selectChatModels({
-			vendor: 'copilot',
-			family: 'gpt-4o'
+			vendor: "copilot",
+			family: "gpt-4o",
 		});
 
 		const model = models[0];
@@ -87,21 +102,35 @@ Body: ${comment.body}
 
 		if (threadId && notificationKey) {
 			const markAsReadCommand = {
-				title: 'Mark As Read',
-				command: 'notification.markAsRead',
-				arguments: [{ threadId, notificationKey }]
+				title: "Mark As Read",
+				command: "notification.markAsRead",
+				arguments: [{ threadId, notificationKey }],
 			};
 			content.push(new vscode.LanguageModelTextPart(TOOL_COMMAND_RESULT));
-			content.push(new vscode.LanguageModelTextPart(JSON.stringify(markAsReadCommand)));
+			content.push(
+				new vscode.LanguageModelTextPart(
+					JSON.stringify(markAsReadCommand),
+				),
+			);
 		}
 		const owner = options.input.owner;
 
 		const repo = options.input.repo;
 
 		if (model && owner && repo) {
-			const messages = [vscode.LanguageModelChatMessage.User(this.summarizeInstructions(owner, repo))];
-			messages.push(vscode.LanguageModelChatMessage.User(`The notification information is as follows:`));
-			messages.push(vscode.LanguageModelChatMessage.User(notificationInfo));
+			const messages = [
+				vscode.LanguageModelChatMessage.User(
+					this.summarizeInstructions(owner, repo),
+				),
+			];
+			messages.push(
+				vscode.LanguageModelChatMessage.User(
+					`The notification information is as follows:`,
+				),
+			);
+			messages.push(
+				vscode.LanguageModelChatMessage.User(notificationInfo),
+			);
 
 			const response = await model.sendRequest(messages, {});
 
@@ -110,7 +139,11 @@ Body: ${comment.body}
 		} else {
 			content.push(new vscode.LanguageModelTextPart(notificationInfo));
 		}
-		content.push(new vscode.LanguageModelTextPart('Above is a summary of the notification. Extract and output this notification summary directly as is to the user. Do not output the result from the call to the fetch notification tool.'));
+		content.push(
+			new vscode.LanguageModelTextPart(
+				"Above is a summary of the notification. Extract and output this notification summary directly as is to the user. Do not output the result from the call to the fetch notification tool.",
+			),
+		);
 
 		return new vscode.LanguageModelToolResult(content);
 	}
@@ -153,5 +186,4 @@ Both 'Unread Thread' and 'Unread Comments' should not appear at the same time as
 <comments>
 `;
 	}
-
 }

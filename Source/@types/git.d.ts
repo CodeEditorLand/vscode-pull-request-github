@@ -3,8 +3,16 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { Uri, Event, Disposable, ProviderResult, Command, CancellationToken } from 'vscode';
-export { ProviderResult } from 'vscode';
+import {
+	CancellationToken,
+	Command,
+	Disposable,
+	Event,
+	ProviderResult,
+	Uri,
+} from "vscode";
+
+export { ProviderResult } from "vscode";
 
 export interface Git {
 	readonly path: string;
@@ -16,13 +24,13 @@ export interface InputBox {
 
 export const enum ForcePushMode {
 	Force,
-	ForceWithLease
+	ForceWithLease,
 }
 
 export const enum RefType {
 	Head,
 	RemoteHead,
-	Tag
+	Tag,
 }
 
 export interface Ref {
@@ -85,11 +93,10 @@ export const enum Status {
 	DELETED_BY_THEM,
 	BOTH_ADDED,
 	BOTH_DELETED,
-	BOTH_MODIFIED
+	BOTH_MODIFIED,
 }
 
 export interface Change {
-
 	/**
 	 * Returns either `originalUri` or `renameUri`, depending
 	 * on whether this change is a rename change. When
@@ -129,7 +136,7 @@ export interface LogOptions {
 }
 
 export interface CommitOptions {
-	all?: boolean | 'tracked';
+	all?: boolean | "tracked";
 	amend?: boolean;
 	signoff?: boolean;
 	signCommit?: boolean;
@@ -159,7 +166,7 @@ export interface RefQuery {
 	readonly contains?: string;
 	readonly count?: number;
 	readonly pattern?: string;
-	readonly sort?: 'alphabetically' | 'committerdate';
+	readonly sort?: "alphabetically" | "committerdate";
 }
 
 export interface BranchQuery extends RefQuery {
@@ -167,13 +174,12 @@ export interface BranchQuery extends RefQuery {
 }
 
 export interface Repository {
-
 	readonly rootUri: Uri;
 	readonly inputBox: InputBox;
 	readonly state: RepositoryState;
 	readonly ui: RepositoryUIState;
 
-	getConfigs(): Promise<{ key: string; value: string; }[]>;
+	getConfigs(): Promise<{ key: string; value: string }[]>;
 
 	getConfig(key: string): Promise<string>;
 
@@ -181,8 +187,13 @@ export interface Repository {
 
 	getGlobalConfig(key: string): Promise<string>;
 
-	getObjectDetails(treeish: string, path: string): Promise<{ mode: string, object: string, size: number }>;
-	detectObjectType(object: string): Promise<{ mimetype: string, encoding?: string }>;
+	getObjectDetails(
+		treeish: string,
+		path: string,
+	): Promise<{ mode: string; object: string; size: number }>;
+	detectObjectType(
+		object: string,
+	): Promise<{ mimetype: string; encoding?: string }>;
 	buffer(ref: string, path: string): Promise<Buffer>;
 	show(ref: string, path: string): Promise<string>;
 
@@ -213,13 +224,19 @@ export interface Repository {
 
 	getBranch(name: string): Promise<Branch>;
 
-	getBranches(query: BranchQuery, cancellationToken?: CancellationToken): Promise<Ref[]>;
+	getBranches(
+		query: BranchQuery,
+		cancellationToken?: CancellationToken,
+	): Promise<Ref[]>;
 
 	getBranchBase(name: string): Promise<Branch | undefined>;
 
 	setBranchUpstream(name: string, upstream: string): Promise<void>;
 
-	getRefs(query: RefQuery, cancellationToken?: CancellationToken): Promise<Ref[]>;
+	getRefs(
+		query: RefQuery,
+		cancellationToken?: CancellationToken,
+	): Promise<Ref[]>;
 
 	getMergeBase(ref1: string, ref2: string): Promise<string>;
 
@@ -236,7 +253,12 @@ export interface Repository {
 	fetch(options?: FetchOptions): Promise<void>;
 	fetch(remote?: string, ref?: string, depth?: number): Promise<void>;
 	pull(unshallow?: boolean): Promise<void>;
-	push(remoteName?: string, branchName?: string, setUpstream?: boolean, force?: ForcePushMode): Promise<void>;
+	push(
+		remoteName?: string,
+		branchName?: string,
+		setUpstream?: boolean,
+		force?: ForcePushMode,
+	): Promise<void>;
 
 	blame(path: string): Promise<string>;
 	log(options?: LogOptions): Promise<Commit[]>;
@@ -283,10 +305,15 @@ export interface PostCommitCommandsProvider {
 }
 
 export interface PushErrorHandler {
-	handlePushError(repository: Repository, remote: Remote, refspec: string, error: Error & { gitErrorCode: GitErrorCodes }): Promise<boolean>;
+	handlePushError(
+		repository: Repository,
+		remote: Remote,
+		refspec: string,
+		error: Error & { gitErrorCode: GitErrorCodes },
+	): Promise<boolean>;
 }
 
-export type APIState = 'uninitialized' | 'initialized';
+export type APIState = "uninitialized" | "initialized";
 
 export interface PublishEvent {
 	repository: Repository;
@@ -306,17 +333,18 @@ export interface GitAPI {
 
 	getRepository(uri: Uri): Repository | null;
 	init(root: Uri): Promise<Repository | null>;
-	openRepository(root: Uri): Promise<Repository | null>
+	openRepository(root: Uri): Promise<Repository | null>;
 
 	registerRemoteSourcePublisher(publisher: RemoteSourcePublisher): Disposable;
 	registerRemoteSourceProvider(provider: RemoteSourceProvider): Disposable;
 	registerCredentialsProvider(provider: CredentialsProvider): Disposable;
-	registerPostCommitCommandsProvider(provider: PostCommitCommandsProvider): Disposable;
+	registerPostCommitCommandsProvider(
+		provider: PostCommitCommandsProvider,
+	): Disposable;
 	registerPushErrorHandler(handler: PushErrorHandler): Disposable;
 }
 
 export interface GitExtension {
-
 	readonly enabled: boolean;
 	readonly onDidChangeEnablement: Event<boolean>;
 
@@ -334,43 +362,43 @@ export interface GitExtension {
 }
 
 export const enum GitErrorCodes {
-	BadConfigFile = 'BadConfigFile',
-	AuthenticationFailed = 'AuthenticationFailed',
-	NoUserNameConfigured = 'NoUserNameConfigured',
-	NoUserEmailConfigured = 'NoUserEmailConfigured',
-	NoRemoteRepositorySpecified = 'NoRemoteRepositorySpecified',
-	NotAGitRepository = 'NotAGitRepository',
-	NotAtRepositoryRoot = 'NotAtRepositoryRoot',
-	Conflict = 'Conflict',
-	StashConflict = 'StashConflict',
-	UnmergedChanges = 'UnmergedChanges',
-	PushRejected = 'PushRejected',
-	RemoteConnectionError = 'RemoteConnectionError',
-	DirtyWorkTree = 'DirtyWorkTree',
-	CantOpenResource = 'CantOpenResource',
-	GitNotFound = 'GitNotFound',
-	CantCreatePipe = 'CantCreatePipe',
-	PermissionDenied = 'PermissionDenied',
-	CantAccessRemote = 'CantAccessRemote',
-	RepositoryNotFound = 'RepositoryNotFound',
-	RepositoryIsLocked = 'RepositoryIsLocked',
-	BranchNotFullyMerged = 'BranchNotFullyMerged',
-	NoRemoteReference = 'NoRemoteReference',
-	InvalidBranchName = 'InvalidBranchName',
-	BranchAlreadyExists = 'BranchAlreadyExists',
-	NoLocalChanges = 'NoLocalChanges',
-	NoStashFound = 'NoStashFound',
-	LocalChangesOverwritten = 'LocalChangesOverwritten',
-	NoUpstreamBranch = 'NoUpstreamBranch',
-	IsInSubmodule = 'IsInSubmodule',
-	WrongCase = 'WrongCase',
-	CantLockRef = 'CantLockRef',
-	CantRebaseMultipleBranches = 'CantRebaseMultipleBranches',
-	PatchDoesNotApply = 'PatchDoesNotApply',
-	NoPathFound = 'NoPathFound',
-	UnknownPath = 'UnknownPath',
-	EmptyCommitMessage = 'EmptyCommitMessage',
-	BranchFastForwardRejected = 'BranchFastForwardRejected',
-	BranchNotYetBorn = 'BranchNotYetBorn',
-	TagConflict = 'TagConflict'
+	BadConfigFile = "BadConfigFile",
+	AuthenticationFailed = "AuthenticationFailed",
+	NoUserNameConfigured = "NoUserNameConfigured",
+	NoUserEmailConfigured = "NoUserEmailConfigured",
+	NoRemoteRepositorySpecified = "NoRemoteRepositorySpecified",
+	NotAGitRepository = "NotAGitRepository",
+	NotAtRepositoryRoot = "NotAtRepositoryRoot",
+	Conflict = "Conflict",
+	StashConflict = "StashConflict",
+	UnmergedChanges = "UnmergedChanges",
+	PushRejected = "PushRejected",
+	RemoteConnectionError = "RemoteConnectionError",
+	DirtyWorkTree = "DirtyWorkTree",
+	CantOpenResource = "CantOpenResource",
+	GitNotFound = "GitNotFound",
+	CantCreatePipe = "CantCreatePipe",
+	PermissionDenied = "PermissionDenied",
+	CantAccessRemote = "CantAccessRemote",
+	RepositoryNotFound = "RepositoryNotFound",
+	RepositoryIsLocked = "RepositoryIsLocked",
+	BranchNotFullyMerged = "BranchNotFullyMerged",
+	NoRemoteReference = "NoRemoteReference",
+	InvalidBranchName = "InvalidBranchName",
+	BranchAlreadyExists = "BranchAlreadyExists",
+	NoLocalChanges = "NoLocalChanges",
+	NoStashFound = "NoStashFound",
+	LocalChangesOverwritten = "LocalChangesOverwritten",
+	NoUpstreamBranch = "NoUpstreamBranch",
+	IsInSubmodule = "IsInSubmodule",
+	WrongCase = "WrongCase",
+	CantLockRef = "CantLockRef",
+	CantRebaseMultipleBranches = "CantRebaseMultipleBranches",
+	PatchDoesNotApply = "PatchDoesNotApply",
+	NoPathFound = "NoPathFound",
+	UnknownPath = "UnknownPath",
+	EmptyCommitMessage = "EmptyCommitMessage",
+	BranchFastForwardRejected = "BranchFastForwardRejected",
+	BranchNotYetBorn = "BranchNotYetBorn",
+	TagConflict = "TagConflict",
 }

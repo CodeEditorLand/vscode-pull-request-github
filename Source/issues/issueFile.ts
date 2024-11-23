@@ -3,21 +3,27 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as vscode from 'vscode';
-import { FolderRepositoryManager, PullRequestDefaults } from '../github/folderRepositoryManager';
-import { IProject } from '../github/interface';
-import { RepositoriesManager } from '../github/repositoriesManager';
+import * as vscode from "vscode";
 
-export const NEW_ISSUE_SCHEME = 'newIssue';
-export const NEW_ISSUE_FILE = 'NewIssue.md';
-export const ASSIGNEES = vscode.l10n.t('Assignees:');
-export const LABELS = vscode.l10n.t('Labels:');
-export const MILESTONE = vscode.l10n.t('Milestone:');
-export const PROJECTS = vscode.l10n.t('Projects:');
+import {
+	FolderRepositoryManager,
+	PullRequestDefaults,
+} from "../github/folderRepositoryManager";
+import { IProject } from "../github/interface";
+import { RepositoriesManager } from "../github/repositoriesManager";
 
-const NEW_ISSUE_CACHE = 'newIssue.cache';
+export const NEW_ISSUE_SCHEME = "newIssue";
+export const NEW_ISSUE_FILE = "NewIssue.md";
+export const ASSIGNEES = vscode.l10n.t("Assignees:");
+export const LABELS = vscode.l10n.t("Labels:");
+export const MILESTONE = vscode.l10n.t("Milestone:");
+export const PROJECTS = vscode.l10n.t("Projects:");
 
-export function extractIssueOriginFromQuery(uri: vscode.Uri): vscode.Uri | undefined {
+const NEW_ISSUE_CACHE = "newIssue.cache";
+
+export function extractIssueOriginFromQuery(
+	uri: vscode.Uri,
+): vscode.Uri | undefined {
 	const query = JSON.parse(uri.query);
 
 	if (query.origin) {
@@ -29,14 +35,17 @@ export class IssueFileSystemProvider implements vscode.FileSystemProvider {
 	private content: Uint8Array | undefined;
 	private createTime: number = 0;
 	private modifiedTime: number = 0;
-	private _onDidChangeFile: vscode.EventEmitter<vscode.FileChangeEvent[]> = new vscode.EventEmitter<
-		vscode.FileChangeEvent[]
-	>();
+	private _onDidChangeFile: vscode.EventEmitter<vscode.FileChangeEvent[]> =
+		new vscode.EventEmitter<vscode.FileChangeEvent[]>();
 
-	constructor(private readonly cache: NewIssueCache) { }
-	onDidChangeFile: vscode.Event<vscode.FileChangeEvent[]> = this._onDidChangeFile.event;
-	watch(_uri: vscode.Uri, _options: { recursive: boolean; excludes: string[] }): vscode.Disposable {
-		const disposable = this.onDidChangeFile(e => {
+	constructor(private readonly cache: NewIssueCache) {}
+	onDidChangeFile: vscode.Event<vscode.FileChangeEvent[]> =
+		this._onDidChangeFile.event;
+	watch(
+		_uri: vscode.Uri,
+		_options: { recursive: boolean; excludes: string[] },
+	): vscode.Disposable {
+		const disposable = this.onDidChangeFile((e) => {
 			if (e.length === 0 && e[0].type === vscode.FileChangeType.Deleted) {
 				disposable.dispose();
 			}
@@ -52,42 +61,62 @@ export class IssueFileSystemProvider implements vscode.FileSystemProvider {
 			size: this.content?.length ?? 0,
 		};
 	}
-	readDirectory(_uri: vscode.Uri): [string, vscode.FileType][] | Thenable<[string, vscode.FileType][]> {
+	readDirectory(
+		_uri: vscode.Uri,
+	): [string, vscode.FileType][] | Thenable<[string, vscode.FileType][]> {
 		return [];
 	}
-	createDirectory(_uri: vscode.Uri): void { }
+	createDirectory(_uri: vscode.Uri): void {}
 	readFile(_uri: vscode.Uri): Uint8Array | Thenable<Uint8Array> {
 		return this.content ?? new Uint8Array(0);
 	}
 	writeFile(
 		uri: vscode.Uri,
 		content: Uint8Array,
-		_options: { create: boolean; overwrite: boolean } = { create: false, overwrite: false },
+		_options: { create: boolean; overwrite: boolean } = {
+			create: false,
+			overwrite: false,
+		},
 	): void | Thenable<void> {
 		const oldContent = this.content;
 		this.content = content;
 
 		if (oldContent === undefined) {
 			this.createTime = new Date().getTime();
-			this._onDidChangeFile.fire([{ uri: uri, type: vscode.FileChangeType.Created }]);
+			this._onDidChangeFile.fire([
+				{ uri: uri, type: vscode.FileChangeType.Created },
+			]);
 		} else {
 			this.modifiedTime = new Date().getTime();
-			this._onDidChangeFile.fire([{ uri: uri, type: vscode.FileChangeType.Changed }]);
+			this._onDidChangeFile.fire([
+				{ uri: uri, type: vscode.FileChangeType.Changed },
+			]);
 		}
 		this.cache.cache(content);
 	}
-	delete(uri: vscode.Uri, _options: { recursive: boolean }): void | Thenable<void> {
+	delete(
+		uri: vscode.Uri,
+		_options: { recursive: boolean },
+	): void | Thenable<void> {
 		this.content = undefined;
 		this.createTime = 0;
 		this.modifiedTime = 0;
-		this._onDidChangeFile.fire([{ uri: uri, type: vscode.FileChangeType.Deleted }]);
+		this._onDidChangeFile.fire([
+			{ uri: uri, type: vscode.FileChangeType.Deleted },
+		]);
 	}
 
-	rename(_oldUri: vscode.Uri, _newUri: vscode.Uri, _options: { overwrite: boolean }): void | Thenable<void> { }
+	rename(
+		_oldUri: vscode.Uri,
+		_newUri: vscode.Uri,
+		_options: { overwrite: boolean },
+	): void | Thenable<void> {}
 }
 
-export class NewIssueFileCompletionProvider implements vscode.CompletionItemProvider {
-	constructor(private manager: RepositoriesManager) { }
+export class NewIssueFileCompletionProvider
+	implements vscode.CompletionItemProvider
+{
+	constructor(private manager: RepositoriesManager) {}
 
 	async provideCompletionItems(
 		document: vscode.TextDocument,
@@ -97,7 +126,11 @@ export class NewIssueFileCompletionProvider implements vscode.CompletionItemProv
 	): Promise<vscode.CompletionItem[]> {
 		const line = document.lineAt(position.line).text;
 
-		if (!line.startsWith(LABELS) && !line.startsWith(MILESTONE) && !line.startsWith(PROJECTS)) {
+		if (
+			!line.startsWith(LABELS) &&
+			!line.startsWith(MILESTONE) &&
+			!line.startsWith(PROJECTS)
+		) {
 			return [];
 		}
 		const originFile = extractIssueOriginFromQuery(document.uri);
@@ -123,37 +156,56 @@ export class NewIssueFileCompletionProvider implements vscode.CompletionItemProv
 		}
 	}
 
-	private async provideLabelCompletionItems(folderManager: FolderRepositoryManager, defaults: PullRequestDefaults): Promise<vscode.CompletionItem[]> {
+	private async provideLabelCompletionItems(
+		folderManager: FolderRepositoryManager,
+		defaults: PullRequestDefaults,
+	): Promise<vscode.CompletionItem[]> {
 		const labels = await folderManager.getLabels(undefined, defaults);
 
-		return labels.map(label => {
-			const item = new vscode.CompletionItem(label.name, vscode.CompletionItemKind.Color);
+		return labels.map((label) => {
+			const item = new vscode.CompletionItem(
+				label.name,
+				vscode.CompletionItemKind.Color,
+			);
 			item.documentation = `#${label.color}`;
-			item.commitCharacters = [' ', ','];
+			item.commitCharacters = [" ", ","];
 
 			return item;
 		});
 	}
 
-	private async provideMilestoneCompletionItems(folderManager: FolderRepositoryManager): Promise<vscode.CompletionItem[]> {
-		const milestones = await (await folderManager.getPullRequestDefaultRepo())?.getMilestones() ?? [];
+	private async provideMilestoneCompletionItems(
+		folderManager: FolderRepositoryManager,
+	): Promise<vscode.CompletionItem[]> {
+		const milestones =
+			(await (
+				await folderManager.getPullRequestDefaultRepo()
+			)?.getMilestones()) ?? [];
 
-		return milestones.map(milestone => {
-			const item = new vscode.CompletionItem(milestone.title, vscode.CompletionItemKind.Event);
-			item.commitCharacters = [' ', ','];
+		return milestones.map((milestone) => {
+			const item = new vscode.CompletionItem(
+				milestone.title,
+				vscode.CompletionItemKind.Event,
+			);
+			item.commitCharacters = [" ", ","];
 
 			return item;
 		});
 	}
 
-	private async provideProjectCompletionItems(folderManager: FolderRepositoryManager): Promise<vscode.CompletionItem[]> {
+	private async provideProjectCompletionItems(
+		folderManager: FolderRepositoryManager,
+	): Promise<vscode.CompletionItem[]> {
 		const repo = await folderManager.getPullRequestDefaultRepo();
 
-		const projects = await folderManager.getAllProjects(repo) ?? [];
+		const projects = (await folderManager.getAllProjects(repo)) ?? [];
 
-		return projects.map(project => {
-			const item = new vscode.CompletionItem(project.title, vscode.CompletionItemKind.Event);
-			item.commitCharacters = [' ', ','];
+		return projects.map((project) => {
+			const item = new vscode.CompletionItem(
+				project.title,
+				vscode.CompletionItemKind.Event,
+			);
+			item.commitCharacters = [" ", ","];
 
 			return item;
 		});
@@ -174,7 +226,9 @@ export class NewIssueCache {
 	}
 
 	public get(): string | undefined {
-		const content = this.context.workspaceState.get<Uint8Array | undefined>(NEW_ISSUE_CACHE);
+		const content = this.context.workspaceState.get<Uint8Array | undefined>(
+			NEW_ISSUE_CACHE,
+		);
 
 		if (content) {
 			return new TextDecoder().decode(content);
@@ -182,7 +236,20 @@ export class NewIssueCache {
 	}
 }
 
-export async function extractMetadataFromFile(repositoriesManager: RepositoriesManager): Promise<{ labels: string[] | undefined, milestone: number | undefined, projects: IProject[] | undefined, assignees: string[] | undefined, title: string, body: string | undefined, originUri: vscode.Uri } | undefined> {
+export async function extractMetadataFromFile(
+	repositoriesManager: RepositoriesManager,
+): Promise<
+	| {
+			labels: string[] | undefined;
+			milestone: number | undefined;
+			projects: IProject[] | undefined;
+			assignees: string[] | undefined;
+			title: string;
+			body: string | undefined;
+			originUri: vscode.Uri;
+	  }
+	| undefined
+> {
 	let text: string;
 
 	if (
@@ -191,7 +258,9 @@ export async function extractMetadataFromFile(repositoriesManager: RepositoriesM
 	) {
 		return;
 	}
-	const originUri = extractIssueOriginFromQuery(vscode.window.activeTextEditor.document.uri);
+	const originUri = extractIssueOriginFromQuery(
+		vscode.window.activeTextEditor.document.uri,
+	);
 
 	if (!originUri) {
 		return;
@@ -204,9 +273,9 @@ export async function extractMetadataFromFile(repositoriesManager: RepositoriesM
 	const repo = await folderManager.getPullRequestDefaultRepo();
 	text = vscode.window.activeTextEditor.document.getText();
 
-	const indexOfEmptyLineWindows = text.indexOf('\r\n\r\n');
+	const indexOfEmptyLineWindows = text.indexOf("\r\n\r\n");
 
-	const indexOfEmptyLineOther = text.indexOf('\n\n');
+	const indexOfEmptyLineOther = text.indexOf("\n\n");
 
 	let indexOfEmptyLine: number;
 
@@ -218,7 +287,10 @@ export async function extractMetadataFromFile(repositoriesManager: RepositoriesM
 		} else if (indexOfEmptyLineOther < 0) {
 			indexOfEmptyLine = indexOfEmptyLineWindows;
 		} else {
-			indexOfEmptyLine = Math.min(indexOfEmptyLineWindows, indexOfEmptyLineOther);
+			indexOfEmptyLine = Math.min(
+				indexOfEmptyLineWindows,
+				indexOfEmptyLineOther,
+			);
 		}
 	}
 	const title = text.substring(0, indexOfEmptyLine);
@@ -235,11 +307,11 @@ export async function extractMetadataFromFile(repositoriesManager: RepositoriesM
 		if (lines.length === 1) {
 			assignees = lines[0]
 				.substring(ASSIGNEES.length)
-				.split(',')
-				.map(value => {
+				.split(",")
+				.map((value) => {
 					value = value.trim();
 
-					if (value.startsWith('@')) {
+					if (value.startsWith("@")) {
 						value = value.substring(1);
 					}
 					return value;
@@ -255,9 +327,9 @@ export async function extractMetadataFromFile(repositoriesManager: RepositoriesM
 		if (lines.length === 1) {
 			labels = lines[0]
 				.substring(LABELS.length)
-				.split(',')
-				.map(value => value.trim())
-				.filter(label => label);
+				.split(",")
+				.map((value) => value.trim())
+				.filter((label) => label);
 			text = text.substring(lines[0].length).trim();
 		}
 	}
@@ -271,7 +343,9 @@ export async function extractMetadataFromFile(repositoriesManager: RepositoriesM
 
 			if (milestoneTitle) {
 				const repoMilestones = await repo.getMilestones();
-				milestone = repoMilestones?.find(milestone => milestone.title === milestoneTitle)?.number;
+				milestone = repoMilestones?.find(
+					(milestone) => milestone.title === milestoneTitle,
+				)?.number;
 			}
 			text = text.substring(lines[0].length).trim();
 		}
@@ -284,19 +358,24 @@ export async function extractMetadataFromFile(repositoriesManager: RepositoriesM
 		if (lines.length === 1) {
 			if (await repo.canGetProjectsNow()) {
 				const repoProjects = await folderManager.getAllProjects(repo);
-				projects = lines[0].substring(PROJECTS.length)
-					.split(',')
-					.map(value => {
+				projects = lines[0]
+					.substring(PROJECTS.length)
+					.split(",")
+					.map((value) => {
 						value = value.trim();
 
-						return repoProjects.find(project => project.title === value);
+						return repoProjects.find(
+							(project) => project.title === value,
+						);
 					})
-					.filter<IProject>((project): project is IProject => !!project);
+					.filter<IProject>(
+						(project): project is IProject => !!project,
+					);
 			}
 			text = text.substring(lines[0].length).trim();
 		}
 	}
-	const body = text ?? '';
+	const body = text ?? "";
 
 	return { labels, milestone, projects, assignees, title, body, originUri };
 }

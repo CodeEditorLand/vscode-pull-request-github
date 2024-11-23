@@ -3,53 +3,70 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-'use strict';
-import TelemetryReporter from '@vscode/extension-telemetry';
-import * as vscode from 'vscode';
-import { LiveShare } from 'vsls/vscode.js';
-import { PostCommitCommandsProvider, Repository } from './api/api';
-import { GitApiImpl } from './api/api1';
-import { registerCommands } from './commands';
-import { commands } from './common/executeCommands';
-import Logger from './common/logger';
-import * as PersistentState from './common/persistentState';
-import { parseRepositoryRemotes } from './common/remote';
-import { Resource } from './common/resources';
-import { BRANCH_PUBLISH, EXPERIMENTAL_CHAT, EXPERIMENTAL_NOTIFICATIONS, FILE_LIST_LAYOUT, GIT, OPEN_DIFF_ON_CLICK, PR_SETTINGS_NAMESPACE } from './common/settingKeys';
-import { TemporaryState } from './common/temporaryState';
-import { Schemes, handler as uriHandler } from './common/uri';
-import { EXTENSION_ID, FOCUS_REVIEW_MODE } from './constants';
-import { createExperimentationService, ExperimentationTelemetry } from './experimentationService';
-import { CredentialStore } from './github/credentials';
-import { FolderRepositoryManager } from './github/folderRepositoryManager';
-import { RepositoriesManager } from './github/repositoriesManager';
-import { registerBuiltinGitProvider, registerLiveShareGitProvider } from './gitProviders/api';
-import { GitHubContactServiceProvider } from './gitProviders/GitHubContactServiceProvider';
-import { GitLensIntegration } from './integrations/gitlens/gitlensImpl';
-import { IssueFeatureRegistrar } from './issues/issueFeatureRegistrar';
-import { ChatParticipant, ChatParticipantState } from './lm/participants';
-import { registerTools } from './lm/tools/tools';
-import { NotificationsFeatureRegister } from './notifications/notificationsFeatureRegistar';
-import { CommentDecorationProvider } from './view/commentDecorationProvider';
-import { CompareChanges } from './view/compareChangesTreeDataProvider';
-import { CreatePullRequestHelper } from './view/createPullRequestHelper';
-import { FileTypeDecorationProvider } from './view/fileTypeDecorationProvider';
-import { getInMemPRFileSystemProvider } from './view/inMemPRContentProvider';
-import { PullRequestChangesTreeDataProvider } from './view/prChangesTreeDataProvider';
-import { PRNotificationDecorationProvider } from './view/prNotificationDecorationProvider';
-import { PullRequestsTreeDataProvider } from './view/prsTreeDataProvider';
-import { ReviewManager, ShowPullRequest } from './view/reviewManager';
-import { ReviewsManager } from './view/reviewsManager';
-import { TreeDecorationProviders } from './view/treeDecorationProviders';
-import { WebviewViewCoordinator } from './view/webviewViewCoordinator';
+"use strict";
 
-const ingestionKey = '0c6ae279ed8443289764825290e4f9e2-1a736e7c-1324-4338-be46-fc2a58ae4d14-7255';
+import TelemetryReporter from "@vscode/extension-telemetry";
+import * as vscode from "vscode";
+import { LiveShare } from "vsls/vscode.js";
+
+import { PostCommitCommandsProvider, Repository } from "./api/api";
+import { GitApiImpl } from "./api/api1";
+import { registerCommands } from "./commands";
+import { commands } from "./common/executeCommands";
+import Logger from "./common/logger";
+import * as PersistentState from "./common/persistentState";
+import { parseRepositoryRemotes } from "./common/remote";
+import { Resource } from "./common/resources";
+import {
+	BRANCH_PUBLISH,
+	EXPERIMENTAL_CHAT,
+	EXPERIMENTAL_NOTIFICATIONS,
+	FILE_LIST_LAYOUT,
+	GIT,
+	OPEN_DIFF_ON_CLICK,
+	PR_SETTINGS_NAMESPACE,
+} from "./common/settingKeys";
+import { TemporaryState } from "./common/temporaryState";
+import { Schemes, handler as uriHandler } from "./common/uri";
+import { EXTENSION_ID, FOCUS_REVIEW_MODE } from "./constants";
+import {
+	createExperimentationService,
+	ExperimentationTelemetry,
+} from "./experimentationService";
+import { CredentialStore } from "./github/credentials";
+import { FolderRepositoryManager } from "./github/folderRepositoryManager";
+import { RepositoriesManager } from "./github/repositoriesManager";
+import {
+	registerBuiltinGitProvider,
+	registerLiveShareGitProvider,
+} from "./gitProviders/api";
+import { GitHubContactServiceProvider } from "./gitProviders/GitHubContactServiceProvider";
+import { GitLensIntegration } from "./integrations/gitlens/gitlensImpl";
+import { IssueFeatureRegistrar } from "./issues/issueFeatureRegistrar";
+import { ChatParticipant, ChatParticipantState } from "./lm/participants";
+import { registerTools } from "./lm/tools/tools";
+import { NotificationsFeatureRegister } from "./notifications/notificationsFeatureRegistar";
+import { CommentDecorationProvider } from "./view/commentDecorationProvider";
+import { CompareChanges } from "./view/compareChangesTreeDataProvider";
+import { CreatePullRequestHelper } from "./view/createPullRequestHelper";
+import { FileTypeDecorationProvider } from "./view/fileTypeDecorationProvider";
+import { getInMemPRFileSystemProvider } from "./view/inMemPRContentProvider";
+import { PullRequestChangesTreeDataProvider } from "./view/prChangesTreeDataProvider";
+import { PRNotificationDecorationProvider } from "./view/prNotificationDecorationProvider";
+import { PullRequestsTreeDataProvider } from "./view/prsTreeDataProvider";
+import { ReviewManager, ShowPullRequest } from "./view/reviewManager";
+import { ReviewsManager } from "./view/reviewsManager";
+import { TreeDecorationProviders } from "./view/treeDecorationProviders";
+import { WebviewViewCoordinator } from "./view/webviewViewCoordinator";
+
+const ingestionKey =
+	"0c6ae279ed8443289764825290e4f9e2-1a736e7c-1324-4338-be46-fc2a58ae4d14-7255";
 
 let telemetry: ExperimentationTelemetry;
 
-const PROMPTS_SCOPE = 'prompts';
+const PROMPTS_SCOPE = "prompts";
 
-const PROMPT_TO_CREATE_PR_ON_PUBLISH_KEY = 'createPROnPublish';
+const PROMPT_TO_CREATE_PR_ON_PUBLISH_KEY = "createPROnPublish";
 
 async function init(
 	context: vscode.ExtensionContext,
@@ -60,34 +77,46 @@ async function init(
 	liveshareApiPromise: Promise<LiveShare | undefined>,
 	showPRController: ShowPullRequest,
 	reposManager: RepositoriesManager,
-	createPrHelper: CreatePullRequestHelper
+	createPrHelper: CreatePullRequestHelper,
 ): Promise<void> {
 	context.subscriptions.push(Logger);
-	Logger.appendLine('Git repository found, initializing review manager and pr tree view.');
-
-	context.subscriptions.push(credentialStore.onDidChangeSessions(async e => {
-		if (e.provider.id === 'github') {
-			await reposManager.clearCredentialCache();
-
-			if (reviewsManager) {
-				reviewsManager.reviewManagers.forEach(reviewManager => reviewManager.updateState(true));
-			}
-		}
-	}));
+	Logger.appendLine(
+		"Git repository found, initializing review manager and pr tree view.",
+	);
 
 	context.subscriptions.push(
-		git.onDidPublish(async e => {
+		credentialStore.onDidChangeSessions(async (e) => {
+			if (e.provider.id === "github") {
+				await reposManager.clearCredentialCache();
+
+				if (reviewsManager) {
+					reviewsManager.reviewManagers.forEach((reviewManager) =>
+						reviewManager.updateState(true),
+					);
+				}
+			}
+		}),
+	);
+
+	context.subscriptions.push(
+		git.onDidPublish(async (e) => {
 			// Only notify on branch publish events
 			if (!e.branch) {
 				return;
 			}
 
-			if (vscode.workspace.getConfiguration(PR_SETTINGS_NAMESPACE).get<'ask' | 'never' | undefined>(BRANCH_PUBLISH) !== 'ask') {
+			if (
+				vscode.workspace
+					.getConfiguration(PR_SETTINGS_NAMESPACE)
+					.get<"ask" | "never" | undefined>(BRANCH_PUBLISH) !== "ask"
+			) {
 				return;
 			}
 
 			const reviewManager = reviewsManager.reviewManagers.find(
-				manager => manager.repository.rootUri.toString() === e.repository.rootUri.toString(),
+				(manager) =>
+					manager.repository.rootUri.toString() ===
+					e.repository.rootUri.toString(),
 			);
 
 			if (reviewManager?.isCreatingPullRequest) {
@@ -95,9 +124,15 @@ async function init(
 			}
 
 			const folderManager = reposManager.folderManagers.find(
-				manager => manager.repository.rootUri.toString() === e.repository.rootUri.toString());
+				(manager) =>
+					manager.repository.rootUri.toString() ===
+					e.repository.rootUri.toString(),
+			);
 
-			if (!folderManager || folderManager.gitHubRepositories.length === 0) {
+			if (
+				!folderManager ||
+				folderManager.gitHubRepositories.length === 0
+			) {
 				return;
 			}
 
@@ -107,12 +142,15 @@ async function init(
 				return;
 			}
 
-			const create = vscode.l10n.t('Create Pull Request...');
+			const create = vscode.l10n.t("Create Pull Request...");
 
-			const dontShowAgain = vscode.l10n.t('Don\'t Show Again');
+			const dontShowAgain = vscode.l10n.t("Don't Show Again");
 
 			const result = await vscode.window.showInformationMessage(
-				vscode.l10n.t('Would you like to create a Pull Request for branch \'{0}\'?', e.branch),
+				vscode.l10n.t(
+					"Would you like to create a Pull Request for branch '{0}'?",
+					e.branch,
+				),
 				create,
 				dontShowAgain,
 			);
@@ -120,7 +158,13 @@ async function init(
 			if (result === create) {
 				reviewManager?.createPullRequest(e.branch);
 			} else if (result === dontShowAgain) {
-				await vscode.workspace.getConfiguration(PR_SETTINGS_NAMESPACE).update(BRANCH_PUBLISH, 'never', vscode.ConfigurationTarget.Global);
+				await vscode.workspace
+					.getConfiguration(PR_SETTINGS_NAMESPACE)
+					.update(
+						BRANCH_PUBLISH,
+						"never",
+						vscode.ConfigurationTarget.Global,
+					);
 			}
 		}),
 	);
@@ -137,12 +181,19 @@ async function init(
 			let indexB = workspaceFolders.length;
 
 			for (let i = 0; i < workspaceFolders.length; i++) {
-				if (workspaceFolders[i].uri.toString() === a.rootUri.toString()) {
+				if (
+					workspaceFolders[i].uri.toString() === a.rootUri.toString()
+				) {
 					indexA = i;
-				} else if (workspaceFolders[i].uri.toString() === b.rootUri.toString()) {
+				} else if (
+					workspaceFolders[i].uri.toString() === b.rootUri.toString()
+				) {
 					indexB = i;
 				}
-				if (indexA !== workspaceFolders.length && indexB !== workspaceFolders.length) {
+				if (
+					indexA !== workspaceFolders.length &&
+					indexB !== workspaceFolders.length
+				) {
 					break;
 				}
 			}
@@ -150,14 +201,20 @@ async function init(
 		});
 	}
 
-	liveshareApiPromise.then(api => {
+	liveshareApiPromise.then((api) => {
 		if (api) {
 			// register the pull request provider to suggest PR contacts
-			api.registerContactServiceProvider('github-pr', new GitHubContactServiceProvider(reposManager));
+			api.registerContactServiceProvider(
+				"github-pr",
+				new GitHubContactServiceProvider(reposManager),
+			);
 		}
 	});
 
-	const changesTree = new PullRequestChangesTreeDataProvider(git, reposManager);
+	const changesTree = new PullRequestChangesTreeDataProvider(
+		git,
+		reposManager,
+	);
 	context.subscriptions.push(changesTree);
 
 	const activePrViewCoordinator = new WebviewViewCoordinator(context);
@@ -166,32 +223,75 @@ async function init(
 	let reviewManagerIndex = 0;
 
 	const reviewManagers = reposManager.folderManagers.map(
-		folderManager => new ReviewManager(reviewManagerIndex++, context, folderManager.repository, folderManager, telemetry, changesTree, tree, showPRController, activePrViewCoordinator, createPrHelper, git),
+		(folderManager) =>
+			new ReviewManager(
+				reviewManagerIndex++,
+				context,
+				folderManager.repository,
+				folderManager,
+				telemetry,
+				changesTree,
+				tree,
+				showPRController,
+				activePrViewCoordinator,
+				createPrHelper,
+				git,
+			),
 	);
 
 	const treeDecorationProviders = new TreeDecorationProviders(reposManager);
 	context.subscriptions.push(treeDecorationProviders);
-	treeDecorationProviders.registerProviders([new FileTypeDecorationProvider(), new CommentDecorationProvider(reposManager)]);
+	treeDecorationProviders.registerProviders([
+		new FileTypeDecorationProvider(),
+		new CommentDecorationProvider(reposManager),
+	]);
 
-	const reviewsManager = new ReviewsManager(context, reposManager, reviewManagers, tree, changesTree, telemetry, credentialStore, git);
+	const reviewsManager = new ReviewsManager(
+		context,
+		reposManager,
+		reviewManagers,
+		tree,
+		changesTree,
+		telemetry,
+		credentialStore,
+		git,
+	);
 	context.subscriptions.push(reviewsManager);
 
 	git.onDidChangeState(() => {
-		Logger.appendLine(`Git initialization state changed: state=${git.state}`);
-		reviewsManager.reviewManagers.forEach(reviewManager => reviewManager.updateState(true));
+		Logger.appendLine(
+			`Git initialization state changed: state=${git.state}`,
+		);
+		reviewsManager.reviewManagers.forEach((reviewManager) =>
+			reviewManager.updateState(true),
+		);
 	});
 
-	git.onDidOpenRepository(repo => {
+	git.onDidOpenRepository((repo) => {
 		function addRepo() {
 			// Make sure we don't already have a folder manager for this repo.
-			const existing = reposManager.folderManagers.find(manager => manager.repository.rootUri.toString() === repo.rootUri.toString());
+			const existing = reposManager.folderManagers.find(
+				(manager) =>
+					manager.repository.rootUri.toString() ===
+					repo.rootUri.toString(),
+			);
 
 			if (existing) {
-				Logger.appendLine(`Repo ${repo.rootUri} has already been setup.`);
+				Logger.appendLine(
+					`Repo ${repo.rootUri} has already been setup.`,
+				);
 
 				return;
 			}
-			const newFolderManager = new FolderRepositoryManager(reposManager.folderManagers.length, context, repo, telemetry, git, credentialStore, createPrHelper);
+			const newFolderManager = new FolderRepositoryManager(
+				reposManager.folderManagers.length,
+				context,
+				repo,
+				telemetry,
+				git,
+				credentialStore,
+				createPrHelper,
+			);
 			reposManager.insertFolderManager(newFolderManager);
 
 			const newReviewManager = new ReviewManager(
@@ -205,7 +305,7 @@ async function init(
 				showPRController,
 				activePrViewCoordinator,
 				createPrHelper,
-				git
+				git,
 			);
 			reviewsManager.addReviewManager(newReviewManager);
 		}
@@ -219,44 +319,80 @@ async function init(
 		});
 	});
 
-	git.onDidCloseRepository(repo => {
+	git.onDidCloseRepository((repo) => {
 		reposManager.removeRepo(repo);
 		reviewsManager.removeReviewManager(repo);
 		tree.notificationProvider.refreshOrLaunchPolling();
 	});
 
-	tree.initialize(reviewsManager.reviewManagers.map(manager => manager.reviewModel), credentialStore);
+	tree.initialize(
+		reviewsManager.reviewManagers.map((manager) => manager.reviewModel),
+		credentialStore,
+	);
 
-	context.subscriptions.push(new PRNotificationDecorationProvider(tree.notificationProvider));
+	context.subscriptions.push(
+		new PRNotificationDecorationProvider(tree.notificationProvider),
+	);
 
 	registerCommands(context, reposManager, reviewsManager, telemetry, tree);
 
-	const layout = vscode.workspace.getConfiguration(PR_SETTINGS_NAMESPACE).get<string>(FILE_LIST_LAYOUT);
-	await vscode.commands.executeCommand('setContext', 'fileListLayout:flat', layout === 'flat');
+	const layout = vscode.workspace
+		.getConfiguration(PR_SETTINGS_NAMESPACE)
+		.get<string>(FILE_LIST_LAYOUT);
+	await vscode.commands.executeCommand(
+		"setContext",
+		"fileListLayout:flat",
+		layout === "flat",
+	);
 
-	const issuesFeatures = new IssueFeatureRegistrar(git, reposManager, reviewsManager, context, telemetry);
+	const issuesFeatures = new IssueFeatureRegistrar(
+		git,
+		reposManager,
+		reviewsManager,
+		context,
+		telemetry,
+	);
 	context.subscriptions.push(issuesFeatures);
 	await issuesFeatures.initialize();
 
-	const notificationsViewEnabled = vscode.workspace.getConfiguration(PR_SETTINGS_NAMESPACE).get<boolean>(EXPERIMENTAL_NOTIFICATIONS, false);
+	const notificationsViewEnabled = vscode.workspace
+		.getConfiguration(PR_SETTINGS_NAMESPACE)
+		.get<boolean>(EXPERIMENTAL_NOTIFICATIONS, false);
 
 	if (notificationsViewEnabled) {
-		const notificationsFeatures = new NotificationsFeatureRegister(credentialStore, reposManager, telemetry);
+		const notificationsFeatures = new NotificationsFeatureRegister(
+			credentialStore,
+			reposManager,
+			telemetry,
+		);
 		context.subscriptions.push(notificationsFeatures);
 	}
 
 	context.subscriptions.push(new GitLensIntegration());
 
-	await vscode.commands.executeCommand('setContext', 'github:initialized', true);
+	await vscode.commands.executeCommand(
+		"setContext",
+		"github:initialized",
+		true,
+	);
 
 	registerPostCommitCommandsProvider(reposManager, git);
 
-	const chatEnabled = vscode.workspace.getConfiguration(PR_SETTINGS_NAMESPACE).get<boolean>(EXPERIMENTAL_CHAT, false);
+	const chatEnabled = vscode.workspace
+		.getConfiguration(PR_SETTINGS_NAMESPACE)
+		.get<boolean>(EXPERIMENTAL_CHAT, false);
 
 	if (chatEnabled) {
 		const chatParticipantState = new ChatParticipantState();
-		context.subscriptions.push(new ChatParticipant(context, chatParticipantState));
-		registerTools(context, credentialStore, reposManager, chatParticipantState);
+		context.subscriptions.push(
+			new ChatParticipant(context, chatParticipantState),
+		);
+		registerTools(
+			context,
+			credentialStore,
+			reposManager,
+			chatParticipantState,
+		);
 	}
 
 	// Make sure any compare changes tabs, which come from the create flow, are closed.
@@ -264,40 +400,62 @@ async function init(
 	/* __GDPR__
 		"startup" : {}
 	*/
-	telemetry.sendTelemetryEvent('startup');
+	telemetry.sendTelemetryEvent("startup");
 }
 
-export async function activate(context: vscode.ExtensionContext): Promise<GitApiImpl> {
-	Logger.appendLine(`Extension version: ${vscode.extensions.getExtension(EXTENSION_ID)?.packageJSON.version}`, 'Activation');
+export async function activate(
+	context: vscode.ExtensionContext,
+): Promise<GitApiImpl> {
+	Logger.appendLine(
+		`Extension version: ${vscode.extensions.getExtension(EXTENSION_ID)?.packageJSON.version}`,
+		"Activation",
+	);
 	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 	// @ts-ignore
-	if (EXTENSION_ID === 'GitHub.vscode-pull-request-github-insiders') {
-		const stable = vscode.extensions.getExtension('github.vscode-pull-request-github');
+	if (EXTENSION_ID === "GitHub.vscode-pull-request-github-insiders") {
+		const stable = vscode.extensions.getExtension(
+			"github.vscode-pull-request-github",
+		);
 
 		if (stable !== undefined) {
 			throw new Error(
-				'GitHub Pull Requests and Issues Nightly cannot be used while GitHub Pull Requests and Issues is also installed. Please ensure that only one version of the extension is installed.',
+				"GitHub Pull Requests and Issues Nightly cannot be used while GitHub Pull Requests and Issues is also installed. Please ensure that only one version of the extension is installed.",
 			);
 		}
 	}
 
 	const showPRController = new ShowPullRequest();
-	vscode.commands.registerCommand('github.api.preloadPullRequest', async (shouldShow: boolean) => {
-		await vscode.commands.executeCommand('setContext', FOCUS_REVIEW_MODE, true);
-		await commands.focusView('github:activePullRequest:welcome');
-		showPRController.shouldShow = shouldShow;
-	});
+	vscode.commands.registerCommand(
+		"github.api.preloadPullRequest",
+		async (shouldShow: boolean) => {
+			await vscode.commands.executeCommand(
+				"setContext",
+				FOCUS_REVIEW_MODE,
+				true,
+			);
+			await commands.focusView("github:activePullRequest:welcome");
+			showPRController.shouldShow = shouldShow;
+		},
+	);
 
-	const openDiff = vscode.workspace.getConfiguration(GIT, null).get(OPEN_DIFF_ON_CLICK, true);
-	await vscode.commands.executeCommand('setContext', 'openDiffOnClick', openDiff);
+	const openDiff = vscode.workspace
+		.getConfiguration(GIT, null)
+		.get(OPEN_DIFF_ON_CLICK, true);
+	await vscode.commands.executeCommand(
+		"setContext",
+		"openDiffOnClick",
+		openDiff,
+	);
 
 	// initialize resources
 	Resource.initialize(context);
-	Logger.debug('Creating API implementation.', 'Activation');
+	Logger.debug("Creating API implementation.", "Activation");
 
 	const apiImpl = new GitApiImpl();
 
-	telemetry = new ExperimentationTelemetry(new TelemetryReporter(ingestionKey));
+	telemetry = new ExperimentationTelemetry(
+		new TelemetryReporter(ingestionKey),
+	);
 	context.subscriptions.push(telemetry);
 
 	await deferredActivate(context, apiImpl, showPRController);
@@ -305,8 +463,15 @@ export async function activate(context: vscode.ExtensionContext): Promise<GitApi
 	return apiImpl;
 }
 
-async function doRegisterBuiltinGitProvider(context: vscode.ExtensionContext, credentialStore: CredentialStore, apiImpl: GitApiImpl): Promise<boolean> {
-	const builtInGitProvider = await registerBuiltinGitProvider(credentialStore, apiImpl);
+async function doRegisterBuiltinGitProvider(
+	context: vscode.ExtensionContext,
+	credentialStore: CredentialStore,
+	apiImpl: GitApiImpl,
+): Promise<boolean> {
+	const builtInGitProvider = await registerBuiltinGitProvider(
+		credentialStore,
+		apiImpl,
+	);
 
 	if (builtInGitProvider) {
 		context.subscriptions.push(builtInGitProvider);
@@ -316,39 +481,66 @@ async function doRegisterBuiltinGitProvider(context: vscode.ExtensionContext, cr
 	return false;
 }
 
-function registerPostCommitCommandsProvider(reposManager: RepositoriesManager, git: GitApiImpl) {
-	const componentId = 'GitPostCommitCommands';
+function registerPostCommitCommandsProvider(
+	reposManager: RepositoriesManager,
+	git: GitApiImpl,
+) {
+	const componentId = "GitPostCommitCommands";
 
 	class Provider implements PostCommitCommandsProvider {
-
 		getCommands(repository: Repository) {
-			Logger.debug(`Looking for remote. Comparing ${repository.state.remotes.length} local repo remotes with ${reposManager.folderManagers.reduce((prev, curr) => prev + curr.gitHubRepositories.length, 0)} GitHub repositories.`, componentId);
+			Logger.debug(
+				`Looking for remote. Comparing ${repository.state.remotes.length} local repo remotes with ${reposManager.folderManagers.reduce((prev, curr) => prev + curr.gitHubRepositories.length, 0)} GitHub repositories.`,
+				componentId,
+			);
 
 			const repoRemotes = parseRepositoryRemotes(repository);
 
-			const found = reposManager.folderManagers.find(folderManager => folderManager.findRepo(githubRepo => {
-				return !!repoRemotes.find(remote => {
-					return remote.equals(githubRepo.remote);
-				});
-			}));
-			Logger.debug(`Found ${found ? 'a repo' : 'no repos'} when getting post commit commands.`, componentId);
+			const found = reposManager.folderManagers.find((folderManager) =>
+				folderManager.findRepo((githubRepo) => {
+					return !!repoRemotes.find((remote) => {
+						return remote.equals(githubRepo.remote);
+					});
+				}),
+			);
+			Logger.debug(
+				`Found ${found ? "a repo" : "no repos"} when getting post commit commands.`,
+				componentId,
+			);
 
-			return found ? [{
-				command: 'pr.pushAndCreate',
-				title: vscode.l10n.t('{0} Commit & Create Pull Request', '$(git-pull-request-create)'),
-				tooltip: vscode.l10n.t('Commit & Create Pull Request')
-			}] : [];
+			return found
+				? [
+						{
+							command: "pr.pushAndCreate",
+							title: vscode.l10n.t(
+								"{0} Commit & Create Pull Request",
+								"$(git-pull-request-create)",
+							),
+							tooltip: vscode.l10n.t(
+								"Commit & Create Pull Request",
+							),
+						},
+					]
+				: [];
 		}
 	}
 
 	function hasGitHubRepos(): boolean {
-		return reposManager.folderManagers.some(folderManager => folderManager.gitHubRepositories.length > 0);
+		return reposManager.folderManagers.some(
+			(folderManager) => folderManager.gitHubRepositories.length > 0,
+		);
 	}
 	function tryRegister(): boolean {
-		Logger.debug('Trying to register post commit commands.', 'GitPostCommitCommands');
+		Logger.debug(
+			"Trying to register post commit commands.",
+			"GitPostCommitCommands",
+		);
 
 		if (hasGitHubRepos()) {
-			Logger.debug('GitHub remote(s) found, registering post commit commands.', componentId);
+			Logger.debug(
+				"GitHub remote(s) found, registering post commit commands.",
+				componentId,
+			);
 			git.registerPostCommitCommandsProvider(new Provider());
 
 			return true;
@@ -365,43 +557,79 @@ function registerPostCommitCommandsProvider(reposManager: RepositoriesManager, g
 	}
 }
 
-async function deferredActivateRegisterBuiltInGitProvider(context: vscode.ExtensionContext, apiImpl: GitApiImpl, credentialStore: CredentialStore) {
-	Logger.debug('Registering built in git provider.', 'Activation');
+async function deferredActivateRegisterBuiltInGitProvider(
+	context: vscode.ExtensionContext,
+	apiImpl: GitApiImpl,
+	credentialStore: CredentialStore,
+) {
+	Logger.debug("Registering built in git provider.", "Activation");
 
-	if (!(await doRegisterBuiltinGitProvider(context, credentialStore, apiImpl))) {
-		const extensionsChangedDisposable = vscode.extensions.onDidChange(async () => {
-			if (await doRegisterBuiltinGitProvider(context, credentialStore, apiImpl)) {
-				extensionsChangedDisposable.dispose();
-			}
-		});
+	if (
+		!(await doRegisterBuiltinGitProvider(context, credentialStore, apiImpl))
+	) {
+		const extensionsChangedDisposable = vscode.extensions.onDidChange(
+			async () => {
+				if (
+					await doRegisterBuiltinGitProvider(
+						context,
+						credentialStore,
+						apiImpl,
+					)
+				) {
+					extensionsChangedDisposable.dispose();
+				}
+			},
+		);
 		context.subscriptions.push(extensionsChangedDisposable);
 	}
 }
 
-async function deferredActivate(context: vscode.ExtensionContext, apiImpl: GitApiImpl, showPRController: ShowPullRequest) {
-	Logger.debug('Initializing state.', 'Activation');
+async function deferredActivate(
+	context: vscode.ExtensionContext,
+	apiImpl: GitApiImpl,
+	showPRController: ShowPullRequest,
+) {
+	Logger.debug("Initializing state.", "Activation");
 	PersistentState.init(context);
 	// Migrate from state to setting
-	if (PersistentState.fetch(PROMPTS_SCOPE, PROMPT_TO_CREATE_PR_ON_PUBLISH_KEY) === false) {
-		await vscode.workspace.getConfiguration(PR_SETTINGS_NAMESPACE).update(BRANCH_PUBLISH, 'never', vscode.ConfigurationTarget.Global);
-		PersistentState.store(PROMPTS_SCOPE, PROMPT_TO_CREATE_PR_ON_PUBLISH_KEY, true);
+	if (
+		PersistentState.fetch(
+			PROMPTS_SCOPE,
+			PROMPT_TO_CREATE_PR_ON_PUBLISH_KEY,
+		) === false
+	) {
+		await vscode.workspace
+			.getConfiguration(PR_SETTINGS_NAMESPACE)
+			.update(BRANCH_PUBLISH, "never", vscode.ConfigurationTarget.Global);
+		PersistentState.store(
+			PROMPTS_SCOPE,
+			PROMPT_TO_CREATE_PR_ON_PUBLISH_KEY,
+			true,
+		);
 	}
 	TemporaryState.init(context);
-	Logger.debug('Creating credential store.', 'Activation');
+	Logger.debug("Creating credential store.", "Activation");
 
 	const credentialStore = new CredentialStore(telemetry, context);
 	context.subscriptions.push(credentialStore);
 
-	const experimentationService = await createExperimentationService(context, telemetry);
+	const experimentationService = await createExperimentationService(
+		context,
+		telemetry,
+	);
 	await experimentationService.initializePromise;
-	await experimentationService.isCachedFlightEnabled('githubaa');
+	await experimentationService.isCachedFlightEnabled("githubaa");
 
-	const showBadge = (vscode.env.appHost === 'desktop');
+	const showBadge = vscode.env.appHost === "desktop";
 	await credentialStore.create(showBadge ? undefined : { silent: true });
 
-	deferredActivateRegisterBuiltInGitProvider(context, apiImpl, credentialStore);
+	deferredActivateRegisterBuiltInGitProvider(
+		context,
+		apiImpl,
+		credentialStore,
+	);
 
-	Logger.debug('Registering live share git provider.', 'Activation');
+	Logger.debug("Registering live share git provider.", "Activation");
 
 	const liveshareGitProvider = registerLiveShareGitProvider(apiImpl);
 	context.subscriptions.push(liveshareGitProvider);
@@ -410,18 +638,26 @@ async function deferredActivate(context: vscode.ExtensionContext, apiImpl: GitAp
 
 	context.subscriptions.push(apiImpl);
 
-	Logger.debug('Creating tree view.', 'Activation');
+	Logger.debug("Creating tree view.", "Activation");
 
 	const reposManager = new RepositoriesManager(credentialStore, telemetry);
 	context.subscriptions.push(reposManager);
 
-	const prTree = new PullRequestsTreeDataProvider(telemetry, context, reposManager);
+	const prTree = new PullRequestsTreeDataProvider(
+		telemetry,
+		context,
+		reposManager,
+	);
 	context.subscriptions.push(prTree);
-	context.subscriptions.push(credentialStore.onDidGetSession(() => prTree.refresh(undefined, true)));
-	Logger.appendLine('Looking for git repository');
+	context.subscriptions.push(
+		credentialStore.onDidGetSession(() => prTree.refresh(undefined, true)),
+	);
+	Logger.appendLine("Looking for git repository");
 
 	const repositories = apiImpl.repositories;
-	Logger.appendLine(`Found ${repositories.length} repositories during activation`);
+	Logger.appendLine(
+		`Found ${repositories.length} repositories during activation`,
+	);
 
 	const createPrHelper = new CreatePullRequestHelper();
 	context.subscriptions.push(createPrHelper);
@@ -429,7 +665,16 @@ async function deferredActivate(context: vscode.ExtensionContext, apiImpl: GitAp
 	let folderManagerIndex = 0;
 
 	const folderManagers = repositories.map(
-		repository => new FolderRepositoryManager(folderManagerIndex++, context, repository, telemetry, apiImpl, credentialStore, createPrHelper),
+		(repository) =>
+			new FolderRepositoryManager(
+				folderManagerIndex++,
+				context,
+				repository,
+				telemetry,
+				apiImpl,
+				credentialStore,
+				createPrHelper,
+			),
 	);
 	context.subscriptions.push(...folderManagers);
 
@@ -437,13 +682,39 @@ async function deferredActivate(context: vscode.ExtensionContext, apiImpl: GitAp
 		reposManager.insertFolderManager(folderManager);
 	}
 
-	const inMemPRFileSystemProvider = getInMemPRFileSystemProvider({ reposManager, gitAPI: apiImpl, credentialStore })!;
+	const inMemPRFileSystemProvider = getInMemPRFileSystemProvider({
+		reposManager,
+		gitAPI: apiImpl,
+		credentialStore,
+	})!;
 
-	const readOnlyMessage = new vscode.MarkdownString(vscode.l10n.t('Cannot edit this pull request file. [Check out](command:pr.checkoutFromReadonlyFile) this pull request to edit.'));
-	readOnlyMessage.isTrusted = { enabledCommands: ['pr.checkoutFromReadonlyFile'] };
-	context.subscriptions.push(vscode.workspace.registerFileSystemProvider(Schemes.Pr, inMemPRFileSystemProvider, { isReadonly: readOnlyMessage }));
+	const readOnlyMessage = new vscode.MarkdownString(
+		vscode.l10n.t(
+			"Cannot edit this pull request file. [Check out](command:pr.checkoutFromReadonlyFile) this pull request to edit.",
+		),
+	);
+	readOnlyMessage.isTrusted = {
+		enabledCommands: ["pr.checkoutFromReadonlyFile"],
+	};
+	context.subscriptions.push(
+		vscode.workspace.registerFileSystemProvider(
+			Schemes.Pr,
+			inMemPRFileSystemProvider,
+			{ isReadonly: readOnlyMessage },
+		),
+	);
 
-	await init(context, apiImpl, credentialStore, repositories, prTree, liveshareApiPromise, showPRController, reposManager, createPrHelper);
+	await init(
+		context,
+		apiImpl,
+		credentialStore,
+		repositories,
+		prTree,
+		liveshareApiPromise,
+		showPRController,
+		reposManager,
+		createPrHelper,
+	);
 }
 
 export async function deactivate() {

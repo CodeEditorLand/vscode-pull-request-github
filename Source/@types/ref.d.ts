@@ -7,5 +7,5 @@
 /// <reference path='./vscode.proposed.d.ts'/>
 /// <reference path='./graphql.d.ts'/>
 
-declare module 'tunnel';
-declare module 'ssh-config';
+declare module "tunnel";
+declare module "ssh-config";

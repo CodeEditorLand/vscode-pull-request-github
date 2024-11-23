@@ -3,18 +3,19 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-'use strict';
+"use strict";
 
-import { Buffer } from 'buffer';
-import * as pathUtils from 'path';
-import fetch from 'cross-fetch';
-import * as vscode from 'vscode';
-import { Repository } from '../api/api';
-import { IAccount, ITeam, reviewerId } from '../github/interface';
-import { PullRequestModel } from '../github/pullRequestModel';
-import { GitChangeType } from './file';
-import Logger from './logger';
-import { TemporaryState } from './temporaryState';
+import { Buffer } from "buffer";
+import * as pathUtils from "path";
+import fetch from "cross-fetch";
+import * as vscode from "vscode";
+
+import { Repository } from "../api/api";
+import { IAccount, ITeam, reviewerId } from "../github/interface";
+import { PullRequestModel } from "../github/pullRequestModel";
+import { GitChangeType } from "./file";
+import Logger from "./logger";
+import { TemporaryState } from "./temporaryState";
 
 export interface ReviewUriParams {
 	path: string;
@@ -41,25 +42,25 @@ export interface PRUriParams {
 }
 
 export function fromPRUri(uri: vscode.Uri): PRUriParams | undefined {
-	if (uri.query === '') {
+	if (uri.query === "") {
 		return undefined;
 	}
 	try {
 		return JSON.parse(uri.query) as PRUriParams;
-	} catch (e) { }
+	} catch (e) {}
 }
 
 export interface PRNodeUriParams {
-	prIdentifier: string
+	prIdentifier: string;
 }
 
 export function fromPRNodeUri(uri: vscode.Uri): PRNodeUriParams | undefined {
-	if (uri.query === '') {
+	if (uri.query === "") {
 		return undefined;
 	}
 	try {
 		return JSON.parse(uri.query) as PRNodeUriParams;
-	} catch (e) { }
+	} catch (e) {}
 }
 
 export interface GitHubUriParams {
@@ -69,18 +70,22 @@ export interface GitHubUriParams {
 	isEmpty?: boolean;
 }
 export function fromGitHubURI(uri: vscode.Uri): GitHubUriParams | undefined {
-	if (uri.query === '') {
+	if (uri.query === "") {
 		return undefined;
 	}
 	try {
 		return JSON.parse(uri.query) as GitHubUriParams;
-	} catch (e) { }
+	} catch (e) {}
 }
 
-export function toGitHubUri(fileUri: vscode.Uri, scheme: Schemes.GithubPr | Schemes.GitPr, params: GitHubUriParams): vscode.Uri {
+export function toGitHubUri(
+	fileUri: vscode.Uri,
+	scheme: Schemes.GithubPr | Schemes.GitPr,
+	params: GitHubUriParams,
+): vscode.Uri {
 	return fileUri.with({
 		scheme,
-		query: JSON.stringify(params)
+		query: JSON.stringify(params),
 	});
 }
 
@@ -90,58 +95,65 @@ export interface GitUriOptions {
 	base: boolean;
 }
 
-const ImageMimetypes = ['image/png', 'image/gif', 'image/jpeg', 'image/webp', 'image/tiff', 'image/bmp'];
+const ImageMimetypes = [
+	"image/png",
+	"image/gif",
+	"image/jpeg",
+	"image/webp",
+	"image/tiff",
+	"image/bmp",
+];
 // Known media types that VS Code can handle: https://github.com/microsoft/vscode/blob/a64e8e5673a44e5b9c2d493666bde684bd5a135c/src/vs/base/common/mime.ts#L33-L84
 export const KnownMediaExtensions = [
-	'.aac',
-	'.avi',
-	'.bmp',
-	'.flv',
-	'.gif',
-	'.ico',
-	'.jpe',
-	'.jpeg',
-	'.jpg',
-	'.m1v',
-	'.m2a',
-	'.m2v',
-	'.m3a',
-	'.mid',
-	'.midi',
-	'.mk3d',
-	'.mks',
-	'.mkv',
-	'.mov',
-	'.movie',
-	'.mp2',
-	'.mp2a',
-	'.mp3',
-	'.mp4',
-	'.mp4a',
-	'.mp4v',
-	'.mpe',
-	'.mpeg',
-	'.mpg',
-	'.mpg4',
-	'.mpga',
-	'.oga',
-	'.ogg',
-	'.opus',
-	'.ogv',
-	'.png',
-	'.psd',
-	'.qt',
-	'.spx',
-	'.svg',
-	'.tga',
-	'.tif',
-	'.tiff',
-	'.wav',
-	'.webm',
-	'.webp',
-	'.wma',
-	'.wmv',
-	'.woff'
+	".aac",
+	".avi",
+	".bmp",
+	".flv",
+	".gif",
+	".ico",
+	".jpe",
+	".jpeg",
+	".jpg",
+	".m1v",
+	".m2a",
+	".m2v",
+	".m3a",
+	".mid",
+	".midi",
+	".mk3d",
+	".mks",
+	".mkv",
+	".mov",
+	".movie",
+	".mp2",
+	".mp2a",
+	".mp3",
+	".mp4",
+	".mp4a",
+	".mp4v",
+	".mpe",
+	".mpeg",
+	".mpg",
+	".mpg4",
+	".mpga",
+	".oga",
+	".ogg",
+	".opus",
+	".ogv",
+	".png",
+	".psd",
+	".qt",
+	".spx",
+	".svg",
+	".tga",
+	".tif",
+	".tiff",
+	".wav",
+	".webm",
+	".webp",
+	".wma",
+	".wmv",
+	".woff",
 ];
 
 // a 1x1 pixel transparent gif, from http://png-pixel.com/
@@ -149,31 +161,57 @@ export const EMPTY_IMAGE_URI = vscode.Uri.parse(
 	`data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==`,
 );
 
-export async function asTempStorageURI(uri: vscode.Uri, repository: Repository): Promise<vscode.Uri | undefined> {
+export async function asTempStorageURI(
+	uri: vscode.Uri,
+	repository: Repository,
+): Promise<vscode.Uri | undefined> {
 	try {
-		const { commit, baseCommit, headCommit, isBase, path }: { commit: string, baseCommit: string, headCommit: string, isBase: string, path: string } = JSON.parse(uri.query);
+		const {
+			commit,
+			baseCommit,
+			headCommit,
+			isBase,
+			path,
+		}: {
+			commit: string;
+			baseCommit: string;
+			headCommit: string;
+			isBase: string;
+			path: string;
+		} = JSON.parse(uri.query);
 
 		const ext = pathUtils.extname(path);
 
 		if (!KnownMediaExtensions.includes(ext)) {
 			return;
 		}
-		const ref = uri.scheme === Schemes.Review ? commit : isBase ? baseCommit : headCommit;
+		const ref =
+			uri.scheme === Schemes.Review
+				? commit
+				: isBase
+					? baseCommit
+					: headCommit;
 
-		const absolutePath = pathUtils.join(repository.rootUri.fsPath, path).replace(/\\/g, '/');
+		const absolutePath = pathUtils
+			.join(repository.rootUri.fsPath, path)
+			.replace(/\\/g, "/");
 
 		const { object } = await repository.getObjectDetails(ref, absolutePath);
 
 		const { mimetype } = await repository.detectObjectType(object);
 
-		if (mimetype === 'text/plain') {
+		if (mimetype === "text/plain") {
 			return;
 		}
 
 		if (ImageMimetypes.indexOf(mimetype) > -1) {
 			const contents = await repository.buffer(ref, absolutePath);
 
-			return TemporaryState.write(pathUtils.dirname(path), pathUtils.basename(path), contents);
+			return TemporaryState.write(
+				pathUtils.dirname(path),
+				pathUtils.basename(path),
+				contents,
+			);
 		}
 	} catch (err) {
 		return;
@@ -181,7 +219,7 @@ export async function asTempStorageURI(uri: vscode.Uri, repository: Repository):
 }
 
 export namespace DataUri {
-	const iconsFolder = 'userIcons';
+	const iconsFolder = "userIcons";
 
 	function iconFilename(user: IAccount | ITeam): string {
 		return `${reviewerId(user)}.jpg`;
@@ -191,15 +229,22 @@ export namespace DataUri {
 		return vscode.Uri.joinPath(context.globalStorageUri, iconsFolder);
 	}
 
-	function fileCacheUri(context: vscode.ExtensionContext, user: IAccount | ITeam): vscode.Uri {
+	function fileCacheUri(
+		context: vscode.ExtensionContext,
+		user: IAccount | ITeam,
+	): vscode.Uri {
 		return vscode.Uri.joinPath(cacheLocation(context), iconFilename(user));
 	}
 
 	function cacheLogUri(context: vscode.ExtensionContext): vscode.Uri {
-		return vscode.Uri.joinPath(cacheLocation(context), 'cache.log');
+		return vscode.Uri.joinPath(cacheLocation(context), "cache.log");
 	}
 
-	async function writeAvatarToCache(context: vscode.ExtensionContext, user: IAccount | ITeam, contents: Uint8Array): Promise<vscode.Uri> {
+	async function writeAvatarToCache(
+		context: vscode.ExtensionContext,
+		user: IAccount | ITeam,
+		contents: Uint8Array,
+	): Promise<vscode.Uri> {
 		await vscode.workspace.fs.createDirectory(cacheLocation(context));
 
 		const file = fileCacheUri(context, user);
@@ -208,7 +253,10 @@ export namespace DataUri {
 		return file;
 	}
 
-	async function readAvatarFromCache(context: vscode.ExtensionContext, user: IAccount | ITeam): Promise<Uint8Array | undefined> {
+	async function readAvatarFromCache(
+		context: vscode.ExtensionContext,
+		user: IAccount | ITeam,
+	): Promise<Uint8Array | undefined> {
 		try {
 			const file = fileCacheUri(context, user);
 
@@ -220,11 +268,17 @@ export namespace DataUri {
 
 	export function asImageDataURI(contents: Buffer): vscode.Uri {
 		return vscode.Uri.parse(
-			`data:image/svg+xml;size:${contents.byteLength};base64,${contents.toString('base64')}`
+			`data:image/svg+xml;size:${contents.byteLength};base64,${contents.toString("base64")}`,
 		);
 	}
 
-	export async function avatarCirclesAsImageDataUris(context: vscode.ExtensionContext, users: (IAccount | ITeam)[], height: number, width: number, localOnly?: boolean): Promise<(vscode.Uri | undefined)[]> {
+	export async function avatarCirclesAsImageDataUris(
+		context: vscode.ExtensionContext,
+		users: (IAccount | ITeam)[],
+		height: number,
+		width: number,
+		localOnly?: boolean,
+	): Promise<(vscode.Uri | undefined)[]> {
 		let cacheLogOrder: string[];
 
 		const cacheLog = cacheLogUri(context);
@@ -237,80 +291,101 @@ export namespace DataUri {
 		}
 		const startingCacheSize = cacheLogOrder.length;
 
-		const results = await Promise.all(users.map(async (user) => {
+		const results = await Promise.all(
+			users.map(async (user) => {
+				const imageSourceUrl = user.avatarUrl;
 
-			const imageSourceUrl = user.avatarUrl;
-
-			if (imageSourceUrl === undefined) {
-				return undefined;
-			}
-			let innerImageContents: Buffer | undefined;
-
-			let cacheMiss: boolean = false;
-
-			try {
-				const fileContents = await readAvatarFromCache(context, user);
-
-				if (!fileContents) {
-					throw new Error('Temporary state not initialized');
+				if (imageSourceUrl === undefined) {
+					return undefined;
 				}
-				innerImageContents = Buffer.from(fileContents);
-			} catch (e) {
-				if (localOnly) {
-					return;
-				}
-				cacheMiss = true;
+				let innerImageContents: Buffer | undefined;
 
-				const doFetch = async () => {
-					const response = await fetch(imageSourceUrl.toString());
-
-					const buffer = await response.arrayBuffer();
-					await writeAvatarToCache(context, user, new Uint8Array(buffer));
-					innerImageContents = Buffer.from(buffer);
-				};
+				let cacheMiss: boolean = false;
 
 				try {
-					await doFetch();
-				} catch (e) {
-					// We retry once.
-					await doFetch();
-				}
-			}
-			if (!innerImageContents) {
-				return undefined;
-			}
-			if (cacheMiss) {
-				const icon = iconFilename(user);
-				cacheLogOrder.push(icon);
-			}
-			const innerImageEncoded = `data:image/jpeg;size:${innerImageContents.byteLength};base64,${innerImageContents.toString('base64')}`;
+					const fileContents = await readAvatarFromCache(
+						context,
+						user,
+					);
 
-			const contentsString = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+					if (!fileContents) {
+						throw new Error("Temporary state not initialized");
+					}
+					innerImageContents = Buffer.from(fileContents);
+				} catch (e) {
+					if (localOnly) {
+						return;
+					}
+					cacheMiss = true;
+
+					const doFetch = async () => {
+						const response = await fetch(imageSourceUrl.toString());
+
+						const buffer = await response.arrayBuffer();
+						await writeAvatarToCache(
+							context,
+							user,
+							new Uint8Array(buffer),
+						);
+						innerImageContents = Buffer.from(buffer);
+					};
+
+					try {
+						await doFetch();
+					} catch (e) {
+						// We retry once.
+						await doFetch();
+					}
+				}
+				if (!innerImageContents) {
+					return undefined;
+				}
+				if (cacheMiss) {
+					const icon = iconFilename(user);
+					cacheLogOrder.push(icon);
+				}
+				const innerImageEncoded = `data:image/jpeg;size:${innerImageContents.byteLength};base64,${innerImageContents.toString("base64")}`;
+
+				const contentsString = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
 		<image href="${innerImageEncoded}" width="${width}" height="${height}" style="clip-path: inset(0 0 0 0 round 50%);"/>
 		</svg>`;
 
-			const contents = Buffer.from(contentsString);
+				const contents = Buffer.from(contentsString);
 
-			const finalDataUri = asImageDataURI(contents);
+				const finalDataUri = asImageDataURI(contents);
 
-			return finalDataUri;
-		}));
+				return finalDataUri;
+			}),
+		);
 
 		const maxCacheSize = Math.max(users.length, 200);
 
-		if (cacheLogOrder.length > startingCacheSize && startingCacheSize > 0 && cacheLogOrder.length > maxCacheSize) {
+		if (
+			cacheLogOrder.length > startingCacheSize &&
+			startingCacheSize > 0 &&
+			cacheLogOrder.length > maxCacheSize
+		) {
 			// The cache is getting big, we should clean it up.
 			const toDelete = cacheLogOrder.splice(0, 50);
-			await Promise.all(toDelete.map(async (id) => {
-				try {
-					await vscode.workspace.fs.delete(vscode.Uri.joinPath(cacheLocation(context), id));
-				} catch (e) {
-					Logger.error(`Failed to delete avatar from cache: ${e}`);
-				}
-			}));
+			await Promise.all(
+				toDelete.map(async (id) => {
+					try {
+						await vscode.workspace.fs.delete(
+							vscode.Uri.joinPath(cacheLocation(context), id),
+						);
+					} catch (e) {
+						Logger.error(
+							`Failed to delete avatar from cache: ${e}`,
+						);
+					}
+				}),
+			);
 		}
 
-		await vscode.workspace.fs.writeFile(cacheLog, Buffer.from(JSON.stringify(cacheLogOrder)));
+		await vscode.workspace.fs.writeFile(
+			cacheLog,
+			Buffer.from(JSON.stringify(cacheLogOrder)),
+		);
 
 		return results;
 	}
@@ -354,12 +429,18 @@ export interface FileChangeNodeUriParams {
 	status?: GitChangeType;
 }
 
-export function toResourceUri(uri: vscode.Uri, prNumber: number, fileName: string, status: GitChangeType, previousFileName?: string) {
+export function toResourceUri(
+	uri: vscode.Uri,
+	prNumber: number,
+	fileName: string,
+	status: GitChangeType,
+	previousFileName?: string,
+) {
 	const params: FileChangeNodeUriParams = {
 		prNumber,
 		fileName,
 		status,
-		previousFileName
+		previousFileName,
 	};
 
 	return uri.with({
@@ -368,13 +449,15 @@ export function toResourceUri(uri: vscode.Uri, prNumber: number, fileName: strin
 	});
 }
 
-export function fromFileChangeNodeUri(uri: vscode.Uri): FileChangeNodeUriParams | undefined {
-	if (uri.query === '') {
+export function fromFileChangeNodeUri(
+	uri: vscode.Uri,
+): FileChangeNodeUriParams | undefined {
+	if (uri.query === "") {
 		return undefined;
 	}
 	try {
 		return JSON.parse(uri.query) as FileChangeNodeUriParams;
-	} catch (e) { }
+	} catch (e) {}
 }
 
 export function toPRUri(
@@ -385,7 +468,7 @@ export function toPRUri(
 	fileName: string,
 	base: boolean,
 	status: GitChangeType,
-	previousFileName?: string
+	previousFileName?: string,
 ): vscode.Uri {
 	const params: PRUriParams = {
 		baseCommit: baseCommit,
@@ -395,7 +478,7 @@ export function toPRUri(
 		prNumber: pullRequestModel.number,
 		status: status,
 		remoteName: pullRequestModel.githubRepository.remote.remoteName,
-		previousFileName
+		previousFileName,
 	};
 
 	const path = uri.path;
@@ -407,12 +490,17 @@ export function toPRUri(
 	});
 }
 
-export function createPRNodeIdentifier(pullRequest: PullRequestModel | { remote: string, prNumber: number } | string) {
+export function createPRNodeIdentifier(
+	pullRequest:
+		| PullRequestModel
+		| { remote: string; prNumber: number }
+		| string,
+) {
 	let identifier: string;
 
 	if (pullRequest instanceof PullRequestModel) {
 		identifier = `${pullRequest.remote.url}:${pullRequest.number}`;
-	} else if (typeof pullRequest === 'string') {
+	} else if (typeof pullRequest === "string") {
 		identifier = pullRequest;
 	} else {
 		identifier = `${pullRequest.remote}:${pullRequest.prNumber}`;
@@ -421,7 +509,10 @@ export function createPRNodeIdentifier(pullRequest: PullRequestModel | { remote:
 }
 
 export function createPRNodeUri(
-	pullRequest: PullRequestModel | { remote: string, prNumber: number } | string
+	pullRequest:
+		| PullRequestModel
+		| { remote: string; prNumber: number }
+		| string,
 ): vscode.Uri {
 	const identifier = createPRNodeIdentifier(pullRequest);
 
@@ -433,7 +524,7 @@ export function createPRNodeUri(
 
 	return uri.with({
 		scheme: Schemes.PRNode,
-		query: JSON.stringify(params)
+		query: JSON.stringify(params),
 	});
 }
 
@@ -445,7 +536,9 @@ export function toNotificationUri(params: NotificationUriParams) {
 	return vscode.Uri.from({ scheme: Schemes.Notification, path: params.key });
 }
 
-export function fromNotificationUri(uri: vscode.Uri): NotificationUriParams | undefined {
+export function fromNotificationUri(
+	uri: vscode.Uri,
+): NotificationUriParams | undefined {
 	if (uri.scheme !== Schemes.Notification) {
 		return;
 	}
@@ -453,21 +546,21 @@ export function fromNotificationUri(uri: vscode.Uri): NotificationUriParams | un
 		return {
 			key: uri.path,
 		};
-	} catch (e) { }
+	} catch (e) {}
 }
 
 export enum Schemes {
-	File = 'file',
-	Review = 'review', // File content for a checked out PR
-	Pr = 'pr', // File content from GitHub for non-checkout PR
-	PRNode = 'prnode',
-	FileChange = 'filechange', // Tree items, for decorations
-	GithubPr = 'githubpr', // File content from GitHub in create flow
-	GitPr = 'gitpr', // File content from git in create flow
-	VscodeVfs = 'vscode-vfs', // Remote Repository
-	Comment = 'comment', // Comments from the VS Code comment widget
-	MergeOutput = 'merge-output', // Merge output
-	Notification = 'notification' // Notification tree items in the notification view
+	File = "file",
+	Review = "review", // File content for a checked out PR
+	Pr = "pr", // File content from GitHub for non-checkout PR
+	PRNode = "prnode",
+	FileChange = "filechange", // Tree items, for decorations
+	GithubPr = "githubpr", // File content from GitHub in create flow
+	GitPr = "gitpr", // File content from git in create flow
+	VscodeVfs = "vscode-vfs", // Remote Repository
+	Comment = "comment", // Comments from the VS Code comment widget
+	MergeOutput = "merge-output", // Merge output
+	Notification = "notification", // Notification tree items in the notification view
 }
 
 export function resolvePath(from: vscode.Uri, to: string) {
@@ -478,7 +571,10 @@ export function resolvePath(from: vscode.Uri, to: string) {
 	}
 }
 
-class UriEventHandler extends vscode.EventEmitter<vscode.Uri> implements vscode.UriHandler {
+class UriEventHandler
+	extends vscode.EventEmitter<vscode.Uri>
+	implements vscode.UriHandler
+{
 	public handleUri(uri: vscode.Uri) {
 		this.fire(uri);
 	}

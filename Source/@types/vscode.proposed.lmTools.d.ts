@@ -6,15 +6,17 @@
 // version: 10
 // https://github.com/microsoft/vscode/issues/213274
 
-declare module 'vscode' {
-
+declare module "vscode" {
 	export namespace lm {
 		/**
 		 * Register a LanguageModelTool. The tool must also be registered in the package.json `languageModelTools` contribution
 		 * point. A registered tool is available in the {@link lm.tools} list for any extension to see. But in order for it to
 		 * be seen by a language model, it must be passed in the list of available tools in {@link LanguageModelChatRequestOptions.tools}.
 		 */
-		export function registerTool<T>(name: string, tool: LanguageModelTool<T>): Disposable;
+		export function registerTool<T>(
+			name: string,
+			tool: LanguageModelTool<T>,
+		): Disposable;
 
 		/**
 		 * A list of all available tools that were registered by all extensions using {@link lm.registerTool}. They can be called
@@ -38,7 +40,11 @@ declare module 'vscode' {
 		 * the {@link ChatResult.metadata} returned from the handler and retrieve them on the next turn from
 		 * {@link ChatResponseTurn.result}.
 		 */
-		export function invokeTool(name: string, options: LanguageModelToolInvocationOptions<object>, token: CancellationToken): Thenable<LanguageModelToolResult>;
+		export function invokeTool(
+			name: string,
+			options: LanguageModelToolInvocationOptions<object>,
+			token: CancellationToken,
+		): Thenable<LanguageModelToolResult>;
 	}
 
 	/**
@@ -76,11 +82,10 @@ declare module 'vscode' {
 		 * mode. TODO@API - do we throw, or just pick the first tool? Or only offer an API that allows callers to pick a single
 		 * tool? Go back to `toolChoice?: string`?
 		 */
-		Required = 2
+		Required = 2,
 	}
 
 	export interface LanguageModelChatRequestOptions {
-
 		/**
 		 * An optional list of tools that are available to the language model. These could be registered tools available via
 		 * {@link lm.tools}, or private tools that are just implemented within the calling extension.
@@ -171,7 +176,9 @@ declare module 'vscode' {
 		 * {@link LanguageModelTextPart} is part of the assistant's response to be shown to the user. A
 		 * {@link LanguageModelToolCallPart} is a request from the language model to call a tool.
 		 */
-		stream: AsyncIterable<LanguageModelTextPart | LanguageModelToolCallPart | unknown>;
+		stream: AsyncIterable<
+			LanguageModelTextPart | LanguageModelToolCallPart | unknown
+		>;
 	}
 
 	/**
@@ -186,13 +193,24 @@ declare module 'vscode' {
 		/**
 		 * The value of the tool result.
 		 */
-		content: (LanguageModelTextPart | LanguageModelPromptTsxPart | unknown)[];
+		content: (
+			| LanguageModelTextPart
+			| LanguageModelPromptTsxPart
+			| unknown
+		)[];
 
 		/**
 		 * @param callId The ID of the tool call.
 		 * @param content The content of the tool result.
 		 */
-		constructor(callId: string, content: (LanguageModelTextPart | LanguageModelPromptTsxPart | unknown)[]);
+		constructor(
+			callId: string,
+			content: (
+				| LanguageModelTextPart
+				| LanguageModelPromptTsxPart
+				| unknown
+			)[],
+		);
 	}
 
 	export interface LanguageModelChatMessage {
@@ -200,7 +218,11 @@ declare module 'vscode' {
 		 * A heterogeneous array of other things that a message can contain as content. Some parts may be message-type specific
 		 * for some models.
 		 */
-		content2: (string | LanguageModelToolResultPart | LanguageModelToolCallPart)[];
+		content2: (
+			| string
+			| LanguageModelToolResultPart
+			| LanguageModelToolCallPart
+		)[];
 	}
 
 	/**
@@ -212,13 +234,23 @@ declare module 'vscode' {
 		 * the future.
 		 * @see {@link lm.invokeTool}.
 		 */
-		content: (LanguageModelTextPart | LanguageModelPromptTsxPart | unknown)[];
+		content: (
+			| LanguageModelTextPart
+			| LanguageModelPromptTsxPart
+			| unknown
+		)[];
 
 		/**
 		 * Create a LanguageModelToolResult
 		 * @param content A list of tool result content parts
 		 */
-		constructor(content: (LanguageModelTextPart | LanguageModelPromptTsxPart | unknown)[]);
+		constructor(
+			content: (
+				| LanguageModelTextPart
+				| LanguageModelPromptTsxPart
+				| unknown
+			)[],
+		);
 	}
 
 	/**
@@ -333,7 +365,10 @@ declare module 'vscode' {
 		 * The provided {@link LanguageModelToolInvocationOptions.parameters} are currently not validated against the declared
 		 * schema, but will be in the future.
 		 */
-		invoke(options: LanguageModelToolInvocationOptions<T>, token: CancellationToken): ProviderResult<LanguageModelToolResult>;
+		invoke(
+			options: LanguageModelToolInvocationOptions<T>,
+			token: CancellationToken,
+		): ProviderResult<LanguageModelToolResult>;
 
 		/**
 		 * Called once before a tool is invoked. It's recommended to implement this to customize the progress message that appears
@@ -341,7 +376,10 @@ declare module 'vscode' {
 		 * signal that a tool needs user confirmation before running, if appropriate. Must be free of side-effects. A call to
 		 * `prepareInvocation` is not necessarily followed by a call to `invoke`.
 		 */
-		prepareInvocation?(options: LanguageModelToolInvocationPrepareOptions<T>, token: CancellationToken): ProviderResult<PreparedToolInvocation>;
+		prepareInvocation?(
+			options: LanguageModelToolInvocationPrepareOptions<T>,
+			token: CancellationToken,
+		): ProviderResult<PreparedToolInvocation>;
 	}
 
 	/**

@@ -3,58 +3,61 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-'use strict';
-import { sep } from 'path';
-import dayjs from 'dayjs';
-import * as relativeTime from 'dayjs/plugin/relativeTime';
-import * as updateLocale from 'dayjs/plugin/updateLocale';
-import type { Disposable, Event, ExtensionContext, Uri } from 'vscode';
-import { combinedDisposable } from './lifecycle';
+"use strict";
+
+import { sep } from "path";
+import dayjs from "dayjs";
+import * as relativeTime from "dayjs/plugin/relativeTime";
+import * as updateLocale from "dayjs/plugin/updateLocale";
+import type { Disposable, Event, ExtensionContext, Uri } from "vscode";
+
+import { combinedDisposable } from "./lifecycle";
+
 // TODO: localization for webview needed
 
 dayjs.extend(relativeTime.default, {
 	thresholds: [
-		{ l: 's', r: 44, d: 'second' },
-		{ l: 'm', r: 89 },
-		{ l: 'mm', r: 44, d: 'minute' },
-		{ l: 'h', r: 89 },
-		{ l: 'hh', r: 21, d: 'hour' },
-		{ l: 'd', r: 35 },
-		{ l: 'dd', r: 6, d: 'day' },
-		{ l: 'w', r: 7 },
-		{ l: 'ww', r: 3, d: 'week' },
-		{ l: 'M', r: 4 },
-		{ l: 'MM', r: 10, d: 'month' },
-		{ l: 'y', r: 17 },
-		{ l: 'yy', d: 'year' },
+		{ l: "s", r: 44, d: "second" },
+		{ l: "m", r: 89 },
+		{ l: "mm", r: 44, d: "minute" },
+		{ l: "h", r: 89 },
+		{ l: "hh", r: 21, d: "hour" },
+		{ l: "d", r: 35 },
+		{ l: "dd", r: 6, d: "day" },
+		{ l: "w", r: 7 },
+		{ l: "ww", r: 3, d: "week" },
+		{ l: "M", r: 4 },
+		{ l: "MM", r: 10, d: "month" },
+		{ l: "y", r: 17 },
+		{ l: "yy", d: "year" },
 	],
 });
 
 dayjs.extend(updateLocale.default);
-dayjs.updateLocale('en', {
+dayjs.updateLocale("en", {
 	relativeTime: {
-		future: 'in %s',
-		past: '%s ago',
-		s: 'seconds',
-		m: 'a minute',
-		mm: '%d minutes',
-		h: 'an hour',
-		hh: '%d hours',
-		d: 'a day',
-		dd: '%d days',
-		w: 'a week',
-		ww: '%d weeks',
-		M: 'a month',
-		MM: '%d months',
-		y: 'a year',
-		yy: '%d years',
+		future: "in %s",
+		past: "%s ago",
+		s: "seconds",
+		m: "a minute",
+		mm: "%d minutes",
+		h: "an hour",
+		hh: "%d hours",
+		d: "a day",
+		dd: "%d days",
+		w: "a week",
+		ww: "%d weeks",
+		M: "a month",
+		MM: "%d months",
+		y: "a year",
+		yy: "%d years",
 	},
 });
 
 export function uniqBy<T>(arr: T[], fn: (el: T) => string): T[] {
 	const seen = Object.create(null);
 
-	return arr.filter(el => {
+	return arr.filter((el) => {
 		const key = fn(el);
 
 		if (seen[key]) {
@@ -69,7 +72,9 @@ export function uniqBy<T>(arr: T[], fn: (el: T) => string): T[] {
 
 export function anyEvent<T>(...events: Event<T>[]): Event<T> {
 	return (listener, thisArgs = null, disposables?) => {
-		const result = combinedDisposable(events.map(event => event(i => listener.call(thisArgs, i))));
+		const result = combinedDisposable(
+			events.map((event) => event((i) => listener.call(thisArgs, i))),
+		);
 
 		if (disposables) {
 			disposables.push(result);
@@ -79,15 +84,22 @@ export function anyEvent<T>(...events: Event<T>[]): Event<T> {
 	};
 }
 
-export function filterEvent<T>(event: Event<T>, filter: (e: T) => boolean): Event<T> {
+export function filterEvent<T>(
+	event: Event<T>,
+	filter: (e: T) => boolean,
+): Event<T> {
 	return (listener, thisArgs = null, disposables?: Disposable[]) =>
-		event(e => filter(e) && listener.call(thisArgs, e), null, disposables);
+		event(
+			(e) => filter(e) && listener.call(thisArgs, e),
+			null,
+			disposables,
+		);
 }
 
 export function onceEvent<T>(event: Event<T>): Event<T> {
 	return (listener, thisArgs = null, disposables?: Disposable[]) => {
 		const result = event(
-			e => {
+			(e) => {
 				result.dispose();
 
 				return listener.call(thisArgs, e);
@@ -104,7 +116,11 @@ function isWindowsPath(path: string): boolean {
 	return /^[a-zA-Z]:\\/.test(path);
 }
 
-export function isDescendant(parent: string, descendant: string, separator: string = sep): boolean {
+export function isDescendant(
+	parent: string,
+	descendant: string,
+	separator: string = sep,
+): boolean {
 	if (parent === descendant) {
 		return true;
 	}
@@ -122,7 +138,10 @@ export function isDescendant(parent: string, descendant: string, separator: stri
 	return descendant.startsWith(parent);
 }
 
-export function groupBy<T>(arr: T[], fn: (el: T) => string): { [key: string]: T[] } {
+export function groupBy<T>(
+	arr: T[],
+	fn: (el: T) => string,
+): { [key: string]: T[] } {
 	return arr.reduce((result, el) => {
 		const key = fn(el);
 		result[key] = [...(result[key] || []), el];
@@ -145,7 +164,9 @@ function isHookError(e: Error): e is HookError {
 	return !!(e as any).errors;
 }
 
-function hasFieldErrors(e: any): e is Error & { errors: { value: string; field: string; code: string }[] } {
+function hasFieldErrors(
+	e: any,
+): e is Error & { errors: { value: string; field: string; code: string }[] } {
 	let areFieldErrors = true;
 
 	if (!!e.errors && Array.isArray(e.errors)) {
@@ -164,7 +185,7 @@ function hasFieldErrors(e: any): e is Error & { errors: { value: string; field: 
 
 export function formatError(e: HookError | any): string {
 	if (!(e instanceof Error)) {
-		if (typeof e === 'string') {
+		if (typeof e === "string") {
 			return e;
 		}
 
@@ -174,31 +195,31 @@ export function formatError(e: HookError | any): string {
 		} else if (e.stderr) {
 			return `${e.stderr}. Please check git output for more details`;
 		}
-		return 'Error';
+		return "Error";
 	}
 
 	let errorMessage = e.message;
 
 	let furtherInfo: string | undefined;
 
-	if (e.message === 'Validation Failed' && hasFieldErrors(e)) {
+	if (e.message === "Validation Failed" && hasFieldErrors(e)) {
 		furtherInfo = e.errors
-			.map(error => {
+			.map((error) => {
 				return `Value "${error.value}" cannot be set for field ${error.field} (code: ${error.code})`;
 			})
-			.join(', ');
-	} else if (e.message.startsWith('Validation Failed:')) {
+			.join(", ");
+	} else if (e.message.startsWith("Validation Failed:")) {
 		return e.message;
 	} else if (isHookError(e) && e.errors) {
 		return e.errors
 			.map((error: any) => {
-				if (typeof error === 'string') {
+				if (typeof error === "string") {
 					return error;
 				} else {
 					return error.message;
 				}
 			})
-			.join(', ');
+			.join(", ");
 	}
 	if (furtherInfo) {
 		errorMessage = `${errorMessage}: ${furtherInfo}`;
@@ -208,42 +229,55 @@ export function formatError(e: HookError | any): string {
 }
 
 export interface PromiseAdapter<T, U> {
-	(value: T, resolve: (value?: U | PromiseLike<U>) => void, reject: (reason: any) => void): any;
+	(
+		value: T,
+		resolve: (value?: U | PromiseLike<U>) => void,
+		reject: (reason: any) => void,
+	): any;
 }
 
 // Copied from https://github.com/microsoft/vscode/blob/cfd9d25826b5b5bc3b06677521660b4f1ba6639a/extensions/vscode-api-tests/src/utils.ts#L135-L136
 export async function asPromise<T>(event: Event<T>): Promise<T> {
 	return new Promise<T>((resolve) => {
-		const sub = event(e => {
+		const sub = event((e) => {
 			sub.dispose();
 			resolve(e);
 		});
 	});
 }
 
-export async function promiseWithTimeout<T>(promise: Promise<T>, ms: number): Promise<T | undefined> {
-	return Promise.race([promise, new Promise<undefined>(resolve => {
-		setTimeout(() => resolve(undefined), ms);
-	})]);
+export async function promiseWithTimeout<T>(
+	promise: Promise<T>,
+	ms: number,
+): Promise<T | undefined> {
+	return Promise.race([
+		promise,
+		new Promise<undefined>((resolve) => {
+			setTimeout(() => resolve(undefined), ms);
+		}),
+	]);
 }
 
 export function dateFromNow(date: Date | string): string {
 	const djs = dayjs(date);
 
 	const now = Date.now();
-	djs.diff(now, 'month');
+	djs.diff(now, "month");
 
-	if (djs.diff(now, 'month') < 1) {
+	if (djs.diff(now, "month") < 1) {
 		return djs.fromNow();
-	} else if (djs.diff(now, 'year') < 1) {
-		return `on ${djs.format('MMM D')}`;
+	} else if (djs.diff(now, "year") < 1) {
+		return `on ${djs.format("MMM D")}`;
 	}
-	return `on ${djs.format('MMM D, YYYY')}`;
+	return `on ${djs.format("MMM D, YYYY")}`;
 }
 
-
-export function gitHubLabelColor(hexColor: string, isDark: boolean, markDown: boolean = false): { textColor: string, backgroundColor: string, borderColor: string } {
-	if (hexColor.startsWith('#')) {
+export function gitHubLabelColor(
+	hexColor: string,
+	isDark: boolean,
+	markDown: boolean = false,
+): { textColor: string; backgroundColor: string; borderColor: string } {
+	if (hexColor.startsWith("#")) {
 		hexColor = hexColor.substring(1);
 	}
 	const rgbColor = hexToRgb(hexColor);
@@ -257,40 +291,57 @@ export function gitHubLabelColor(hexColor: string, isDark: boolean, markDown: bo
 
 		const borderAlpha = 0.3;
 
-		const perceivedLightness = (rgbColor.r * 0.2126 + rgbColor.g * 0.7152 + rgbColor.b * 0.0722) / 255;
+		const perceivedLightness =
+			(rgbColor.r * 0.2126 + rgbColor.g * 0.7152 + rgbColor.b * 0.0722) /
+			255;
 
-		const lightnessSwitch = Math.max(0, Math.min((perceivedLightness - lightnessThreshold) * -1000, 1));
+		const lightnessSwitch = Math.max(
+			0,
+			Math.min((perceivedLightness - lightnessThreshold) * -1000, 1),
+		);
 
-		const lightenBy = (lightnessThreshold - perceivedLightness) * 100 * lightnessSwitch;
+		const lightenBy =
+			(lightnessThreshold - perceivedLightness) * 100 * lightnessSwitch;
 
-		const rgbBorder = hexToRgb(hslToHex(hslColor.h, hslColor.s, hslColor.l + lightenBy));
+		const rgbBorder = hexToRgb(
+			hslToHex(hslColor.h, hslColor.s, hslColor.l + lightenBy),
+		);
 
 		const textColor = `#${hslToHex(hslColor.h, hslColor.s, hslColor.l + lightenBy)}`;
 
-		const backgroundColor = !markDown ?
-			`rgba(${rgbColor.r},${rgbColor.g},${rgbColor.b},${backgroundAlpha})` :
-			`#${rgbToHex({ ...rgbColor, a: backgroundAlpha })}`;
+		const backgroundColor = !markDown
+			? `rgba(${rgbColor.r},${rgbColor.g},${rgbColor.b},${backgroundAlpha})`
+			: `#${rgbToHex({ ...rgbColor, a: backgroundAlpha })}`;
 
-		const borderColor = !markDown ?
-			`rgba(${rgbBorder.r},${rgbBorder.g},${rgbBorder.b},${borderAlpha})` :
-			`#${rgbToHex({ ...rgbBorder, a: borderAlpha })}`;
+		const borderColor = !markDown
+			? `rgba(${rgbBorder.r},${rgbBorder.g},${rgbBorder.b},${borderAlpha})`
+			: `#${rgbToHex({ ...rgbBorder, a: borderAlpha })}`;
 
-		return { textColor: textColor, backgroundColor: backgroundColor, borderColor: borderColor };
-	}
-	else {
-		return { textColor: `#${contrastColor(rgbColor)}`, backgroundColor: `#${hexColor}`, borderColor: `#${hexColor}` };
+		return {
+			textColor: textColor,
+			backgroundColor: backgroundColor,
+			borderColor: borderColor,
+		};
+	} else {
+		return {
+			textColor: `#${contrastColor(rgbColor)}`,
+			backgroundColor: `#${hexColor}`,
+			borderColor: `#${hexColor}`,
+		};
 	}
 }
 
-const rgbToHex = (color: { r: number, g: number, b: number, a?: number }) => {
+const rgbToHex = (color: { r: number; g: number; b: number; a?: number }) => {
 	const colors = [color.r, color.g, color.b];
 
 	if (color.a) {
 		colors.push(Math.floor(color.a * 255));
 	}
-	return colors.map((digit) => {
-		return digit.toString(16).padStart(2, '0');
-	}).join('');
+	return colors
+		.map((digit) => {
+			return digit.toString(16).padStart(2, "0");
+		})
+		.join("");
 };
 
 function hexToRgb(color: string) {
@@ -327,23 +378,18 @@ function rgbToHsl(r: number, g: number, b: number) {
 
 	// Calculate hue
 	// No difference
-	if (delta == 0)
-		h = 0;
+	if (delta == 0) h = 0;
 	// Red is max
-	else if (cmax == r)
-		h = ((g - b) / delta) % 6;
+	else if (cmax == r) h = ((g - b) / delta) % 6;
 	// Green is max
-	else if (cmax == g)
-		h = (b - r) / delta + 2;
+	else if (cmax == g) h = (b - r) / delta + 2;
 	// Blue is max
-	else
-		h = (r - g) / delta + 4;
+	else h = (r - g) / delta + 4;
 
 	h = Math.round(h * 60);
 
 	// Make negative hues positive behind 360 deg
-	if (h < 0)
-		h += 360;
+	if (h < 0) h += 360;
 
 	// Calculate lightness
 	l = (cmax + cmin) / 2;
@@ -372,17 +418,18 @@ function hslToHex(h: number, s: number, l: number): string {
 		// Convert to Hex and prefix with "0" if required
 		return Math.round(255 * color)
 			.toString(16)
-			.padStart(2, '0');
+			.padStart(2, "0");
 	};
 
 	return `${f(0)}${f(8)}${f(4)}`;
 }
 
-function contrastColor(rgbColor: { r: number, g: number, b: number }) {
+function contrastColor(rgbColor: { r: number; g: number; b: number }) {
 	// Color algorithm from https://stackoverflow.com/questions/1855884/determine-font-color-based-on-background-color
-	const luminance = (0.299 * rgbColor.r + 0.587 * rgbColor.g + 0.114 * rgbColor.b) / 255;
+	const luminance =
+		(0.299 * rgbColor.r + 0.587 * rgbColor.g + 0.114 * rgbColor.b) / 255;
 
-	return luminance > 0.5 ? '000000' : 'ffffff';
+	return luminance > 0.5 ? "000000" : "ffffff";
 }
 
 export interface Predicate<T> {
@@ -481,7 +528,14 @@ export function compareSubstringIgnoreCase(
 			//
 			return diff;
 		} else {
-			return compareSubstring(a.toLowerCase(), b.toLowerCase(), aStart, aEnd, bStart, bEnd);
+			return compareSubstring(
+				a.toLowerCase(),
+				b.toLowerCase(),
+				aStart,
+				aEnd,
+				bStart,
+				bEnd,
+			);
 		}
 	}
 
@@ -516,7 +570,7 @@ export interface IKeyIterator<K> {
 }
 
 export class StringIterator implements IKeyIterator<string> {
-	private _value: string = '';
+	private _value: string = "";
 	private _pos: number = 0;
 
 	reset(key: string): this {
@@ -554,7 +608,7 @@ export class ConfigKeysIterator implements IKeyIterator<string> {
 	private _from!: number;
 	private _to!: number;
 
-	constructor(private readonly _caseSensitive: boolean = true) { }
+	constructor(private readonly _caseSensitive: boolean = true) {}
 
 	reset(key: string): this {
 		this._value = key;
@@ -592,8 +646,22 @@ export class ConfigKeysIterator implements IKeyIterator<string> {
 
 	cmp(a: string): number {
 		return this._caseSensitive
-			? compareSubstring(a, this._value, 0, a.length, this._from, this._to)
-			: compareSubstringIgnoreCase(a, this._value, 0, a.length, this._from, this._to);
+			? compareSubstring(
+					a,
+					this._value,
+					0,
+					a.length,
+					this._from,
+					this._to,
+				)
+			: compareSubstringIgnoreCase(
+					a,
+					this._value,
+					0,
+					a.length,
+					this._from,
+					this._to,
+				);
 	}
 
 	value(): string {
@@ -606,10 +674,13 @@ export class PathIterator implements IKeyIterator<string> {
 	private _from!: number;
 	private _to!: number;
 
-	constructor(private readonly _splitOnBackslash: boolean = true, private readonly _caseSensitive: boolean = true) { }
+	constructor(
+		private readonly _splitOnBackslash: boolean = true,
+		private readonly _caseSensitive: boolean = true,
+	) {}
 
 	reset(key: string): this {
-		this._value = key.replace(/\\$|\/$/, '');
+		this._value = key.replace(/\\$|\/$/, "");
 		this._from = 0;
 		this._to = 0;
 
@@ -629,7 +700,10 @@ export class PathIterator implements IKeyIterator<string> {
 		for (; this._to < this._value.length; this._to++) {
 			const ch = this._value.charCodeAt(this._to);
 
-			if (ch === CharCode.Slash || (this._splitOnBackslash && ch === CharCode.Backslash)) {
+			if (
+				ch === CharCode.Slash ||
+				(this._splitOnBackslash && ch === CharCode.Backslash)
+			) {
 				if (justSeps) {
 					this._from++;
 				} else {
@@ -644,8 +718,22 @@ export class PathIterator implements IKeyIterator<string> {
 
 	cmp(a: string): number {
 		return this._caseSensitive
-			? compareSubstring(a, this._value, 0, a.length, this._from, this._to)
-			: compareSubstringIgnoreCase(a, this._value, 0, a.length, this._from, this._to);
+			? compareSubstring(
+					a,
+					this._value,
+					0,
+					a.length,
+					this._from,
+					this._to,
+				)
+			: compareSubstringIgnoreCase(
+					a,
+					this._value,
+					0,
+					a.length,
+					this._from,
+					this._to,
+				);
 	}
 
 	value(): string {
@@ -667,7 +755,7 @@ export class UriIterator implements IKeyIterator<Uri> {
 	private _states: UriIteratorState[] = [];
 	private _stateIdx: number = 0;
 
-	constructor(private readonly _ignorePathCasing: (uri: Uri) => boolean) { }
+	constructor(private readonly _ignorePathCasing: (uri: Uri) => boolean) {}
 
 	reset(key: Uri): this {
 		this._value = key;
@@ -680,7 +768,10 @@ export class UriIterator implements IKeyIterator<Uri> {
 			this._states.push(UriIteratorState.Authority);
 		}
 		if (this._value.path) {
-			this._pathIterator = new PathIterator(false, !this._ignorePathCasing(key));
+			this._pathIterator = new PathIterator(
+				false,
+				!this._ignorePathCasing(key),
+			);
 			this._pathIterator.reset(key.path);
 
 			if (this._pathIterator.value()) {
@@ -699,7 +790,10 @@ export class UriIterator implements IKeyIterator<Uri> {
 	}
 
 	next(): this {
-		if (this._states[this._stateIdx] === UriIteratorState.Path && this._pathIterator.hasNext()) {
+		if (
+			this._states[this._stateIdx] === UriIteratorState.Path &&
+			this._pathIterator.hasNext()
+		) {
 			this._pathIterator.next();
 		} else {
 			this._stateIdx += 1;
@@ -709,7 +803,8 @@ export class UriIterator implements IKeyIterator<Uri> {
 
 	hasNext(): boolean {
 		return (
-			(this._states[this._stateIdx] === UriIteratorState.Path && this._pathIterator.hasNext()) ||
+			(this._states[this._stateIdx] === UriIteratorState.Path &&
+				this._pathIterator.hasNext()) ||
 			this._stateIdx < this._states.length - 1
 		);
 	}
@@ -717,7 +812,9 @@ export class UriIterator implements IKeyIterator<Uri> {
 	cmp(a: string): number {
 		if (this._states[this._stateIdx] === UriIteratorState.Scheme) {
 			return compareIgnoreCase(a, this._value.scheme);
-		} else if (this._states[this._stateIdx] === UriIteratorState.Authority) {
+		} else if (
+			this._states[this._stateIdx] === UriIteratorState.Authority
+		) {
 			return compareIgnoreCase(a, this._value.authority);
 		} else if (this._states[this._stateIdx] === UriIteratorState.Path) {
 			return this._pathIterator.cmp(a);
@@ -732,7 +829,9 @@ export class UriIterator implements IKeyIterator<Uri> {
 	value(): string {
 		if (this._states[this._stateIdx] === UriIteratorState.Scheme) {
 			return this._value.scheme;
-		} else if (this._states[this._stateIdx] === UriIteratorState.Authority) {
+		} else if (
+			this._states[this._stateIdx] === UriIteratorState.Authority
+		) {
 			return this._value.authority;
 		} else if (this._states[this._stateIdx] === UriIteratorState.Path) {
 			return this._pathIterator.value();
@@ -750,7 +849,7 @@ export function isPreRelease(context: ExtensionContext): boolean {
 
 	const path = uri.path;
 
-	const lastIndexOfDot = path.lastIndexOf('.');
+	const lastIndexOfDot = path.lastIndexOf(".");
 
 	if (lastIndexOfDot === -1) {
 		return false;
@@ -775,7 +874,9 @@ class TernarySearchTreeNode<K, V> {
 }
 
 export class TernarySearchTree<K, V> {
-	static forUris<E>(ignorePathCasing: (key: Uri) => boolean = () => false): TernarySearchTree<Uri, E> {
+	static forUris<E>(
+		ignorePathCasing: (key: Uri) => boolean = () => false,
+	): TernarySearchTree<Uri, E> {
 		return new TernarySearchTree<Uri, E>(new UriIterator(ignorePathCasing));
 	}
 
@@ -1024,7 +1125,9 @@ export class TernarySearchTree<K, V> {
 		yield* this._entries(this._root);
 	}
 
-	private *_entries(node: TernarySearchTreeNode<K, V> | undefined): IterableIterator<[K, V]> {
+	private *_entries(
+		node: TernarySearchTreeNode<K, V> | undefined,
+	): IterableIterator<[K, V]> {
 		if (node) {
 			// left
 			yield* this._entries(node.left);
@@ -1044,13 +1147,17 @@ export class TernarySearchTree<K, V> {
 	}
 }
 
-export async function stringReplaceAsync(str: string, regex: RegExp, asyncFn: (substring: string, ...args: any[]) => Promise<string>): Promise<string> {
+export async function stringReplaceAsync(
+	str: string,
+	regex: RegExp,
+	asyncFn: (substring: string, ...args: any[]) => Promise<string>,
+): Promise<string> {
 	const promises: Promise<string>[] = [];
 	str.replace(regex, (match, ...args) => {
 		const promise = asyncFn(match, ...args);
 		promises.push(promise);
 
-		return '';
+		return "";
 	});
 
 	const data = await Promise.all(promises);
@@ -1060,7 +1167,11 @@ export async function stringReplaceAsync(str: string, regex: RegExp, asyncFn: (s
 	return str.replace(regex, () => data[offset++]);
 }
 
-export async function batchPromiseAll<T>(items: readonly T[], batchSize: number, processFn: (item: T) => Promise<void>): Promise<void> {
+export async function batchPromiseAll<T>(
+	items: readonly T[],
+	batchSize: number,
+	processFn: (item: T) => Promise<void>,
+): Promise<void> {
 	const batches = Math.ceil(items.length / batchSize);
 
 	for (let i = 0; i < batches; i++) {
@@ -1068,4 +1179,3 @@ export async function batchPromiseAll<T>(items: readonly T[], batchSize: number,
 		await Promise.all(batch.map(processFn));
 	}
 }
-

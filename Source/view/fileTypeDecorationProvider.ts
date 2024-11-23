@@ -3,23 +3,34 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as path from 'path';
-import * as vscode from 'vscode';
-import { GitChangeType } from '../common/file';
-import { FileChangeNodeUriParams, fromFileChangeNodeUri, fromPRUri, PRUriParams } from '../common/uri';
-import { FolderRepositoryManager } from '../github/folderRepositoryManager';
-import { PullRequestModel } from '../github/pullRequestModel';
-import { TreeDecorationProvider } from './treeDecorationProviders';
+import * as path from "path";
+import * as vscode from "vscode";
+
+import { GitChangeType } from "../common/file";
+import {
+	FileChangeNodeUriParams,
+	fromFileChangeNodeUri,
+	fromPRUri,
+	PRUriParams,
+} from "../common/uri";
+import { FolderRepositoryManager } from "../github/folderRepositoryManager";
+import { PullRequestModel } from "../github/pullRequestModel";
+import { TreeDecorationProvider } from "./treeDecorationProviders";
 
 export class FileTypeDecorationProvider extends TreeDecorationProvider {
 	constructor() {
 		super();
 	}
 
-	registerPullRequestPropertyChangedListeners(folderManager: FolderRepositoryManager, model: PullRequestModel): vscode.Disposable {
-		return model.onDidChangeFileViewedState(changed => {
-			changed.changed.forEach(change => {
-				this._handlePullRequestPropertyChange(folderManager, model, { path: change.fileName });
+	registerPullRequestPropertyChangedListeners(
+		folderManager: FolderRepositoryManager,
+		model: PullRequestModel,
+	): vscode.Disposable {
+		return model.onDidChangeFileViewedState((changed) => {
+			changed.changed.forEach((change) => {
+				this._handlePullRequestPropertyChange(folderManager, model, {
+					path: change.fileName,
+				});
 			});
 		});
 	}
@@ -39,7 +50,7 @@ export class FileTypeDecorationProvider extends TreeDecorationProvider {
 				propagate: false,
 				badge: this.letter(fileChangeUriParams.status),
 				color: this.color(fileChangeUriParams.status),
-				tooltip: this.tooltip(fileChangeUriParams)
+				tooltip: this.tooltip(fileChangeUriParams),
 			};
 		}
 
@@ -50,7 +61,7 @@ export class FileTypeDecorationProvider extends TreeDecorationProvider {
 				propagate: false,
 				badge: this.letter(prParams.status),
 				color: this.color(prParams.status),
-				tooltip: this.tooltip(prParams)
+				tooltip: this.tooltip(prParams),
 			};
 		}
 
@@ -60,80 +71,83 @@ export class FileTypeDecorationProvider extends TreeDecorationProvider {
 	gitColors(status: GitChangeType): string | undefined {
 		switch (status) {
 			case GitChangeType.MODIFY:
-				return 'gitDecoration.modifiedResourceForeground';
+				return "gitDecoration.modifiedResourceForeground";
 
 			case GitChangeType.ADD:
-				return 'gitDecoration.addedResourceForeground';
+				return "gitDecoration.addedResourceForeground";
 
 			case GitChangeType.DELETE:
-				return 'gitDecoration.deletedResourceForeground';
+				return "gitDecoration.deletedResourceForeground";
 
 			case GitChangeType.RENAME:
-				return 'gitDecoration.renamedResourceForeground';
+				return "gitDecoration.renamedResourceForeground";
 
 			case GitChangeType.UNKNOWN:
 				return undefined;
 
 			case GitChangeType.UNMERGED:
-				return 'gitDecoration.conflictingResourceForeground';
+				return "gitDecoration.conflictingResourceForeground";
 		}
 	}
 
 	remoteReposColors(status: GitChangeType): string | undefined {
 		switch (status) {
 			case GitChangeType.MODIFY:
-				return 'remoteHub.decorations.modifiedForegroundColor';
+				return "remoteHub.decorations.modifiedForegroundColor";
 
 			case GitChangeType.ADD:
-				return 'remoteHub.decorations.addedForegroundColor';
+				return "remoteHub.decorations.addedForegroundColor";
 
 			case GitChangeType.DELETE:
-				return 'remoteHub.decorations.deletedForegroundColor';
+				return "remoteHub.decorations.deletedForegroundColor";
 
 			case GitChangeType.RENAME:
-				return 'remoteHub.decorations.incomingRenamedForegroundColor';
+				return "remoteHub.decorations.incomingRenamedForegroundColor";
 
 			case GitChangeType.UNKNOWN:
 				return undefined;
 
 			case GitChangeType.UNMERGED:
-				return 'remoteHub.decorations.conflictForegroundColor';
+				return "remoteHub.decorations.conflictForegroundColor";
 		}
 	}
 
 	color(status: GitChangeType): vscode.ThemeColor | undefined {
-		let color: string | undefined = vscode.extensions.getExtension('vscode.git') ? this.gitColors(status) : this.remoteReposColors(status);
+		let color: string | undefined = vscode.extensions.getExtension(
+			"vscode.git",
+		)
+			? this.gitColors(status)
+			: this.remoteReposColors(status);
 
 		return color ? new vscode.ThemeColor(color) : undefined;
 	}
 
 	letter(status: GitChangeType): string {
-
 		switch (status) {
 			case GitChangeType.MODIFY:
-				return 'M';
+				return "M";
 
 			case GitChangeType.ADD:
-				return 'A';
+				return "A";
 
 			case GitChangeType.DELETE:
-				return 'D';
+				return "D";
 
 			case GitChangeType.RENAME:
-				return 'R';
+				return "R";
 
 			case GitChangeType.UNKNOWN:
-				return 'U';
+				return "U";
 
 			case GitChangeType.UNMERGED:
-				return 'C';
+				return "C";
 		}
 
-		return '';
+		return "";
 	}
 
 	tooltip(change: FileChangeNodeUriParams | PRUriParams) {
-		if ((change.status === GitChangeType.RENAME) && change.previousFileName) {
+		if (change.status === GitChangeType.RENAME && change.previousFileName) {
 			return `Renamed ${change.previousFileName} to ${path.basename(change.fileName)}`;
 		}
 	}

@@ -3,11 +3,12 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as vscode from 'vscode';
-import { APIState, GitAPI, GitExtension, PublishEvent } from '../@types/git';
-import { IGit, Repository } from '../api/api';
-import { commands } from '../common/executeCommands';
-import { Disposable } from '../common/lifecycle';
+import * as vscode from "vscode";
+
+import { APIState, GitAPI, GitExtension, PublishEvent } from "../@types/git";
+import { IGit, Repository } from "../api/api";
+import { commands } from "../common/executeCommands";
+import { Disposable } from "../common/lifecycle";
 
 export class BuiltinGitProvider extends Disposable implements IGit {
 	get repositories(): Repository[] {
@@ -19,13 +20,17 @@ export class BuiltinGitProvider extends Disposable implements IGit {
 	}
 
 	private _onDidOpenRepository = new vscode.EventEmitter<Repository>();
-	readonly onDidOpenRepository: vscode.Event<Repository> = this._onDidOpenRepository.event;
+	readonly onDidOpenRepository: vscode.Event<Repository> =
+		this._onDidOpenRepository.event;
 	private _onDidCloseRepository = new vscode.EventEmitter<Repository>();
-	readonly onDidCloseRepository: vscode.Event<Repository> = this._onDidCloseRepository.event;
+	readonly onDidCloseRepository: vscode.Event<Repository> =
+		this._onDidCloseRepository.event;
 	private _onDidChangeState = new vscode.EventEmitter<APIState>();
-	readonly onDidChangeState: vscode.Event<APIState> = this._onDidChangeState.event;
+	readonly onDidChangeState: vscode.Event<APIState> =
+		this._onDidChangeState.event;
 	private _onDidPublish = new vscode.EventEmitter<PublishEvent>();
-	readonly onDidPublish: vscode.Event<PublishEvent> = this._onDidPublish.event;
+	readonly onDidPublish: vscode.Event<PublishEvent> =
+		this._onDidPublish.event;
 
 	private readonly _gitAPI: GitAPI;
 
@@ -38,19 +43,34 @@ export class BuiltinGitProvider extends Disposable implements IGit {
 			this._gitAPI = gitExtension.getAPI(1);
 		} catch (e) {
 			// The git extension will throw if a git model cannot be found, i.e. if git is not installed.
-			commands.setContext('gitNotInstalled', true);
+			commands.setContext("gitNotInstalled", true);
 
 			throw e;
 		}
 
-		this._register(this._gitAPI.onDidCloseRepository(e => this._onDidCloseRepository.fire(e as any)));
-		this._register(this._gitAPI.onDidOpenRepository(e => this._onDidOpenRepository.fire(e as any)));
-		this._register(this._gitAPI.onDidChangeState(e => this._onDidChangeState.fire(e)));
-		this._register(this._gitAPI.onDidPublish(e => this._onDidPublish.fire(e)));
+		this._register(
+			this._gitAPI.onDidCloseRepository((e) =>
+				this._onDidCloseRepository.fire(e as any),
+			),
+		);
+		this._register(
+			this._gitAPI.onDidOpenRepository((e) =>
+				this._onDidOpenRepository.fire(e as any),
+			),
+		);
+		this._register(
+			this._gitAPI.onDidChangeState((e) =>
+				this._onDidChangeState.fire(e),
+			),
+		);
+		this._register(
+			this._gitAPI.onDidPublish((e) => this._onDidPublish.fire(e)),
+		);
 	}
 
 	static async createProvider(): Promise<BuiltinGitProvider | undefined> {
-		const extension = vscode.extensions.getExtension<GitExtension>('vscode.git');
+		const extension =
+			vscode.extensions.getExtension<GitExtension>("vscode.git");
 
 		if (extension) {
 			await extension.activate();
@@ -65,7 +85,7 @@ export class BuiltinGitProvider extends Disposable implements IGit {
 			return this._gitAPI.registerPostCommitCommandsProvider(provider);
 		}
 		return {
-			dispose: () => { }
+			dispose: () => {},
 		};
 	}
 }

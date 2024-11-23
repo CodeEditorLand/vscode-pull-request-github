@@ -3,13 +3,15 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as vscode from 'vscode';
+import * as vscode from "vscode";
 
 export function toDisposable(d: () => void): vscode.Disposable {
 	return { dispose: d };
 }
 
-export function combinedDisposable(disposables: vscode.Disposable[]): vscode.Disposable {
+export function combinedDisposable(
+	disposables: vscode.Disposable[],
+): vscode.Disposable {
 	return toDisposable(() => disposeAll(disposables));
 }
 
@@ -20,7 +22,10 @@ export function disposeAll(disposables: vscode.Disposable[]) {
 	}
 }
 
-export function addDisposable<T extends vscode.Disposable>(a: T, disposables: vscode.Disposable[]): T {
+export function addDisposable<T extends vscode.Disposable>(
+	a: T,
+	disposables: vscode.Disposable[],
+): T {
 	disposables.push(a);
 
 	return a;

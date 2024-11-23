@@ -3,17 +3,18 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as vscode from 'vscode';
-import { ITelemetry } from '../common/telemetry';
-import { FolderRepositoryManager } from '../github/folderRepositoryManager';
-import { RepositoriesManager } from '../github/repositoriesManager';
-import { ISSUE_OR_URL_EXPRESSION, ParsedIssue, parseIssueExpressionOutput } from '../github/utils';
-import { StateManager } from './stateManager';
+import * as vscode from "vscode";
+
+import { ITelemetry } from "../common/telemetry";
+import { FolderRepositoryManager } from "../github/folderRepositoryManager";
+import { RepositoriesManager } from "../github/repositoriesManager";
 import {
-	getIssue,
-	issueMarkdown,
-	shouldShowHover,
-} from './util';
+	ISSUE_OR_URL_EXPRESSION,
+	ParsedIssue,
+	parseIssueExpressionOutput,
+} from "../github/utils";
+import { StateManager } from "./stateManager";
+import { getIssue, issueMarkdown, shouldShowHover } from "./util";
 
 export class IssueHoverProvider implements vscode.HoverProvider {
 	constructor(
@@ -21,7 +22,7 @@ export class IssueHoverProvider implements vscode.HoverProvider {
 		private stateManager: StateManager,
 		private context: vscode.ExtensionContext,
 		private telemetry: ITelemetry,
-	) { }
+	) {}
 
 	async provideHover(
 		document: vscode.TextDocument,
@@ -32,11 +33,17 @@ export class IssueHoverProvider implements vscode.HoverProvider {
 			return;
 		}
 
-		let wordPosition = document.getWordRangeAtPosition(position, ISSUE_OR_URL_EXPRESSION);
+		let wordPosition = document.getWordRangeAtPosition(
+			position,
+			ISSUE_OR_URL_EXPRESSION,
+		);
 
 		if (wordPosition && wordPosition.start.character > 0) {
 			wordPosition = new vscode.Range(
-				new vscode.Position(wordPosition.start.line, wordPosition.start.character),
+				new vscode.Position(
+					wordPosition.start.line,
+					wordPosition.start.character,
+				),
 				wordPosition.end,
 			);
 
@@ -46,7 +53,9 @@ export class IssueHoverProvider implements vscode.HoverProvider {
 
 			const tryParsed = parseIssueExpressionOutput(match);
 
-			const folderManager = this.manager.getManagerForFile(document.uri) ?? this.manager.folderManagers[0];
+			const folderManager =
+				this.manager.getManagerForFile(document.uri) ??
+				this.manager.folderManagers[0];
 
 			if (!folderManager) {
 				return;
@@ -56,9 +65,18 @@ export class IssueHoverProvider implements vscode.HoverProvider {
 				tryParsed &&
 				match &&
 				// Only check the max issue number if the owner/repo format isn't used here.
-				(tryParsed.owner || tryParsed.issueNumber <= this.stateManager.maxIssueNumber(folderManager.repository.rootUri))
+				(tryParsed.owner ||
+					tryParsed.issueNumber <=
+						this.stateManager.maxIssueNumber(
+							folderManager.repository.rootUri,
+						))
 			) {
-				return this.createHover(folderManager, match[0], tryParsed, wordPosition);
+				return this.createHover(
+					folderManager,
+					match[0],
+					tryParsed,
+					wordPosition,
+				);
 			}
 		} else {
 			return;
@@ -71,7 +89,12 @@ export class IssueHoverProvider implements vscode.HoverProvider {
 		parsed: ParsedIssue,
 		range: vscode.Range,
 	): Promise<vscode.Hover | undefined> {
-		const issue = await getIssue(this.stateManager, folderManager, value, parsed);
+		const issue = await getIssue(
+			this.stateManager,
+			folderManager,
+			value,
+			parsed,
+		);
 
 		if (!issue) {
 			return;
@@ -79,8 +102,16 @@ export class IssueHoverProvider implements vscode.HoverProvider {
 		/* __GDPR__
 			"issue.issueHover" : {}
 		*/
-		this.telemetry.sendTelemetryEvent('issues.issueHover');
+		this.telemetry.sendTelemetryEvent("issues.issueHover");
 
-		return new vscode.Hover(await issueMarkdown(issue, this.context, this.manager, parsed.commentNumber), range);
+		return new vscode.Hover(
+			await issueMarkdown(
+				issue,
+				this.context,
+				this.manager,
+				parsed.commentNumber,
+			),
+			range,
+		);
 	}
 }

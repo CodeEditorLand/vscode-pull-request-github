@@ -3,10 +3,10 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as vscode from 'vscode';
-import { resolve } from '../env/node/ssh';
-import Logger from './logger';
+import * as vscode from "vscode";
 
+import { resolve } from "../env/node/ssh";
+import Logger from "./logger";
 
 export enum ProtocolType {
 	Local,
@@ -18,14 +18,16 @@ export enum ProtocolType {
 
 export class Protocol {
 	public type: ProtocolType = ProtocolType.OTHER;
-	public host: string = '';
+	public host: string = "";
 
-	public owner: string = '';
+	public owner: string = "";
 
-	public repositoryName: string = '';
+	public repositoryName: string = "";
 
 	public get nameWithOwner(): string {
-		return this.owner ? `${this.owner}/${this.repositoryName}` : this.repositoryName;
+		return this.owner
+			? `${this.owner}/${this.repositoryName}`
+			: this.repositoryName;
 	}
 
 	public readonly url: vscode.Uri;
@@ -42,30 +44,34 @@ export class Protocol {
 			this.host = this.getHostName(this.url.authority);
 
 			if (this.host) {
-				this.repositoryName = this.getRepositoryName(this.url.path) || '';
-				this.owner = this.getOwnerName(this.url.path) || '';
+				this.repositoryName =
+					this.getRepositoryName(this.url.path) || "";
+				this.owner = this.getOwnerName(this.url.path) || "";
 			}
 		} catch (e) {
 			Logger.error(`Failed to parse '${uriString}'`);
 			vscode.window.showWarningMessage(
-				vscode.l10n.t('Unable to parse remote \'{0}\'. Please check that it is correctly formatted.', uriString)
+				vscode.l10n.t(
+					"Unable to parse remote '{0}'. Please check that it is correctly formatted.",
+					uriString,
+				),
 			);
 		}
 	}
 
 	private getType(scheme: string): ProtocolType {
 		switch (scheme) {
-			case 'file':
+			case "file":
 				return ProtocolType.Local;
 
-			case 'http':
-			case 'https':
+			case "http":
+			case "https":
 				return ProtocolType.HTTP;
 
-			case 'git':
+			case "git":
 				return ProtocolType.GIT;
 
-			case 'ssh':
+			case "ssh":
 				return ProtocolType.SSH;
 
 			default:
@@ -81,8 +87,8 @@ export class Protocol {
 		}
 		const { Hostname, HostName, path } = sshConfig;
 		this.host = HostName || Hostname;
-		this.owner = this.getOwnerName(path) || '';
-		this.repositoryName = this.getRepositoryName(path) || '';
+		this.owner = this.getOwnerName(path) || "";
+		this.repositoryName = this.getRepositoryName(path) || "";
 		this.type = ProtocolType.SSH;
 
 		return true;
@@ -95,37 +101,39 @@ export class Protocol {
 		if (matches && matches.length >= 2) {
 			// normalize to fix #903.
 			// www.github.com will redirect anyways, so this is safe in this specific case, but potentially not in others.
-			return matches[1].toLocaleLowerCase() === 'www.github.com' ? 'github.com' : matches[1];
+			return matches[1].toLocaleLowerCase() === "www.github.com"
+				? "github.com"
+				: matches[1];
 		}
 
-		return '';
+		return "";
 	}
 
 	getRepositoryName(path: string) {
-		let normalized = path.replace(/\\/g, '/');
+		let normalized = path.replace(/\\/g, "/");
 
-		if (normalized.endsWith('/')) {
+		if (normalized.endsWith("/")) {
 			normalized = normalized.substr(0, normalized.length - 1);
 		}
-		const lastIndex = normalized.lastIndexOf('/');
+		const lastIndex = normalized.lastIndexOf("/");
 
 		const lastSegment = normalized.substr(lastIndex + 1);
 
-		if (lastSegment === '' || lastSegment === '/') {
+		if (lastSegment === "" || lastSegment === "/") {
 			return;
 		}
 
-		return lastSegment.replace(/\/$/, '').replace(/\.git$/, '');
+		return lastSegment.replace(/\/$/, "").replace(/\.git$/, "");
 	}
 
 	getOwnerName(path: string) {
-		let normalized = path.replace(/\\/g, '/');
+		let normalized = path.replace(/\\/g, "/");
 
-		if (normalized.endsWith('/')) {
+		if (normalized.endsWith("/")) {
 			normalized = normalized.substr(0, normalized.length - 1);
 		}
 
-		const fragments = normalized.split('/');
+		const fragments = normalized.split("/");
 
 		if (fragments.length > 1) {
 			return fragments[fragments.length - 2];
@@ -143,9 +151,12 @@ export class Protocol {
 			return this.url;
 		}
 
-		let scheme = 'https';
+		let scheme = "https";
 
-		if (this.url && (this.url.scheme === 'http' || this.url.scheme === 'https')) {
+		if (
+			this.url &&
+			(this.url.scheme === "http" || this.url.scheme === "https")
+		) {
 			scheme = this.url.scheme;
 		}
 
@@ -187,7 +198,12 @@ export class Protocol {
 		return;
 	}
 
-	update(change: { type?: ProtocolType; host?: string; owner?: string; repositoryName?: string }): Protocol {
+	update(change: {
+		type?: ProtocolType;
+		host?: string;
+		owner?: string;
+		repositoryName?: string;
+	}): Protocol {
 		if (change.type) {
 			this.type = change.type;
 		}
@@ -220,6 +236,9 @@ export class Protocol {
 			return false;
 		}
 
-		return normalizeUri.toString().toLocaleLowerCase() === otherNormalizeUri.toString().toLocaleLowerCase();
+		return (
+			normalizeUri.toString().toLocaleLowerCase() ===
+			otherNormalizeUri.toString().toLocaleLowerCase()
+		);
 	}
 }

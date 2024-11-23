@@ -3,8 +3,8 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { PullRequest } from '../../src/github/views';
-import { vscode } from './message';
+import { PullRequest } from "../../src/github/views";
+import { vscode } from "./message";
 
 export function getState(): PullRequest {
 	return vscode.getState();
@@ -13,7 +13,11 @@ export function getState(): PullRequest {
 export function setState(pullRequest: PullRequest): void {
 	const oldPullRequest = getState();
 
-	if (oldPullRequest && oldPullRequest.number && oldPullRequest.number === pullRequest.number) {
+	if (
+		oldPullRequest &&
+		oldPullRequest.number &&
+		oldPullRequest.number === pullRequest.number
+	) {
 		pullRequest.pendingCommentText = oldPullRequest.pendingCommentText;
 	}
 

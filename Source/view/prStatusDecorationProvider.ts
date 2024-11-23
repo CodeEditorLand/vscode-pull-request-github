@@ -3,25 +3,31 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as vscode from 'vscode';
-import { Disposable } from '../common/lifecycle';
-import { createPRNodeUri, fromPRNodeUri, Schemes } from '../common/uri';
-import { PrsTreeModel, UnsatisfiedChecks } from './prsTreeModel';
+import * as vscode from "vscode";
 
-export class PRStatusDecorationProvider extends Disposable implements vscode.FileDecorationProvider {
+import { Disposable } from "../common/lifecycle";
+import { createPRNodeUri, fromPRNodeUri, Schemes } from "../common/uri";
+import { PrsTreeModel, UnsatisfiedChecks } from "./prsTreeModel";
 
-	private _onDidChangeFileDecorations: vscode.EventEmitter<vscode.Uri | vscode.Uri[]> = new vscode.EventEmitter<
+export class PRStatusDecorationProvider
+	extends Disposable
+	implements vscode.FileDecorationProvider
+{
+	private _onDidChangeFileDecorations: vscode.EventEmitter<
 		vscode.Uri | vscode.Uri[]
-	>();
-	onDidChangeFileDecorations: vscode.Event<vscode.Uri | vscode.Uri[]> = this._onDidChangeFileDecorations.event;
+	> = new vscode.EventEmitter<vscode.Uri | vscode.Uri[]>();
+	onDidChangeFileDecorations: vscode.Event<vscode.Uri | vscode.Uri[]> =
+		this._onDidChangeFileDecorations.event;
 
 	constructor(private readonly _prsTreeModel: PrsTreeModel) {
 		super();
 		this._register(vscode.window.registerFileDecorationProvider(this));
 		this._register(
-			this._prsTreeModel.onDidChangePrStatus(identifiers => {
-				this._onDidChangeFileDecorations.fire(identifiers.map(id => createPRNodeUri(id)));
-			})
+			this._prsTreeModel.onDidChangePrStatus((identifiers) => {
+				this._onDidChangeFileDecorations.fire(
+					identifiers.map((id) => createPRNodeUri(id)),
+				);
+			}),
 		);
 	}
 
@@ -46,44 +52,66 @@ export class PRStatusDecorationProvider extends Disposable implements vscode.Fil
 		return this._getDecoration(status.status) as vscode.FileDecoration;
 	}
 
-	private _getDecoration(status: UnsatisfiedChecks): vscode.FileDecoration2 | undefined {
-		if ((status & UnsatisfiedChecks.CIFailed) && (status & UnsatisfiedChecks.ReviewRequired)) {
+	private _getDecoration(
+		status: UnsatisfiedChecks,
+	): vscode.FileDecoration2 | undefined {
+		if (
+			status & UnsatisfiedChecks.CIFailed &&
+			status & UnsatisfiedChecks.ReviewRequired
+		) {
 			return {
 				propagate: false,
-				badge: new vscode.ThemeIcon('close', new vscode.ThemeColor('list.errorForeground')),
-				tooltip: 'Review required and some checks have failed'
+				badge: new vscode.ThemeIcon(
+					"close",
+					new vscode.ThemeColor("list.errorForeground"),
+				),
+				tooltip: "Review required and some checks have failed",
 			};
 		} else if (status & UnsatisfiedChecks.CIFailed) {
 			return {
 				propagate: false,
-				badge: new vscode.ThemeIcon('close', new vscode.ThemeColor('list.errorForeground')),
-				tooltip: 'Some checks have failed'
+				badge: new vscode.ThemeIcon(
+					"close",
+					new vscode.ThemeColor("list.errorForeground"),
+				),
+				tooltip: "Some checks have failed",
 			};
 		} else if (status & UnsatisfiedChecks.ChangesRequested) {
 			return {
 				propagate: false,
-				badge: new vscode.ThemeIcon('request-changes', new vscode.ThemeColor('list.errorForeground')),
-				tooltip: 'Changes requested'
+				badge: new vscode.ThemeIcon(
+					"request-changes",
+					new vscode.ThemeColor("list.errorForeground"),
+				),
+				tooltip: "Changes requested",
 			};
 		} else if (status & UnsatisfiedChecks.CIPending) {
 			return {
 				propagate: false,
-				badge: new vscode.ThemeIcon('sync', new vscode.ThemeColor('list.warningForeground')),
-				tooltip: 'Checks pending'
+				badge: new vscode.ThemeIcon(
+					"sync",
+					new vscode.ThemeColor("list.warningForeground"),
+				),
+				tooltip: "Checks pending",
 			};
 		} else if (status & UnsatisfiedChecks.ReviewRequired) {
 			return {
 				propagate: false,
-				badge: new vscode.ThemeIcon('circle-filled', new vscode.ThemeColor('list.warningForeground')),
-				tooltip: 'Review required'
+				badge: new vscode.ThemeIcon(
+					"circle-filled",
+					new vscode.ThemeColor("list.warningForeground"),
+				),
+				tooltip: "Review required",
 			};
 		} else if (status === UnsatisfiedChecks.None) {
 			return {
 				propagate: false,
-				badge: new vscode.ThemeIcon('check-all', new vscode.ThemeColor('issues.open')),
-				tooltip: 'All checks passed'
+				badge: new vscode.ThemeIcon(
+					"check-all",
+					new vscode.ThemeColor("issues.open"),
+				),
+				tooltip: "All checks passed",
 			};
 		}
-
 	}
 }

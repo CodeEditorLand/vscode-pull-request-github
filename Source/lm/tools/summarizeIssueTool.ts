@@ -2,31 +2,44 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-'use strict';
+"use strict";
 
-import * as vscode from 'vscode';
-import { FetchIssueResult } from './fetchIssueTool';
-import { concatAsyncIterable } from './toolsUtils';
+import * as vscode from "vscode";
 
-export class IssueSummarizationTool implements vscode.LanguageModelTool<FetchIssueResult> {
-	public static readonly toolId = 'github-pull-request_issue_summarize';
+import { FetchIssueResult } from "./fetchIssueTool";
+import { concatAsyncIterable } from "./toolsUtils";
 
-	async prepareInvocation(options: vscode.LanguageModelToolInvocationPrepareOptions<FetchIssueResult>): Promise<vscode.PreparedToolInvocation> {
+export class IssueSummarizationTool
+	implements vscode.LanguageModelTool<FetchIssueResult>
+{
+	public static readonly toolId = "github-pull-request_issue_summarize";
+
+	async prepareInvocation(
+		options: vscode.LanguageModelToolInvocationPrepareOptions<FetchIssueResult>,
+	): Promise<vscode.PreparedToolInvocation> {
 		if (!options.input.title) {
 			return {
-				invocationMessage: vscode.l10n.t('Summarizing issue')
+				invocationMessage: vscode.l10n.t("Summarizing issue"),
 			};
 		}
 		const shortenedTitle = options.input.title.length > 40;
 
-		const maxLengthTitle = shortenedTitle ? options.input.title.substring(0, 40) : options.input.title;
+		const maxLengthTitle = shortenedTitle
+			? options.input.title.substring(0, 40)
+			: options.input.title;
 
 		return {
-			invocationMessage: vscode.l10n.t('Summarizing "{0}', maxLengthTitle)
+			invocationMessage: vscode.l10n.t(
+				'Summarizing "{0}',
+				maxLengthTitle,
+			),
 		};
 	}
 
-	async invoke(options: vscode.LanguageModelToolInvocationOptions<FetchIssueResult>, _token: vscode.CancellationToken): Promise<vscode.LanguageModelToolResult | undefined> {
+	async invoke(
+		options: vscode.LanguageModelToolInvocationOptions<FetchIssueResult>,
+		_token: vscode.CancellationToken,
+	): Promise<vscode.LanguageModelToolResult | undefined> {
 		let issueOrPullRequestInfo: string = `
 Title : ${options.input.title}
 Body : ${options.input.body}
@@ -58,8 +71,8 @@ Body: ${comment.body}
 			}
 		}
 		const models = await vscode.lm.selectChatModels({
-			vendor: 'copilot',
-			family: 'gpt-4o'
+			vendor: "copilot",
+			family: "gpt-4o",
 		});
 
 		const model = models[0];
@@ -69,17 +82,31 @@ Body: ${comment.body}
 		const owner = options.input.owner;
 
 		if (model && repo && owner) {
-			const messages = [vscode.LanguageModelChatMessage.User(this.summarizeInstructions(repo, owner))];
-			messages.push(vscode.LanguageModelChatMessage.User(`The issue or pull request information is as follows:`));
-			messages.push(vscode.LanguageModelChatMessage.User(issueOrPullRequestInfo));
+			const messages = [
+				vscode.LanguageModelChatMessage.User(
+					this.summarizeInstructions(repo, owner),
+				),
+			];
+			messages.push(
+				vscode.LanguageModelChatMessage.User(
+					`The issue or pull request information is as follows:`,
+				),
+			);
+			messages.push(
+				vscode.LanguageModelChatMessage.User(issueOrPullRequestInfo),
+			);
 
 			const response = await model.sendRequest(messages, {});
 
 			const responseText = await concatAsyncIterable(response.text);
 
-			return new vscode.LanguageModelToolResult([new vscode.LanguageModelTextPart(responseText)]);
+			return new vscode.LanguageModelToolResult([
+				new vscode.LanguageModelTextPart(responseText),
+			]);
 		} else {
-			return new vscode.LanguageModelToolResult([new vscode.LanguageModelTextPart(issueOrPullRequestInfo)]);
+			return new vscode.LanguageModelToolResult([
+				new vscode.LanguageModelTextPart(issueOrPullRequestInfo),
+			]);
 		}
 	}
 
@@ -102,5 +129,4 @@ joe: this is a comment
 Make sure the summary is at least as short or shorter than the issue or PR with the comments and the patches if there are.
 `;
 	}
-
 }

@@ -2,13 +2,14 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-'use strict';
+"use strict";
 
-import * as vscode from 'vscode';
-import Logger from '../../common/logger';
-import { FolderRepositoryManager } from '../../github/folderRepositoryManager';
-import { ILabel, Issue } from '../../github/interface';
-import { concatAsyncIterable, MimeTypes, RepoToolBase } from './toolsUtils';
+import * as vscode from "vscode";
+
+import Logger from "../../common/logger";
+import { FolderRepositoryManager } from "../../github/folderRepositoryManager";
+import { ILabel, Issue } from "../../github/interface";
+import { concatAsyncIterable, MimeTypes, RepoToolBase } from "./toolsUtils";
 
 interface ConvertToQuerySyntaxParameters {
 	naturalLanguageString: string;
@@ -27,61 +28,92 @@ interface ConvertToQuerySyntaxResult {
 }
 
 enum ValidatableProperty {
-	is = 'is',
-	type = 'type',
-	state = 'state',
-	in = 'in',
-	linked = 'linked',
-	status = 'status',
-	draft = 'draft',
-	review = 'review',
-	no = 'no',
+	is = "is",
+	type = "type",
+	state = "state",
+	in = "in",
+	linked = "linked",
+	status = "status",
+	draft = "draft",
+	review = "review",
+	no = "no",
 }
 
 const githubSearchSyntax = {
-	is: { possibleValues: ['issue', 'pr', 'draft', 'public', 'private', 'locked', 'unlocked'] },
-	assignee: { valueDescription: 'A GitHub user name or @me' },
-	author: { valueDescription: 'A GitHub user name or @me' },
-	mentions: { valueDescription: 'A GitHub user name or @me' },
-	team: { valueDescription: 'A GitHub user name' },
-	commenter: { valueDescription: 'A GitHub user name or @me' },
-	involves: { valueDescription: 'A GitHub user name or @me' },
-	label: { valueDescription: 'A GitHub issue/pr label' },
-	type: { possibleValues: ['pr', 'issue'] },
-	state: { possibleValues: ['open', 'closed', 'merged'] },
-	in: { possibleValues: ['title', 'body', 'comments'] },
-	user: { valueDescription: 'A GitHub user name or @me' },
-	org: { valueDescription: 'A GitHub org, without the repo name' },
-	repo: { valueDescription: 'A GitHub repo, without the org name' },
-	linked: { possibleValues: ['pr', 'issue'] },
-	milestone: { valueDescription: 'A GitHub milestone' },
-	project: { valueDescription: 'A GitHub project' },
-	status: { possibleValues: ['success', 'failure', 'pending'] },
-	head: { valueDescription: 'A git commit sha or branch name' },
-	base: { valueDescription: 'A git commit sha or branch name' },
-	comments: { valueDescription: 'A number' },
-	interactions: { valueDescription: 'A number' },
-	reactions: { valueDescription: 'A number' },
-	draft: { possibleValues: ['true', 'false'] },
-	review: { possibleValues: ['none', 'required', 'approved', 'changes_requested'] },
-	reviewedBy: { valueDescription: 'A GitHub user name or @me' },
-	reviewRequested: { valueDescription: 'A GitHub user name or @me' },
-	userReviewRequested: { valueDescription: 'A GitHub user name or @me' },
-	teamReviewRequested: { valueDescription: 'A GitHub user name' },
-	created: { valueDescription: 'A date, with an optional < >' },
-	updated: { valueDescription: 'A date, with an optional < >' },
-	closed: { valueDescription: 'A date, with an optional < >' },
-	no: { possibleValues: ['label', 'milestone', 'assignee', 'project'] },
-	sort: { possibleValues: ['updated', 'updated-asc', 'interactions', 'interactions-asc', 'author-date', 'author-date-asc', 'committer-date', 'committer-date-asc', 'reactions', 'reactions-asc', 'reactions-(+1, -1, smile, tada, heart)'] }
+	is: {
+		possibleValues: [
+			"issue",
+			"pr",
+			"draft",
+			"public",
+			"private",
+			"locked",
+			"unlocked",
+		],
+	},
+	assignee: { valueDescription: "A GitHub user name or @me" },
+	author: { valueDescription: "A GitHub user name or @me" },
+	mentions: { valueDescription: "A GitHub user name or @me" },
+	team: { valueDescription: "A GitHub user name" },
+	commenter: { valueDescription: "A GitHub user name or @me" },
+	involves: { valueDescription: "A GitHub user name or @me" },
+	label: { valueDescription: "A GitHub issue/pr label" },
+	type: { possibleValues: ["pr", "issue"] },
+	state: { possibleValues: ["open", "closed", "merged"] },
+	in: { possibleValues: ["title", "body", "comments"] },
+	user: { valueDescription: "A GitHub user name or @me" },
+	org: { valueDescription: "A GitHub org, without the repo name" },
+	repo: { valueDescription: "A GitHub repo, without the org name" },
+	linked: { possibleValues: ["pr", "issue"] },
+	milestone: { valueDescription: "A GitHub milestone" },
+	project: { valueDescription: "A GitHub project" },
+	status: { possibleValues: ["success", "failure", "pending"] },
+	head: { valueDescription: "A git commit sha or branch name" },
+	base: { valueDescription: "A git commit sha or branch name" },
+	comments: { valueDescription: "A number" },
+	interactions: { valueDescription: "A number" },
+	reactions: { valueDescription: "A number" },
+	draft: { possibleValues: ["true", "false"] },
+	review: {
+		possibleValues: ["none", "required", "approved", "changes_requested"],
+	},
+	reviewedBy: { valueDescription: "A GitHub user name or @me" },
+	reviewRequested: { valueDescription: "A GitHub user name or @me" },
+	userReviewRequested: { valueDescription: "A GitHub user name or @me" },
+	teamReviewRequested: { valueDescription: "A GitHub user name" },
+	created: { valueDescription: "A date, with an optional < >" },
+	updated: { valueDescription: "A date, with an optional < >" },
+	closed: { valueDescription: "A date, with an optional < >" },
+	no: { possibleValues: ["label", "milestone", "assignee", "project"] },
+	sort: {
+		possibleValues: [
+			"updated",
+			"updated-asc",
+			"interactions",
+			"interactions-asc",
+			"author-date",
+			"author-date-asc",
+			"committer-date",
+			"committer-date-asc",
+			"reactions",
+			"reactions-asc",
+			"reactions-(+1, -1, smile, tada, heart)",
+		],
+	},
 };
 
 const MATCH_UNQUOTED_SPACES = /(?!\B"[^"]*)\s+(?![^"]*"\B)/;
 
 export class ConvertToSearchSyntaxTool extends RepoToolBase<ConvertToQuerySyntaxParameters> {
-	static ID = 'ConvertToSearchSyntaxTool';
+	static ID = "ConvertToSearchSyntaxTool";
 
-	private async fullQueryAssistantPrompt(folderRepoManager: FolderRepositoryManager): Promise<string> {
-		const remote = folderRepoManager.activePullRequest?.remote ?? folderRepoManager.activeIssue?.remote ?? (await folderRepoManager.getPullRequestDefaultRepo()).remote;
+	private async fullQueryAssistantPrompt(
+		folderRepoManager: FolderRepositoryManager,
+	): Promise<string> {
+		const remote =
+			folderRepoManager.activePullRequest?.remote ??
+			folderRepoManager.activeIssue?.remote ??
+			(await folderRepoManager.getPullRequestDefaultRepo()).remote;
 
 		return `Instructions:
 You are an expert on GitHub issue search syntax. GitHub issues are always software engineering related. You can help the user convert a natural language query to a query that can be used to search GitHub issues. Here are some rules to follow:
@@ -104,7 +136,10 @@ You are an expert on GitHub issue search syntax. GitHub issues are always softwa
 `;
 	}
 
-	private async labelsAssistantPrompt(folderRepoManager: FolderRepositoryManager, labels: ILabel[]): Promise<string> {
+	private async labelsAssistantPrompt(
+		folderRepoManager: FolderRepositoryManager,
+		labels: ILabel[],
+	): Promise<string> {
 		// It seems that AND and OR aren't supported in GraphQL, so we can't use them in the query
 		// Here's the prompt in case we switch to REST:
 		// - Use as many labels as you think fit the query. If one label fits, then there are probably more that fit.
@@ -118,7 +153,16 @@ You are an expert on choosing search keywords based on a natural language search
 - Only choose labels that you're sure are relevant. Having no labels is preferable than lables that aren't relevant.
 - Don't choose labels that the user has explicitly excluded.
 - Respond with labels chosen from these options:
-${labels.map(label => label.name).filter(label => !label.includes('required') && !label.includes('search') && !label.includes('question') && !label.includes('find')).join(', ')}
+${labels
+	.map((label) => label.name)
+	.filter(
+		(label) =>
+			!label.includes("required") &&
+			!label.includes("search") &&
+			!label.includes("question") &&
+			!label.includes("find"),
+	)
+	.join(", ")}
 `;
 	}
 
@@ -144,55 +188,94 @@ You are getting ready to make a GitHub search query. Given a natural language qu
 	}
 
 	private fullQueryUserPrompt(originalUserPrompt: string): string {
-		originalUserPrompt = originalUserPrompt.replace(/\b(me|my)\b/, (value) => value.toUpperCase());
+		originalUserPrompt = originalUserPrompt.replace(
+			/\b(me|my)\b/,
+			(value) => value.toUpperCase(),
+		);
 
 		const date = new Date();
 
 		return `Pretend today's date is ${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}, but only include it if needed. How should this be converted to a GitHub issue search query? ${originalUserPrompt}`;
 	}
 
-	private validateSpecificQueryPart(property: ValidatableProperty | string, value: string): boolean {
+	private validateSpecificQueryPart(
+		property: ValidatableProperty | string,
+		value: string,
+	): boolean {
 		switch (property) {
 			case ValidatableProperty.is:
-				return value === 'issue' || value === 'pr' || value === 'draft' || value === 'public' || value === 'private' || value === 'locked' || value === 'unlocked';
+				return (
+					value === "issue" ||
+					value === "pr" ||
+					value === "draft" ||
+					value === "public" ||
+					value === "private" ||
+					value === "locked" ||
+					value === "unlocked"
+				);
 
 			case ValidatableProperty.type:
-				return value === 'pr' || value === 'issue';
+				return value === "pr" || value === "issue";
 
 			case ValidatableProperty.state:
-				return value === 'open' || value === 'closed' || value === 'merged';
+				return (
+					value === "open" || value === "closed" || value === "merged"
+				);
 
 			case ValidatableProperty.in:
-				return value === 'title' || value === 'body' || value === 'comments';
+				return (
+					value === "title" ||
+					value === "body" ||
+					value === "comments"
+				);
 
 			case ValidatableProperty.linked:
-				return value === 'pr' || value === 'issue';
+				return value === "pr" || value === "issue";
 
 			case ValidatableProperty.status:
-				return value === 'success' || value === 'failure' || value === 'pending';
+				return (
+					value === "success" ||
+					value === "failure" ||
+					value === "pending"
+				);
 
 			case ValidatableProperty.draft:
-				return value === 'true' || value === 'false';
+				return value === "true" || value === "false";
 
 			case ValidatableProperty.review:
-				return value === 'none' || value === 'required' || value === 'approved' || value === 'changes_requested';
+				return (
+					value === "none" ||
+					value === "required" ||
+					value === "approved" ||
+					value === "changes_requested"
+				);
 
 			case ValidatableProperty.no:
-				return value === 'label' || value === 'milestone' || value === 'assignee' || value === 'project';
+				return (
+					value === "label" ||
+					value === "milestone" ||
+					value === "assignee" ||
+					value === "project"
+				);
 
 			default:
 				return true;
 		}
 	}
 
-	private validateLabelsList(labelsList: string, allLabels: ILabel[]): string[] {
+	private validateLabelsList(
+		labelsList: string,
+		allLabels: ILabel[],
+	): string[] {
 		// I wrote everything for AND and OR, but it isn't supported with GraphQL.
 		// Leaving it in for now in case we switch to REST.
 		const isAndOrOr = (labelOrOperator: string) => {
-			return labelOrOperator === 'AND' || labelOrOperator === 'OR';
+			return labelOrOperator === "AND" || labelOrOperator === "OR";
 		};
 
-		const labelsAndOperators = labelsList.split(MATCH_UNQUOTED_SPACES).map(label => label.trim());
+		const labelsAndOperators = labelsList
+			.split(MATCH_UNQUOTED_SPACES)
+			.map((label) => label.trim());
 
 		let goodLabels: string[] = [];
 
@@ -200,7 +283,10 @@ You are getting ready to make a GitHub search query. Given a natural language qu
 			if (isAndOrOr(labelOrOperator)) {
 				if (goodLabels.length === 0) {
 					continue;
-				} else if (goodLabels.length > 0 && isAndOrOr(goodLabels[goodLabels.length - 1])) {
+				} else if (
+					goodLabels.length > 0 &&
+					isAndOrOr(goodLabels[goodLabels.length - 1])
+				) {
 					goodLabels[goodLabels.length - 1] = labelOrOperator;
 				} else {
 					goodLabels.push(labelOrOperator);
@@ -217,46 +303,58 @@ You are getting ready to make a GitHub search query. Given a natural language qu
 			if (labelPrefixMatch) {
 				label = labelPrefixMatch[1];
 			}
-			if (allLabels.find(l => l.name === label)) {
+			if (allLabels.find((l) => l.name === label)) {
 				goodLabels.push(label);
 			}
 		}
-		if (goodLabels.length > 0 && isAndOrOr(goodLabels[goodLabels.length - 1])) {
+		if (
+			goodLabels.length > 0 &&
+			isAndOrOr(goodLabels[goodLabels.length - 1])
+		) {
 			goodLabels = goodLabels.slice(0, goodLabels.length - 1);
 		}
 		return goodLabels;
 	}
 
-	private validateFreeForm(baseQuery: string, labels: string[], freeForm: string) {
+	private validateFreeForm(
+		baseQuery: string,
+		labels: string[],
+		freeForm: string,
+	) {
 		// Currently, we only allow the free form to return one keyword
 		freeForm = freeForm.trim();
 
 		if (baseQuery.includes(freeForm)) {
-			return '';
+			return "";
 		}
 		if (labels.includes(freeForm)) {
-			return '';
+			return "";
 		}
-		if (labels.some(label => freeForm.includes(label))) {
-			return '';
+		if (labels.some((label) => freeForm.includes(label))) {
+			return "";
 		}
 		// useless strings to search for
-		if (freeForm.includes('issue')) {
-			return '';
+		if (freeForm.includes("issue")) {
+			return "";
 		}
 		return freeForm;
 	}
 
-	private validateQuery(query: string, labelsList: string, allLabels: ILabel[], freeForm: string) {
-		let reformedQuery = '';
+	private validateQuery(
+		query: string,
+		labelsList: string,
+		allLabels: ILabel[],
+		freeForm: string,
+	) {
+		let reformedQuery = "";
 
 		const queryParts = query.split(MATCH_UNQUOTED_SPACES);
 		// Only keep property:value pairs and '-', no reform allowed here.
 		for (const part of queryParts) {
-			if (part.startsWith('label:')) {
+			if (part.startsWith("label:")) {
 				continue;
 			}
-			const propAndVal = part.split(':');
+			const propAndVal = part.split(":");
 
 			if (propAndVal.length === 2) {
 				const label = propAndVal[0];
@@ -269,7 +367,7 @@ You are getting ready to make a GitHub search query. Given a natural language qu
 				if (!this.validateSpecificQueryPart(label, value)) {
 					continue;
 				}
-			} else if (!part.startsWith('-')) {
+			} else if (!part.startsWith("-")) {
 				continue;
 			}
 			reformedQuery = `${reformedQuery} ${part}`;
@@ -277,20 +375,34 @@ You are getting ready to make a GitHub search query. Given a natural language qu
 
 		const validLabels = this.validateLabelsList(labelsList, allLabels);
 
-		const validFreeForm = this.validateFreeForm(reformedQuery, validLabels, freeForm);
+		const validFreeForm = this.validateFreeForm(
+			reformedQuery,
+			validLabels,
+			freeForm,
+		);
 
-		reformedQuery = `${reformedQuery} ${validLabels.map(label => `label:${label}`).join(' ')} ${validFreeForm}`;
+		reformedQuery = `${reformedQuery} ${validLabels.map((label) => `label:${label}`).join(" ")} ${validFreeForm}`;
 
 		return reformedQuery.trim();
 	}
 
-	private postProcess(queryPart: string, freeForm: string, labelsList: string, allLabels: ILabel[]): ConvertToQuerySyntaxResult | undefined {
+	private postProcess(
+		queryPart: string,
+		freeForm: string,
+		labelsList: string,
+		allLabels: ILabel[],
+	): ConvertToQuerySyntaxResult | undefined {
 		const query = this.findQuery(queryPart);
 
 		if (!query) {
 			return;
 		}
-		const fixedLabels = this.validateQuery(query, labelsList, allLabels, freeForm);
+		const fixedLabels = this.validateQuery(
+			query,
+			labelsList,
+			allLabels,
+			freeForm,
+		);
 
 		const fixedRepo = this.fixRepo(fixedLabels);
 
@@ -315,72 +427,118 @@ You are getting ready to make a GitHub search query. Given a natural language qu
 		if (repoMatch) {
 			const originalRepo = repoMatch[1];
 
-			if (originalRepo.includes('/')) {
-				const ownerAndRepo = originalRepo.split('/');
+			if (originalRepo.includes("/")) {
+				const ownerAndRepo = originalRepo.split("/");
 				owner = ownerAndRepo[0];
 				name = ownerAndRepo[1];
 			}
 
-			if (orgMatch && originalRepo.includes('/')) {
+			if (orgMatch && originalRepo.includes("/")) {
 				// remove the org match
-				newQuery = query.replace(orgRegex, '');
+				newQuery = query.replace(orgRegex, "");
 			} else if (orgMatch) {
 				// We need to add the org into the repo
-				newQuery = query.replace(repoRegex, `repo:${orgMatch[1]}/${originalRepo}`);
+				newQuery = query.replace(
+					repoRegex,
+					`repo:${orgMatch[1]}/${originalRepo}`,
+				);
 				owner = orgMatch[1];
 				name = originalRepo;
 			}
 		}
 		return {
 			query: newQuery,
-			repo: owner && name ? { owner, name } : undefined
+			repo: owner && name ? { owner, name } : undefined,
 		};
 	}
 
 	private findQuery(result: string): string | undefined {
 		// if there's a code block, then that's all we take
-		if (result.includes('```')) {
-			const start = result.indexOf('```');
+		if (result.includes("```")) {
+			const start = result.indexOf("```");
 
-			const end = result.indexOf('```', start + 3);
+			const end = result.indexOf("```", start + 3);
 
 			return result.substring(start + 3, end);
 		}
 		// if it's only one line, we take that
-		const lines = result.split('\n');
+		const lines = result.split("\n");
 
 		if (lines.length <= 1) {
 			return lines.length === 0 ? result : lines[0];
 		}
 		// if there are multiple lines, we take the first line that has a colon
 		for (const line of lines) {
-			if (line.includes(':')) {
+			if (line.includes(":")) {
 				return line;
 			}
 		}
 	}
 
-	private async generateLabelQuery(folderManager: FolderRepositoryManager, labels: ILabel[], chatOptions: vscode.LanguageModelChatRequestOptions, model: vscode.LanguageModelChat, naturalLanguageString: string, token: vscode.CancellationToken): Promise<string> {
-		const messages = [vscode.LanguageModelChatMessage.Assistant(await this.labelsAssistantPrompt(folderManager, labels))];
-		messages.push(vscode.LanguageModelChatMessage.User(this.labelsUserPrompt(naturalLanguageString)));
+	private async generateLabelQuery(
+		folderManager: FolderRepositoryManager,
+		labels: ILabel[],
+		chatOptions: vscode.LanguageModelChatRequestOptions,
+		model: vscode.LanguageModelChat,
+		naturalLanguageString: string,
+		token: vscode.CancellationToken,
+	): Promise<string> {
+		const messages = [
+			vscode.LanguageModelChatMessage.Assistant(
+				await this.labelsAssistantPrompt(folderManager, labels),
+			),
+		];
+		messages.push(
+			vscode.LanguageModelChatMessage.User(
+				this.labelsUserPrompt(naturalLanguageString),
+			),
+		);
 
 		const response = await model.sendRequest(messages, chatOptions, token);
 
 		return concatAsyncIterable(response.text);
 	}
 
-	private async generateFreeFormQuery(folderManager: FolderRepositoryManager, chatOptions: vscode.LanguageModelChatRequestOptions, model: vscode.LanguageModelChat, naturalLanguageString: string, token: vscode.CancellationToken): Promise<string> {
-		const messages = [vscode.LanguageModelChatMessage.Assistant(this.freeFormAssistantPrompt())];
-		messages.push(vscode.LanguageModelChatMessage.User(this.freeFormUserPrompt(naturalLanguageString)));
+	private async generateFreeFormQuery(
+		folderManager: FolderRepositoryManager,
+		chatOptions: vscode.LanguageModelChatRequestOptions,
+		model: vscode.LanguageModelChat,
+		naturalLanguageString: string,
+		token: vscode.CancellationToken,
+	): Promise<string> {
+		const messages = [
+			vscode.LanguageModelChatMessage.Assistant(
+				this.freeFormAssistantPrompt(),
+			),
+		];
+		messages.push(
+			vscode.LanguageModelChatMessage.User(
+				this.freeFormUserPrompt(naturalLanguageString),
+			),
+		);
 
 		const response = await model.sendRequest(messages, chatOptions, token);
 
 		return concatAsyncIterable(response.text);
 	}
 
-	private async generateQuery(folderManager: FolderRepositoryManager, chatOptions: vscode.LanguageModelChatRequestOptions, model: vscode.LanguageModelChat, naturalLanguageString: string, token: vscode.CancellationToken): Promise<string> {
-		const messages = [vscode.LanguageModelChatMessage.Assistant(await this.fullQueryAssistantPrompt(folderManager))];
-		messages.push(vscode.LanguageModelChatMessage.User(this.fullQueryUserPrompt(naturalLanguageString)));
+	private async generateQuery(
+		folderManager: FolderRepositoryManager,
+		chatOptions: vscode.LanguageModelChatRequestOptions,
+		model: vscode.LanguageModelChat,
+		naturalLanguageString: string,
+		token: vscode.CancellationToken,
+	): Promise<string> {
+		const messages = [
+			vscode.LanguageModelChatMessage.Assistant(
+				await this.fullQueryAssistantPrompt(folderManager),
+			),
+		];
+		messages.push(
+			vscode.LanguageModelChatMessage.User(
+				this.fullQueryUserPrompt(naturalLanguageString),
+			),
+		);
 
 		const response = await model.sendRequest(messages, chatOptions, token);
 
@@ -391,42 +549,77 @@ You are getting ready to make a GitHub search query. Given a natural language qu
 		return `https://github.com/issues/?q=${encodeURIComponent(query)}`;
 	}
 
-	async prepareToolInvocation(_options: vscode.LanguageModelToolInvocationPrepareOptions<ConvertToQuerySyntaxParameters>): Promise<vscode.PreparedToolInvocation> {
+	async prepareToolInvocation(
+		_options: vscode.LanguageModelToolInvocationPrepareOptions<ConvertToQuerySyntaxParameters>,
+	): Promise<vscode.PreparedToolInvocation> {
 		return {
-			invocationMessage: vscode.l10n.t('Converting to search syntax...')
+			invocationMessage: vscode.l10n.t("Converting to search syntax..."),
 		};
 	}
 
-	async invoke(options: vscode.LanguageModelToolInvocationOptions<ConvertToQuerySyntaxParameters>, token: vscode.CancellationToken): Promise<vscode.LanguageModelToolResult | undefined> {
+	async invoke(
+		options: vscode.LanguageModelToolInvocationOptions<ConvertToQuerySyntaxParameters>,
+		token: vscode.CancellationToken,
+	): Promise<vscode.LanguageModelToolResult | undefined> {
 		const { owner, name, folderManager } = await this.getRepoInfo(options);
 
 		const firstUserMessage = `${this.chatParticipantState.firstUserMessage}, ${options.parameters.naturalLanguageString}`;
 
-		const labels = await folderManager.getLabels(undefined, { owner, repo: name });
+		const labels = await folderManager.getLabels(undefined, {
+			owner,
+			repo: name,
+		});
 
 		const models = await vscode.lm.selectChatModels({
-			vendor: 'copilot',
-			family: 'gpt-4o'
+			vendor: "copilot",
+			family: "gpt-4o",
 		});
 
 		const model = models[0];
 
 		const chatOptions: vscode.LanguageModelChatRequestOptions = {
-			justification: 'Answering user questions pertaining to GitHub.'
+			justification: "Answering user questions pertaining to GitHub.",
 		};
 
-		const [query, freeForm, labelsList] = await Promise.all([this.generateQuery(folderManager, chatOptions, model, firstUserMessage, token), this.generateFreeFormQuery(folderManager, chatOptions, model, firstUserMessage, token), this.generateLabelQuery(folderManager, labels, chatOptions, model, firstUserMessage, token)]);
+		const [query, freeForm, labelsList] = await Promise.all([
+			this.generateQuery(
+				folderManager,
+				chatOptions,
+				model,
+				firstUserMessage,
+				token,
+			),
+			this.generateFreeFormQuery(
+				folderManager,
+				chatOptions,
+				model,
+				firstUserMessage,
+				token,
+			),
+			this.generateLabelQuery(
+				folderManager,
+				labels,
+				chatOptions,
+				model,
+				firstUserMessage,
+				token,
+			),
+		]);
 
 		const result = this.postProcess(query, freeForm, labelsList, labels);
 
 		if (!result) {
-			throw new Error('Unable to form a query.');
+			throw new Error("Unable to form a query.");
 		}
 		Logger.debug(`Query \`${result.query}\``, ConvertToSearchSyntaxTool.ID);
 
 		return {
 			[MimeTypes.textPlain]: result.query,
-			[MimeTypes.textDisplay]: vscode.l10n.t('Query \`{0}\`. [Open on GitHub.com]({1})\n\n', result.query, this.toGitHubUrl(result.query))
+			[MimeTypes.textDisplay]: vscode.l10n.t(
+				"Query `{0}`. [Open on GitHub.com]({1})\n\n",
+				result.query,
+				this.toGitHubUrl(result.query),
+			),
 		};
 	}
 }
@@ -438,33 +631,46 @@ export interface SearchToolResult {
 }
 
 export class SearchTool extends RepoToolBase<SearchToolParameters> {
-	static ID = 'SearchTool';
+	static ID = "SearchTool";
 
-	async prepareToolInvocation(_options: vscode.LanguageModelToolInvocationPrepareOptions<SearchToolParameters>): Promise<vscode.PreparedToolInvocation> {
+	async prepareToolInvocation(
+		_options: vscode.LanguageModelToolInvocationPrepareOptions<SearchToolParameters>,
+	): Promise<vscode.PreparedToolInvocation> {
 		return {
-			invocationMessage: vscode.l10n.t('Searching for issues...')
+			invocationMessage: vscode.l10n.t("Searching for issues..."),
 		};
 	}
 
-	async invoke(options: vscode.LanguageModelToolInvocationOptions<SearchToolParameters>, _token: vscode.CancellationToken): Promise<vscode.LanguageModelToolResult | undefined> {
+	async invoke(
+		options: vscode.LanguageModelToolInvocationOptions<SearchToolParameters>,
+		_token: vscode.CancellationToken,
+	): Promise<vscode.LanguageModelToolResult | undefined> {
 		const { folderManager } = await this.getRepoInfo(options);
 
 		const parameterQuery = options.parameters.query;
-		Logger.debug(`Searching with query \`${parameterQuery}\``, SearchTool.ID);
+		Logger.debug(
+			`Searching with query \`${parameterQuery}\``,
+			SearchTool.ID,
+		);
 
 		const searchResult = await folderManager.getIssues(parameterQuery);
 
 		if (!searchResult) {
-			throw new Error(`No issues found for ${parameterQuery}. Make sure the query is valid.`);
+			throw new Error(
+				`No issues found for ${parameterQuery}. Make sure the query is valid.`,
+			);
 		}
 		const result: SearchToolResult = {
-			arrayOfIssues: searchResult.items.map(i => i.item)
+			arrayOfIssues: searchResult.items.map((i) => i.item),
 		};
-		Logger.debug(`Found ${result.arrayOfIssues.length} issues, first issue ${result.arrayOfIssues[0]?.number}.`, SearchTool.ID);
+		Logger.debug(
+			`Found ${result.arrayOfIssues.length} issues, first issue ${result.arrayOfIssues[0]?.number}.`,
+			SearchTool.ID,
+		);
 
 		return {
 			[MimeTypes.textPlain]: `Here are the issues I found for the query ${parameterQuery} in json format. You can pass these to a tool that can display them.`,
-			[MimeTypes.textJson]: result
+			[MimeTypes.textJson]: result,
 		};
 	}
 }

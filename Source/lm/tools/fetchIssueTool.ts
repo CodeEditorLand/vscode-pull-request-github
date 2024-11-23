@@ -2,12 +2,13 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-'use strict';
+"use strict";
 
-import * as vscode from 'vscode';
-import { InMemFileChange } from '../../common/file';
-import { PullRequestModel } from '../../github/pullRequestModel';
-import { RepoToolBase } from './toolsUtils';
+import * as vscode from "vscode";
+
+import { InMemFileChange } from "../../common/file";
+import { PullRequestModel } from "../../github/pullRequestModel";
+import { RepoToolBase } from "./toolsUtils";
 
 interface FetchIssueToolParameters {
 	issueNumber?: number;
@@ -35,30 +36,50 @@ export interface FetchIssueResult {
 }
 
 export class FetchIssueTool extends RepoToolBase<FetchIssueToolParameters> {
-	public static readonly toolId = 'github-pull-request_issue_fetch';
+	public static readonly toolId = "github-pull-request_issue_fetch";
 
-	async invoke(options: vscode.LanguageModelToolInvocationOptions<FetchIssueToolParameters>, _token: vscode.CancellationToken): Promise<vscode.LanguageModelToolResult> {
+	async invoke(
+		options: vscode.LanguageModelToolInvocationOptions<FetchIssueToolParameters>,
+		_token: vscode.CancellationToken,
+	): Promise<vscode.LanguageModelToolResult> {
 		const issueNumber = options.input.issueNumber;
 
 		if (!issueNumber) {
-			throw new Error('No issue/PR number provided.');
+			throw new Error("No issue/PR number provided.");
 		}
-		const { owner, name, folderManager } = await this.getRepoInfo({ owner: options.input.repo?.owner, name: options.input.repo?.name });
+		const { owner, name, folderManager } = await this.getRepoInfo({
+			owner: options.input.repo?.owner,
+			name: options.input.repo?.name,
+		});
 
-		const issueOrPullRequest = await folderManager.resolveIssueOrPullRequest(owner, name, issueNumber);
+		const issueOrPullRequest =
+			await folderManager.resolveIssueOrPullRequest(
+				owner,
+				name,
+				issueNumber,
+			);
 
 		if (!issueOrPullRequest) {
-			throw new Error(`No issue or PR found for ${owner}/${name}/${issueNumber}. Make sure the issue or PR exists.`);
+			throw new Error(
+				`No issue or PR found for ${owner}/${name}/${issueNumber}. Make sure the issue or PR exists.`,
+			);
 		}
 		const result: FetchIssueResult = {
 			owner,
 			repo: name,
 			title: issueOrPullRequest.title,
 			body: issueOrPullRequest.body,
-			comments: issueOrPullRequest.item.comments?.map(c => ({ body: c.body, author: c.author.login })) ?? []
+			comments:
+				issueOrPullRequest.item.comments?.map((c) => ({
+					body: c.body,
+					author: c.author.login,
+				})) ?? [],
 		};
 
-		if (issueOrPullRequest instanceof PullRequestModel && issueOrPullRequest.isResolved()) {
+		if (
+			issueOrPullRequest instanceof PullRequestModel &&
+			issueOrPullRequest.isResolved()
+		) {
 			const fileChanges = await issueOrPullRequest.getFileChangesInfo();
 
 			const fetchedFileChanges: FileChange[] = [];
@@ -67,28 +88,50 @@ export class FetchIssueTool extends RepoToolBase<FetchIssueToolParameters> {
 				if (fileChange instanceof InMemFileChange) {
 					fetchedFileChanges.push({
 						fileName: fileChange.fileName,
-						patch: fileChange.patch
+						patch: fileChange.patch,
 					});
 				}
 			}
 			result.fileChanges = fetchedFileChanges;
 		}
-		return new vscode.LanguageModelToolResult([new vscode.LanguageModelTextPart(JSON.stringify(result)),
-		new vscode.LanguageModelTextPart('Above is a stringified JSON representation of the issue or pull request. This can be passed to other tools for further processing.')
+		return new vscode.LanguageModelToolResult([
+			new vscode.LanguageModelTextPart(JSON.stringify(result)),
+			new vscode.LanguageModelTextPart(
+				"Above is a stringified JSON representation of the issue or pull request. This can be passed to other tools for further processing.",
+			),
 		]);
 	}
 
-	async prepareInvocation(options: vscode.LanguageModelToolInvocationPrepareOptions<FetchIssueToolParameters>): Promise<vscode.PreparedToolInvocation> {
+	async prepareInvocation(
+		options: vscode.LanguageModelToolInvocationPrepareOptions<FetchIssueToolParameters>,
+	): Promise<vscode.PreparedToolInvocation> {
 		if (!options.input.issueNumber) {
 			return {
-				invocationMessage: vscode.l10n.t('Fetching item from GitHub')
+				invocationMessage: vscode.l10n.t("Fetching item from GitHub"),
 			};
 		}
-		const { owner, name } = await this.getRepoInfo({ owner: options.input.repo?.owner, name: options.input.repo?.name });
+		const { owner, name } = await this.getRepoInfo({
+			owner: options.input.repo?.owner,
+			name: options.input.repo?.name,
+		});
 
-		const url = (owner && name) ? `https://github.com/${owner}/${name}/issues/${options.input.issueNumber}` : undefined;
+		const url =
+			owner && name
+				? `https://github.com/${owner}/${name}/issues/${options.input.issueNumber}`
+				: undefined;
 
-		const message = url ? new vscode.MarkdownString(vscode.l10n.t('Fetching item [#{0}]({1}) from GitHub', options.input.issueNumber, url)) : vscode.l10n.t('Fetching item #{0} from GitHub', options.input.issueNumber);
+		const message = url
+			? new vscode.MarkdownString(
+					vscode.l10n.t(
+						"Fetching item [#{0}]({1}) from GitHub",
+						options.input.issueNumber,
+						url,
+					),
+				)
+			: vscode.l10n.t(
+					"Fetching item #{0} from GitHub",
+					options.input.issueNumber,
+				);
 
 		return {
 			invocationMessage: message,
