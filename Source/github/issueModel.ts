@@ -169,9 +169,7 @@ export class IssueModel<TItem extends Issue = Issue> {
 		return true;
 	}
 
-	async edit(
-		toEdit: IPullRequestEditData,
-	): Promise<{
+	async edit(toEdit: IPullRequestEditData): Promise<{
 		body: string;
 		bodyHTML: string;
 		title: string;

@@ -531,9 +531,7 @@ export class ReviewManager extends Disposable {
 		return false;
 	}
 
-	private async getUpstreamUrlAndName(
-		branch: Branch,
-	): Promise<{
+	private async getUpstreamUrlAndName(branch: Branch): Promise<{
 		url: string | undefined;
 		branchName: string | undefined;
 		remoteName: string | undefined;
