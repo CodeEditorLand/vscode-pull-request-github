@@ -42,6 +42,7 @@ export interface OpenPullRequestActionContext {
 export type ActionContext =
 	| CreatePullRequestActionContext
 	| OpenPullRequestActionContext;
+
 export type Action<T extends ActionContext> = T["type"];
 
 export interface ActionRunner {

@@ -70,4 +70,5 @@ class Log extends Disposable {
 }
 
 const Logger = new Log();
+
 export default Logger;

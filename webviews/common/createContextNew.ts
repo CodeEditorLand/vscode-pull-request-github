@@ -532,4 +532,5 @@ export class CreatePRContextNew {
 const PullRequestContextNew = createContext<CreatePRContextNew>(
 	CreatePRContextNew.instance,
 );
+
 export default PullRequestContextNew;

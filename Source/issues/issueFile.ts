@@ -13,10 +13,15 @@ import { IProject } from "../github/interface";
 import { RepositoriesManager } from "../github/repositoriesManager";
 
 export const NEW_ISSUE_SCHEME = "newIssue";
+
 export const NEW_ISSUE_FILE = "NewIssue.md";
+
 export const ASSIGNEES = vscode.l10n.t("Assignees:");
+
 export const LABELS = vscode.l10n.t("Labels:");
+
 export const MILESTONE = vscode.l10n.t("Milestone:");
+
 export const PROJECTS = vscode.l10n.t("Projects:");
 
 const NEW_ISSUE_CACHE = "newIssue.cache";

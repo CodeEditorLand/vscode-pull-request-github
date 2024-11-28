@@ -580,6 +580,7 @@ export interface SuggestedReviewerResponse {
 }
 
 export type MergeMethod = "MERGE" | "REBASE" | "SQUASH";
+
 export type MergeQueueState =
 	| "AWAITING_CHECKS"
 	| "LOCKED"

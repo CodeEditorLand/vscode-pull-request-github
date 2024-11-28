@@ -41,6 +41,7 @@ import { StateManager } from "./stateManager";
 export const USER_EXPRESSION: RegExp = /\@([^\s]+)/;
 
 export const MAX_LINE_LENGTH = 150;
+
 export const PERMALINK_COMPONENT = "Permalink";
 
 export async function getIssue(
@@ -301,6 +302,7 @@ async function findCodeLinksInIssue(
 }
 
 export const ISSUE_BODY_LENGTH: number = 200;
+
 export async function issueMarkdown(
 	issue: IssueModel,
 	context: vscode.ExtensionContext,
@@ -975,6 +977,7 @@ async function commitWithDefault(
 const commitStaged = vscode.l10n.t("Commit Staged");
 
 const commitAll = vscode.l10n.t("Commit All");
+
 export async function pushAndCreatePR(
 	manager: FolderRepositoryManager,
 	reviewManager: ReviewManager,

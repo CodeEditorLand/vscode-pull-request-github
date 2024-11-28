@@ -138,6 +138,7 @@ export namespace OctokitCommon {
 }
 
 export type Schema = { [key: string]: any; definitions: any[] };
+
 export function mergeQuerySchemaWithShared(
 	sharedSchema: Schema,
 	schema: Schema,

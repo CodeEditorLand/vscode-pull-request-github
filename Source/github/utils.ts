@@ -67,6 +67,7 @@ import { PullRequestModel } from "./pullRequestModel";
 
 export const ISSUE_EXPRESSION =
 	/(([A-Za-z0-9_.\-]+)\/([A-Za-z0-9_.\-]+))?(#|GH-)([1-9][0-9]*)($|\b)/;
+
 export const ISSUE_OR_URL_EXPRESSION =
 	/(https?:\/\/github\.com\/(([^\s]+)\/([^\s]+))\/([^\s]+\/)?(issues|pull)\/([0-9]+)(#issuecomment\-([0-9]+))?)|(([A-Za-z0-9_.\-]+)\/([A-Za-z0-9_.\-]+))?(#|GH-)([1-9][0-9]*)($|\b)/;
 
@@ -183,8 +184,11 @@ function isResolvedToResolvedState(isResolved: boolean) {
 }
 
 export const COMMENT_EXPAND_STATE_SETTING = "commentExpandState";
+
 export const COMMENT_EXPAND_STATE_COLLAPSE_VALUE = "collapseAll";
+
 export const COMMENT_EXPAND_STATE_EXPAND_VALUE = "expandUnresolved";
+
 export function getCommentCollapsibleState(
 	thread: IReviewThread,
 	expand?: boolean,
@@ -1908,6 +1912,7 @@ export function sanitizeIssueTitle(title: string): string {
 }
 
 const VARIABLE_PATTERN = /\$\{(.*?)\}/g;
+
 export async function variableSubstitution(
 	value: string,
 	issueModel?: IssueModel,

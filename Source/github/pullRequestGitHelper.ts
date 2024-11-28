@@ -23,6 +23,7 @@ import {
 } from "./pullRequestModel";
 
 const PullRequestRemoteMetadataKey = "github-pr-remote";
+
 export const PullRequestMetadataKey = "github-pr-owner-number";
 
 const BaseBranchMetadataKey = "github-pr-base-branch";

@@ -19,6 +19,7 @@ export interface IToolCall {
 }
 
 export const TOOL_MARKDOWN_RESULT = "TOOL_MARKDOWN_RESULT";
+
 export const TOOL_COMMAND_RESULT = "TOOL_COMMAND_RESULT";
 
 export interface IssueToolParameters {

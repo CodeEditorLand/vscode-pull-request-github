@@ -69,6 +69,7 @@ import { PRNode } from "./view/treeNodes/pullRequestNode";
 import { RepositoryChangesNode } from "./view/treeNodes/repositoryChangesNode";
 
 const _onDidUpdatePR = new vscode.EventEmitter<PullRequest | void>();
+
 export const onDidUpdatePR: vscode.Event<PullRequest | void> =
 	_onDidUpdatePR.event;
 
