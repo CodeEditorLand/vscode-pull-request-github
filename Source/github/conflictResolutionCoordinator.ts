@@ -22,6 +22,7 @@ interface MergeEditorInputData {
 	detail?: string;
 	description?: string;
 }
+
 const ORIGINAL_FILE = `<<<<<<< HEAD:file.txt
 A
 =======
