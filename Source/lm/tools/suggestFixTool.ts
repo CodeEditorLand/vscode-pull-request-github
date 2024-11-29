@@ -46,6 +46,7 @@ export class SuggestFixTool extends RepoToolBase<IssueToolParameters> {
 				`No folder manager found for ${options.input.repo.owner}/${options.input.repo.name}. Make sure to have the repository open.`,
 			);
 		}
+
 		const issue = await folderManager.resolveIssue(
 			options.input.repo.owner,
 			options.input.repo.name,
@@ -66,39 +67,47 @@ export class SuggestFixTool extends RepoToolBase<IssueToolParameters> {
 		};
 
 		const messages: vscode.LanguageModelChatMessage[] = [];
+
 		messages.push(
 			vscode.LanguageModelChatMessage.Assistant(
 				`You are a world-class developer who is capable of solving very difficult bugs and issues.`,
 			),
 		);
+
 		messages.push(
 			vscode.LanguageModelChatMessage.Assistant(
 				`The user will give you an issue title, body and a list of comments from GitHub. The user wants you to suggest a fix.`,
 			),
 		);
+
 		messages.push(
 			vscode.LanguageModelChatMessage.Assistant(
 				`Analyze the issue content, the workspace context below and using all this information suggest a fix.`,
 			),
 		);
+
 		messages.push(
 			vscode.LanguageModelChatMessage.Assistant(
 				`Where possible output code-blocks and reference real files in the workspace with the fix.`,
 			),
 		);
+
 		messages.push(
 			vscode.LanguageModelChatMessage.User(
 				`The issue content is as follows: `,
 			),
 		);
+
 		messages.push(
 			vscode.LanguageModelChatMessage.User(
 				`Issue Title: ${result.title}`,
 			),
 		);
+
 		messages.push(
 			vscode.LanguageModelChatMessage.User(`Issue Body: ${result.body}`),
 		);
+
 		result.comments.forEach((comment, index) => {
 			messages.push(
 				vscode.LanguageModelChatMessage.User(
@@ -128,7 +137,9 @@ export class SuggestFixTool extends RepoToolBase<IssueToolParameters> {
 			);
 
 			const toolMessage = vscode.LanguageModelChatMessage.User("");
+
 			toolMessage.content = [plainTextResult];
+
 			messages.push(toolMessage);
 		}
 
@@ -146,6 +157,7 @@ export class SuggestFixTool extends RepoToolBase<IssueToolParameters> {
 		for await (const chunk of response.text) {
 			responseResult += chunk;
 		}
+
 		return new vscode.LanguageModelToolResult([
 			new vscode.LanguageModelTextPart(responseResult),
 		]);

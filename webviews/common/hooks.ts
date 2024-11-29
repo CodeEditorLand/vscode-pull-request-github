@@ -14,6 +14,7 @@ import { Dispatch, SetStateAction, useEffect, useState } from "react";
  */
 export function useStateProp<S>(prop: S): [S, Dispatch<SetStateAction<S>>] {
 	const [state, setState] = useState(prop);
+
 	useEffect(() => {
 		if (state !== prop) {
 			setState(prop);

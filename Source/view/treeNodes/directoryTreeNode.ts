@@ -14,22 +14,29 @@ import { TreeNode, TreeNodeParent } from "./treeNode";
 
 export class DirectoryTreeNode extends TreeNode implements vscode.TreeItem {
 	public collapsibleState: vscode.TreeItemCollapsibleState;
+
 	public override children: (
 		| RemoteFileChangeNode
 		| InMemFileChangeNode
 		| GitFileChangeNode
 		| DirectoryTreeNode
 	)[] = [];
+
 	private pathToChild: Map<string, DirectoryTreeNode> = new Map();
+
 	public checkboxState?: {
 		state: vscode.TreeItemCheckboxState;
+
 		tooltip: string;
+
 		accessibilityInformation: vscode.AccessibilityInformation;
 	};
 
 	constructor(parent: TreeNodeParent, label: string) {
 		super(parent);
+
 		this.label = label;
+
 		this.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
 	}
 
@@ -39,6 +46,7 @@ export class DirectoryTreeNode extends TreeNode implements vscode.TreeItem {
 
 	public finalize(): void {
 		this.trimTree();
+
 		this.sort();
 	}
 
@@ -63,6 +71,7 @@ export class DirectoryTreeNode extends TreeNode implements vscode.TreeItem {
 		if (this.children.length !== 1) {
 			return;
 		}
+
 		const child = this.children[0];
 
 		if (!(child instanceof DirectoryTreeNode)) {
@@ -75,7 +84,9 @@ export class DirectoryTreeNode extends TreeNode implements vscode.TreeItem {
 		if (this.label.startsWith("/")) {
 			this.label = this.label.substr(1);
 		}
+
 		this.children = child.children;
+
 		this.children.forEach((child) => {
 			child.parent = this;
 		});
@@ -107,6 +118,7 @@ export class DirectoryTreeNode extends TreeNode implements vscode.TreeItem {
 
 		// sort
 		dirs.sort((a, b) => (a.label! < b.label! ? -1 : 1));
+
 		files.sort((a, b) => (a.label! < b.label! ? -1 : 1));
 
 		this.children = [...dirs, ...files];
@@ -116,6 +128,7 @@ export class DirectoryTreeNode extends TreeNode implements vscode.TreeItem {
 		file: GitFileChangeNode | RemoteFileChangeNode | InMemFileChangeNode,
 	): void {
 		const paths = file.changeModel.fileName.split("/");
+
 		this.addPathRecc(paths, file);
 	}
 
@@ -129,6 +142,7 @@ export class DirectoryTreeNode extends TreeNode implements vscode.TreeItem {
 
 		if (paths.length === 1) {
 			file.parent = this;
+
 			this.children.push(file);
 
 			return;
@@ -141,7 +155,9 @@ export class DirectoryTreeNode extends TreeNode implements vscode.TreeItem {
 
 		if (!node) {
 			node = new DirectoryTreeNode(this, dir);
+
 			this.pathToChild.set(dir, node);
+
 			this.children.push(node);
 		}
 
@@ -161,6 +177,7 @@ export class DirectoryTreeNode extends TreeNode implements vscode.TreeItem {
 				return false;
 			}
 		}
+
 		return true;
 	}
 

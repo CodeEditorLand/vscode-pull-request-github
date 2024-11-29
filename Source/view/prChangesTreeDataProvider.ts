@@ -32,13 +32,16 @@ export class PullRequestChangesTreeDataProvider
 	implements vscode.TreeDataProvider<TreeNode>, BaseTreeNode
 {
 	private _onDidChangeTreeData = new vscode.EventEmitter<TreeNode | void>();
+
 	readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
 	private _pullRequestManagerMap: Map<
 		FolderRepositoryManager,
 		RepositoryChangesNode
 	> = new Map();
+
 	private _view: vscode.TreeView<TreeNode>;
+
 	private _children: TreeNode[] | undefined;
 
 	public get view(): vscode.TreeView<TreeNode> {
@@ -50,6 +53,7 @@ export class PullRequestChangesTreeDataProvider
 		private _reposManager: RepositoriesManager,
 	) {
 		super();
+
 		this._view = this._register(
 			vscode.window.createTreeView("prStatus:github", {
 				treeDataProvider: this,
@@ -69,6 +73,7 @@ export class PullRequestChangesTreeDataProvider
 					const layout = vscode.workspace
 						.getConfiguration(PR_SETTINGS_NAMESPACE)
 						.get<string>(FILE_LIST_LAYOUT);
+
 					await vscode.commands.executeCommand(
 						"setContext",
 						"fileListLayout:flat",
@@ -144,6 +149,7 @@ export class PullRequestChangesTreeDataProvider
 				existingNode?.dispose();
 			}
 		}
+
 		const node: RepositoryChangesNode = new RepositoryChangesNode(
 			this,
 			pullRequestModel,
@@ -151,10 +157,13 @@ export class PullRequestChangesTreeDataProvider
 			reviewModel,
 			progress,
 		);
+
 		this._pullRequestManagerMap.set(pullRequestManager, node);
+
 		this.updateViewTitle();
 
 		await this.setReviewModeContexts();
+
 		this._onDidChangeTreeData.fire();
 
 		if (shouldReveal) {
@@ -171,6 +180,7 @@ export class PullRequestChangesTreeDataProvider
 		const rootUrisNotInReviewMode: vscode.Uri[] = [];
 
 		const rootUrisInReviewMode: vscode.Uri[] = [];
+
 		this._git.repositories.forEach((repo) => {
 			const folderManager = this._reposManager.getManagerForFile(
 				repo.rootUri,
@@ -185,10 +195,12 @@ export class PullRequestChangesTreeDataProvider
 				rootUrisInReviewMode.push(repo.rootUri);
 			}
 		});
+
 		await commands.setContext(
 			contexts.REPOS_NOT_IN_REVIEW_MODE,
 			rootUrisNotInReviewMode,
 		);
+
 		await commands.setContext(
 			contexts.REPOS_IN_REVIEW_MODE,
 			rootUrisInReviewMode,
@@ -206,11 +218,15 @@ export class PullRequestChangesTreeDataProvider
 				PR_TREE,
 			);
 		}
+
 		oldPR?.dispose();
+
 		this._pullRequestManagerMap.delete(pullRequestManager);
+
 		this.updateViewTitle();
 
 		await this.setReviewModeContexts();
+
 		this._onDidChangeTreeData.fire();
 	}
 
@@ -228,7 +244,9 @@ export class PullRequestChangesTreeDataProvider
 		element: TreeNode,
 		options?: {
 			select?: boolean;
+
 			focus?: boolean;
+
 			expand?: boolean | number;
 		},
 	): Promise<void> {
@@ -264,6 +282,7 @@ export class PullRequestChangesTreeDataProvider
 				) {
 					return 0;
 				}
+
 				if (!workspaceFolders) return 0;
 
 				const aIndex = workspaceFolders.findIndex((folder) =>
@@ -277,9 +296,11 @@ export class PullRequestChangesTreeDataProvider
 				if (aIndex === -1) {
 					return 1;
 				}
+
 				if (bIndex === -1) {
 					return -1;
 				}
+
 				return aIndex - bIndex;
 			})
 			.map(([_, value]) => value);
@@ -296,6 +317,7 @@ export class PullRequestChangesTreeDataProvider
 					this._children.push(item);
 				}
 			}
+
 			return this._children;
 		} else {
 			return await element.getChildren();
@@ -315,6 +337,7 @@ export class PullRequestChangesTreeDataProvider
 		if (element instanceof GitFileChangeNode) {
 			await element.resolve();
 		}
+
 		return element;
 	}
 }

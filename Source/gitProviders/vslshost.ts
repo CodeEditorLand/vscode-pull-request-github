@@ -93,6 +93,7 @@ export class VSLSHost extends Disposable {
 
 				const localFileUri =
 					this._liveShareAPI.convertSharedUriToLocal(vslsFileUri);
+
 				commandArgs[1] = localFileUri.fsPath;
 
 				return localRepository[type](...commandArgs);

@@ -23,6 +23,7 @@ interface ContactServiceProvider {
 
 interface NotifyContactServiceEventArgs {
 	type: string;
+
 	body?: any | undefined;
 }
 
@@ -31,7 +32,9 @@ interface NotifyContactServiceEventArgs {
  */
 interface Contact {
 	id: string;
+
 	displayName?: string | undefined;
+
 	email?: string | undefined;
 }
 
@@ -83,12 +86,14 @@ export class GitHubContactServiceProvider implements ContactServiceProvider {
 					if (!batch) {
 						continue;
 					}
+
 					for (const user of batch) {
 						if (!allAssignableUsers.has(user.login)) {
 							allAssignableUsers.set(user.login, user);
 						}
 					}
 				}
+
 				if (allAssignableUsers.size > 0) {
 					this.notifySuggestedAccounts(
 						Array.from(allAssignableUsers.values()),
@@ -114,6 +119,7 @@ export class GitHubContactServiceProvider implements ContactServiceProvider {
 			// Since we don't care about the error and are just trying to notify accounts and not responding to user action,
 			// it is safe to ignore and leave currentLoginUser undefined.
 		}
+
 		if (currentLoginUser) {
 			// Note: only suggest if the current user is part of the aggregated mentionable users
 			if (
@@ -139,6 +145,7 @@ export class GitHubContactServiceProvider implements ContactServiceProvider {
 		if (this.pullRequestManager.folderManagers.length === 0) {
 			return undefined;
 		}
+
 		const origin =
 			await this.pullRequestManager.folderManagers[0]?.getOrigin();
 

@@ -12,8 +12,11 @@ import { TreeNode, TreeNodeParent } from "./treeNode";
 
 export class DescriptionNode extends TreeNode implements vscode.TreeItem {
 	public command?: vscode.Command;
+
 	public contextValue?: string;
+
 	public tooltip: string;
+
 	public iconPath: vscode.ThemeIcon | vscode.Uri | undefined;
 
 	constructor(
@@ -24,6 +27,7 @@ export class DescriptionNode extends TreeNode implements vscode.TreeItem {
 		private readonly folderRepositoryManager: FolderRepositoryManager,
 	) {
 		super(parent);
+
 		this.label = label;
 
 		this.command = {
@@ -31,11 +35,14 @@ export class DescriptionNode extends TreeNode implements vscode.TreeItem {
 			command: "pr.openDescription",
 			arguments: [this],
 		};
+
 		this.iconPath = new vscode.ThemeIcon("git-pull-request");
+
 		this.tooltip = vscode.l10n.t(
 			"Description of pull request #{0}",
 			pullRequestModel.number,
 		);
+
 		this.accessibilityInformation = {
 			label: vscode.l10n.t(
 				"Pull request page of pull request number {0}",
@@ -55,6 +62,7 @@ export class DescriptionNode extends TreeNode implements vscode.TreeItem {
 		const currentBranchIsForThisPR = this.pullRequestModel.equals(
 			this.folderRepositoryManager.activePullRequest,
 		);
+
 		this.contextValue =
 			"description" +
 			(currentBranchIsForThisPR ? ":active" : ":nonactive") +

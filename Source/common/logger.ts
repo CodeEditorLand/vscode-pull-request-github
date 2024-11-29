@@ -10,10 +10,12 @@ export const PR_TREE = "PullRequestTree";
 
 class Log extends Disposable {
 	private readonly _outputChannel: vscode.LogOutputChannel;
+
 	private readonly _activePerfMarkers: Map<string, number> = new Map();
 
 	constructor() {
 		super();
+
 		this._outputChannel = this._register(
 			vscode.window.createOutputChannel("GitHub Pull Request", {
 				log: true,
@@ -23,15 +25,19 @@ class Log extends Disposable {
 
 	public startPerfMarker(marker: string) {
 		const startTime = performance.now();
+
 		this._outputChannel.appendLine(`PERF_MARKER> Start ${marker}`);
+
 		this._activePerfMarkers.set(marker, startTime);
 	}
 
 	public endPerfMarker(marker: string) {
 		const endTime = performance.now();
+
 		this._outputChannel.appendLine(
 			`PERF_MARKER> End ${marker}: ${endTime - this._activePerfMarkers.get(marker)!} ms`,
 		);
+
 		this._activePerfMarkers.delete(marker);
 	}
 
@@ -45,6 +51,7 @@ class Log extends Disposable {
 				message = JSON.stringify(message);
 			}
 		}
+
 		return component ? `${component}> ${message}` : message;
 	}
 

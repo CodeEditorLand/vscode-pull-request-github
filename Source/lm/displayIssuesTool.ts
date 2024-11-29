@@ -47,6 +47,7 @@ export class DisplayIssuesTool extends ToolBase<DisplayIssuesParameters> {
 			if (line === "") {
 				continue;
 			}
+
 			if (!possibleColumns.includes(line)) {
 				// Check if the llm decided to use formatting, even though we asked it not to
 				const splitOnSpace = line.split(" ");
@@ -62,11 +63,13 @@ export class DisplayIssuesTool extends ToolBase<DisplayIssuesParameters> {
 				finalColumns.push(line as IssueColumn);
 			}
 		}
+
 		const indexOfId = finalColumns.indexOf("id");
 
 		if (indexOfId !== -1) {
 			finalColumns[indexOfId] = "number";
 		}
+
 		return finalColumns;
 	}
 
@@ -92,6 +95,7 @@ export class DisplayIssuesTool extends ToolBase<DisplayIssuesParameters> {
 				this.assistantPrompt(issues),
 			),
 		];
+
 		messages.push(vscode.LanguageModelChatMessage.User(issueItemsInfo));
 
 		const response = await model.sendRequest(messages, chatOptions, token);
@@ -187,6 +191,7 @@ export class DisplayIssuesTool extends ToolBase<DisplayIssuesParameters> {
 				// ignore, the data doesn't exist
 			}
 		}
+
 		if (issueItems.length === 0) {
 			return {
 				"text/plain": "No issues found. Please try another query.",
@@ -195,6 +200,7 @@ export class DisplayIssuesTool extends ToolBase<DisplayIssuesParameters> {
 				),
 			};
 		}
+
 		Logger.debug(
 			`Displaying ${issueItems.length} issues, first issue ${issueItems[0].number}`,
 			DisplayIssuesTool.ID,
@@ -207,13 +213,17 @@ export class DisplayIssuesTool extends ToolBase<DisplayIssuesParameters> {
 		);
 
 		const titleRow = `| ${importantColumns.join(" | ")} |`;
+
 		Logger.debug(`Columns ${titleRow} issues`, DisplayIssuesTool.ID);
 
 		const separatorRow = `| ${importantColumns.map(() => "---").join(" | ")} |\n`;
 
 		const issues = new vscode.MarkdownString(titleRow);
+
 		issues.appendMarkdown("\n");
+
 		issues.appendMarkdown(separatorRow);
+
 		issues.appendMarkdown(
 			issueItems
 				.slice(0, 10)

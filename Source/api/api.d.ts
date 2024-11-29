@@ -15,42 +15,59 @@ export { RefType } from "./api1";
 
 export interface Ref {
 	readonly type: RefType;
+
 	readonly name?: string;
+
 	readonly commit?: string;
+
 	readonly remote?: string;
 }
 
 export interface UpstreamRef {
 	readonly remote: string;
+
 	readonly name: string;
 }
 
 export interface Branch extends Ref {
 	readonly upstream?: UpstreamRef;
+
 	readonly ahead?: number;
+
 	readonly behind?: number;
 }
 
 export interface Commit {
 	readonly hash: string;
+
 	readonly message: string;
+
 	readonly parents: string[];
+
 	readonly authorDate?: Date;
+
 	readonly authorName?: string;
+
 	readonly authorEmail?: string;
+
 	readonly commitDate?: Date;
 }
 
 export interface Submodule {
 	readonly name: string;
+
 	readonly path: string;
+
 	readonly url: string;
 }
 
 export interface Remote {
 	readonly name: string;
+
 	readonly fetchUrl?: string;
+
 	readonly pushUrl?: string;
+
 	readonly isReadOnly: boolean;
 }
 
@@ -63,19 +80,27 @@ export interface Change {
 	 * in doubt always use `uri` over the other two alternatives.
 	 */
 	readonly uri: Uri;
+
 	readonly originalUri: Uri;
+
 	readonly renameUri: Uri | undefined;
+
 	readonly status: Status;
 }
 
 export interface RepositoryState {
 	readonly HEAD: Branch | undefined;
+
 	readonly remotes: Remote[];
+
 	readonly submodules: Submodule[];
+
 	readonly rebaseCommit: Commit | undefined;
 
 	readonly mergeChanges: Change[];
+
 	readonly indexChanges: Change[];
+
 	readonly workingTreeChanges: Change[];
 
 	readonly onDidChange: Event<void>;
@@ -83,29 +108,41 @@ export interface RepositoryState {
 
 export interface RepositoryUIState {
 	readonly selected: boolean;
+
 	readonly onDidChange: Event<void>;
 }
 
 export interface CommitOptions {
 	all?: boolean | "tracked";
+
 	amend?: boolean;
+
 	signoff?: boolean;
+
 	signCommit?: boolean;
+
 	empty?: boolean;
 }
 
 export interface FetchOptions {
 	remote?: string;
+
 	ref?: string;
+
 	all?: boolean;
+
 	prune?: boolean;
+
 	depth?: number;
 }
 
 export interface RefQuery {
 	readonly contains?: string;
+
 	readonly count?: number;
+
 	readonly pattern?: string;
+
 	readonly sort?: "alphabetically" | "committerdate";
 }
 
@@ -115,8 +152,11 @@ export interface BranchQuery extends RefQuery {
 
 export interface Repository {
 	readonly inputBox: InputBox;
+
 	readonly rootUri: Uri;
+
 	readonly state: RepositoryState;
+
 	readonly ui: RepositoryUIState;
 
 	/**
@@ -161,10 +201,13 @@ export interface Repository {
 		treeish: string,
 		path: string,
 	): Promise<{ mode: string; object: string; size: number }>;
+
 	detectObjectType(
 		object: string,
 	): Promise<{ mimetype: string; encoding?: string }>;
+
 	buffer(ref: string, path: string): Promise<Buffer>;
+
 	show(ref: string, path: string): Promise<string>;
 
 	getCommit(ref: string): Promise<Commit>;
@@ -172,22 +215,35 @@ export interface Repository {
 	clean(paths: string[]): Promise<void>;
 
 	apply(patch: string, reverse?: boolean): Promise<void>;
+
 	diff(cached?: boolean): Promise<string>;
+
 	diffWithHEAD(): Promise<Change[]>;
+
 	diffWithHEAD(path: string): Promise<string>;
+
 	diffWith(ref: string): Promise<Change[]>;
+
 	diffWith(ref: string, path: string): Promise<string>;
+
 	diffIndexWithHEAD(): Promise<Change[]>;
+
 	diffIndexWithHEAD(path: string): Promise<string>;
+
 	diffIndexWith(ref: string): Promise<Change[]>;
+
 	diffIndexWith(ref: string, path: string): Promise<string>;
+
 	diffBlobs(object1: string, object2: string): Promise<string>;
+
 	diffBetween(ref1: string, ref2: string): Promise<Change[]>;
+
 	diffBetween(ref1: string, ref2: string, path: string): Promise<string>;
 
 	hashObject(data: string): Promise<string>;
 
 	createBranch(name: string, checkout: boolean, ref?: string): Promise<void>;
+
 	deleteBranch(name: string, force?: boolean): Promise<void>;
 
 	getBranch(name: string): Promise<Branch>;
@@ -206,15 +262,21 @@ export interface Repository {
 	getMergeBase(ref1: string, ref2: string): Promise<string>;
 
 	status(): Promise<void>;
+
 	checkout(treeish: string): Promise<void>;
 
 	addRemote(name: string, url: string): Promise<void>;
+
 	removeRemote(name: string): Promise<void>;
+
 	renameRemote(name: string, newName: string): Promise<void>;
 
 	fetch(options?: FetchOptions): Promise<void>;
+
 	fetch(remote?: string, ref?: string, depth?: number): Promise<void>;
+
 	pull(unshallow?: boolean): Promise<void>;
+
 	push(
 		remoteName?: string,
 		branchName?: string,
@@ -222,11 +284,15 @@ export interface Repository {
 	): Promise<void>;
 
 	blame(path: string): Promise<string>;
+
 	log(options?: LogOptions): Promise<Commit[]>;
 
 	commit(message: string, opts?: CommitOptions): Promise<void>;
+
 	add(paths: string[]): Promise<void>;
+
 	merge(ref: string): Promise<void>;
+
 	mergeAbort(): Promise<void>;
 }
 
@@ -236,6 +302,7 @@ export interface Repository {
 export interface LogOptions {
 	/** Max number of log entries to retrieve. If not specified, the default is 32. */
 	readonly maxEntries?: number;
+
 	readonly path?: string;
 	/** A commit range, such as "0a47c67f0fb52dd11562af48658bc1dff1d75a38..0bb4bdea78e1db44d728fd6894720071e303304f" */
 	readonly range?: string;
@@ -249,12 +316,16 @@ export { GitErrorCodes } from "./api1";
 
 export interface IGit {
 	readonly repositories: Repository[];
+
 	readonly onDidOpenRepository: Event<Repository>;
+
 	readonly onDidCloseRepository: Event<Repository>;
 
 	// Used by the actual git extension to indicate it has finished initializing state information
 	readonly state?: APIState;
+
 	readonly onDidChangeState?: Event<APIState>;
+
 	readonly onDidPublish?: Event<PublishEvent>;
 
 	registerPostCommitCommandsProvider?(
@@ -266,13 +337,17 @@ export interface TitleAndDescriptionProvider {
 	provideTitleAndDescription(
 		context: {
 			commitMessages: string[];
+
 			patches:
 				| string[]
 				| {
 						patch: string;
+
 						fileUri: string;
+
 						previousFileUri?: string;
 				  }[];
+
 			issues?: { reference: string; content: string }[];
 		},
 		token: CancellationToken,
@@ -282,6 +357,7 @@ export interface TitleAndDescriptionProvider {
 export interface ReviewerComments {
 	// To tell which files we should add a comment icon in the "Files Changed" view
 	files: Uri[];
+
 	succeeded: boolean;
 	// For removing comments
 	disposable?: Disposable;
@@ -291,10 +367,14 @@ export interface ReviewerCommentsProvider {
 	provideReviewerComments(
 		context: {
 			repositoryRoot: string;
+
 			commitMessages: string[];
+
 			patches: {
 				patch: string;
+
 				fileUri: string;
+
 				previousFileUri?: string;
 			}[];
 		},

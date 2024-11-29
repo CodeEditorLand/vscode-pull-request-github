@@ -18,6 +18,7 @@ export const PREVIOUS_CREATE_METHOD = "github.pullRequest.previousCreateMethod";
 
 export interface RepoState {
 	mentionableUsers?: IAccount[];
+
 	stateModifiedTime?: number;
 }
 

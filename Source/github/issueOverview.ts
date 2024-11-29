@@ -29,9 +29,13 @@ export class IssueOverviewPanel<
 	private static readonly _viewType: string = "IssueOverview";
 
 	protected readonly _panel: vscode.WebviewPanel;
+
 	protected _descriptionNode: DescriptionNode;
+
 	protected _item: TItem;
+
 	protected _folderRepositoryManager: FolderRepositoryManager;
+
 	protected _scrollPosition = { x: 0, y: 0 };
 
 	public static async createOrShow(
@@ -53,6 +57,7 @@ export class IssueOverviewPanel<
 			IssueOverviewPanel.currentPanel._panel.reveal(activeColumn, true);
 		} else {
 			const title = `Issue #${issue.number.toString()}`;
+
 			IssueOverviewPanel.currentPanel = new IssueOverviewPanel(
 				telemetry,
 				extensionUri,
@@ -92,6 +97,7 @@ export class IssueOverviewPanel<
 		type: string = IssueOverviewPanel._viewType,
 	) {
 		super();
+
 		this._folderRepositoryManager = folderRepositoryManager;
 
 		// Create and show a new webview panel
@@ -122,6 +128,7 @@ export class IssueOverviewPanel<
 					const isCurrentlyCheckedOut = this._item.equals(
 						this._folderRepositoryManager.activeIssue,
 					);
+
 					this._postMessage({
 						command: "pr.update-checkout-status",
 						isCurrentlyCheckedOut: isCurrentlyCheckedOut,
@@ -159,9 +166,11 @@ export class IssueOverviewPanel<
 				}
 
 				this._item = issue as TItem;
+
 				this.setPanelTitle(`Issue #${issueModel.number.toString()}`);
 
 				Logger.debug("pr.initialize", IssueOverviewPanel.ID);
+
 				this._postMessage({
 					command: "pr.initialize",
 					pullrequest: {
@@ -202,6 +211,7 @@ export class IssueOverviewPanel<
 		issueModel: IssueModel,
 	): Promise<void> {
 		this._folderRepositoryManager = foldersManager;
+
 		this._postMessage({
 			command: "set-scroll",
 			scrollPosition: this._scrollPosition,
@@ -276,8 +286,11 @@ export class IssueOverviewPanel<
 			let newLabels: ILabel[] = [];
 
 			quickPick.busy = true;
+
 			quickPick.canSelectMany = true;
+
 			quickPick.show();
+
 			quickPick.items = await getLabelOptions(
 				this._folderRepositoryManager,
 				this._item.item.labels,
@@ -288,6 +301,7 @@ export class IssueOverviewPanel<
 
 				return options.labelPicks;
 			});
+
 			quickPick.selectedItems = quickPick.items.filter(
 				(item) => item.picked,
 			);
@@ -305,6 +319,7 @@ export class IssueOverviewPanel<
 			const labelsToAdd = await Promise.race<
 				readonly vscode.QuickPickItem[] | void
 			>([acceptPromise, hidePromise]);
+
 			quickPick.busy = true;
 
 			if (labelsToAdd) {
@@ -324,6 +339,7 @@ export class IssueOverviewPanel<
 			vscode.window.showErrorMessage(formatError(e));
 		} finally {
 			quickPick.hide();
+
 			quickPick.dispose();
 		}
 	}
@@ -335,6 +351,7 @@ export class IssueOverviewPanel<
 			const index = this._item.item.labels.findIndex(
 				(label) => label.name === message.args,
 			);
+
 			this._item.item.labels.splice(index, 1);
 
 			this._replyMessage(message, {});
@@ -358,11 +375,13 @@ export class IssueOverviewPanel<
 			})
 			.catch((e) => {
 				this._throwError(message, e);
+
 				vscode.window.showErrorMessage(
 					`Editing description failed: ${formatError(e)}`,
 				);
 			});
 	}
+
 	private editTitle(message: IRequestMessage<{ text: string }>) {
 		return this._item
 			.edit({ title: message.args.text })
@@ -373,6 +392,7 @@ export class IssueOverviewPanel<
 			})
 			.catch((e) => {
 				this._throwError(message, e);
+
 				vscode.window.showErrorMessage(
 					`Editing title failed: ${formatError(e)}`,
 				);
@@ -398,6 +418,7 @@ export class IssueOverviewPanel<
 			})
 			.catch((e) => {
 				this._throwError(message, e);
+
 				vscode.window.showErrorMessage(formatError(e));
 			});
 	}
@@ -421,6 +442,7 @@ export class IssueOverviewPanel<
 						})
 						.catch((e) => {
 							this._throwError(message, e);
+
 							vscode.window.showErrorMessage(formatError(e));
 						});
 				}
@@ -455,7 +477,9 @@ export class IssueOverviewPanel<
 
 	public override dispose() {
 		super.dispose();
+
 		this._currentPanel = undefined;
+
 		this._webview = undefined;
 	}
 

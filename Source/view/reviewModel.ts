@@ -12,8 +12,10 @@ import {
 
 export class ReviewModel {
 	private _localFileChanges: GitFileChangeNode[] | undefined;
+
 	private _onDidChangeLocalFileChanges: vscode.EventEmitter<void> =
 		new vscode.EventEmitter();
+
 	public onDidChangeLocalFileChanges: vscode.Event<void> =
 		this._onDidChangeLocalFileChanges.event;
 
@@ -32,6 +34,7 @@ export class ReviewModel {
 
 	set localFileChanges(localFileChanges: GitFileChangeNode[]) {
 		this._localFileChanges = localFileChanges;
+
 		this._onDidChangeLocalFileChanges.fire();
 	}
 
@@ -47,6 +50,7 @@ export class ReviewModel {
 
 	clear() {
 		this.obsoleteFileChanges = [];
+
 		this._localFileChanges = undefined;
 	}
 }

@@ -16,12 +16,15 @@ export class PRStatusDecorationProvider
 	private _onDidChangeFileDecorations: vscode.EventEmitter<
 		vscode.Uri | vscode.Uri[]
 	> = new vscode.EventEmitter<vscode.Uri | vscode.Uri[]>();
+
 	onDidChangeFileDecorations: vscode.Event<vscode.Uri | vscode.Uri[]> =
 		this._onDidChangeFileDecorations.event;
 
 	constructor(private readonly _prsTreeModel: PrsTreeModel) {
 		super();
+
 		this._register(vscode.window.registerFileDecorationProvider(this));
+
 		this._register(
 			this._prsTreeModel.onDidChangePrStatus((identifiers) => {
 				this._onDidChangeFileDecorations.fire(
@@ -38,11 +41,13 @@ export class PRStatusDecorationProvider
 		if (uri.scheme !== Schemes.PRNode) {
 			return;
 		}
+
 		const params = fromPRNodeUri(uri);
 
 		if (!params) {
 			return;
 		}
+
 		const status = this._prsTreeModel.cachedPRStatus(params.prIdentifier);
 
 		if (!status) {

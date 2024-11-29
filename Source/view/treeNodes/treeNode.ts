@@ -13,12 +13,17 @@ export interface BaseTreeNode {
 		element: TreeNode,
 		options?: {
 			select?: boolean;
+
 			focus?: boolean;
+
 			expand?: boolean | number;
 		},
 	): Thenable<void>;
+
 	refresh(treeNode?: TreeNode): void;
+
 	children: TreeNode[] | undefined;
+
 	view: vscode.TreeView<TreeNode>;
 }
 
@@ -26,9 +31,13 @@ export type TreeNodeParent = TreeNode | BaseTreeNode;
 
 export abstract class TreeNode extends Disposable {
 	protected children: TreeNode[] | undefined;
+
 	childrenDisposables: vscode.Disposable[] = [];
+
 	label?: string;
+
 	accessibilityInformation?: vscode.AccessibilityInformation;
+
 	id?: string;
 
 	constructor(public parent: TreeNodeParent) {
@@ -47,7 +56,9 @@ export abstract class TreeNode extends Disposable {
 		treeNode: TreeNode,
 		options?: {
 			select?: boolean;
+
 			focus?: boolean;
+
 			expand?: boolean | number;
 		},
 	): Promise<void> {
@@ -66,6 +77,7 @@ export abstract class TreeNode extends Disposable {
 		if (this.children && this.children.length) {
 			return this.children;
 		}
+
 		return this.getChildren();
 	}
 
@@ -73,6 +85,7 @@ export abstract class TreeNode extends Disposable {
 		if (this.children && this.children.length && shouldDispose) {
 			disposeAll(this.children);
 		}
+
 		return [];
 	}
 
@@ -92,8 +105,10 @@ export class LabelOnlyNode extends TreeNode {
 
 	constructor(parent: TreeNodeParent, label: string) {
 		super(parent);
+
 		this.label = label;
 	}
+
 	getTreeItem(): vscode.TreeItem {
 		return new vscode.TreeItem(this.label);
 	}

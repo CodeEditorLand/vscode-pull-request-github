@@ -11,7 +11,9 @@ let tempState: TemporaryState | undefined;
 
 export class TemporaryState extends vscode.Disposable {
 	private readonly SUBPATH = "temp";
+
 	private readonly disposables: vscode.Disposable[] = [];
+
 	private readonly persistInSessionDisposables: vscode.Disposable[] = [];
 
 	constructor(private readonly _storageUri: vscode.Uri) {
@@ -24,6 +26,7 @@ export class TemporaryState extends vscode.Disposable {
 
 	override dispose() {
 		disposeAll(this.disposables);
+
 		disposeAll(this.persistInSessionDisposables);
 	}
 
@@ -36,8 +39,10 @@ export class TemporaryState extends vscode.Disposable {
 		} else {
 			if (this.disposables.length > 30) {
 				const oldDisposable = this.disposables.shift();
+
 				oldDisposable?.dispose();
 			}
+
 			this.disposables.push(disposable);
 		}
 	}
@@ -63,9 +68,11 @@ export class TemporaryState extends vscode.Disposable {
 		if (subpath) {
 			filePath = vscode.Uri.joinPath(filePath, subpath);
 		}
+
 		await vscode.workspace.fs.createDirectory(filePath);
 
 		const file = vscode.Uri.joinPath(filePath, filename);
+
 		await vscode.workspace.fs.writeFile(file, contents);
 
 		const dispose = {
@@ -79,6 +86,7 @@ export class TemporaryState extends vscode.Disposable {
 				}
 			},
 		};
+
 		this.addDisposable(dispose, persistInSession);
 
 		return file;
@@ -99,6 +107,7 @@ export class TemporaryState extends vscode.Disposable {
 		if (workspace) {
 			filePath = vscode.Uri.joinPath(filePath, workspace);
 		}
+
 		filePath = vscode.Uri.joinPath(filePath, subpath);
 
 		const file = vscode.Uri.joinPath(filePath, filename);
@@ -121,6 +130,7 @@ export class TemporaryState extends vscode.Disposable {
 					`TemporaryState> Error in initialization: ${e.message}`,
 				);
 			}
+
 			try {
 				await vscode.workspace.fs.createDirectory(tempState.path);
 			} catch (e) {
@@ -128,6 +138,7 @@ export class TemporaryState extends vscode.Disposable {
 					`TemporaryState> Error in initialization: ${e.message}`,
 				);
 			}
+
 			context.subscriptions.push(tempState);
 
 			return tempState;

@@ -27,12 +27,15 @@ import { NotificationTreeItem } from "./notificationItem";
 
 export interface INotifications {
 	readonly notifications: Notification[];
+
 	readonly hasNextPage: boolean;
 }
 
 export interface INotificationPriority {
 	readonly key: string;
+
 	readonly priority: string | undefined;
+
 	readonly priorityReasoning: string | undefined;
 }
 
@@ -53,6 +56,7 @@ export class NotificationsProvider extends Disposable {
 		} else if (_credentialStore.isAuthenticated(AuthProvider.github)) {
 			this._authProvider = AuthProvider.github;
 		}
+
 		this._register(
 			_credentialStore.onDidChangeSessions((_) => {
 				if (
@@ -63,6 +67,7 @@ export class NotificationsProvider extends Disposable {
 				) {
 					this._authProvider = AuthProvider.githubEnterprise;
 				}
+
 				if (_credentialStore.isAuthenticated(AuthProvider.github)) {
 					this._authProvider = AuthProvider.github;
 				}
@@ -78,6 +83,7 @@ export class NotificationsProvider extends Disposable {
 
 	public async markAsRead(notificationIdentifier: {
 		threadId: string;
+
 		notificationKey: string;
 	}): Promise<void> {
 		const gitHub = this._getGitHub();
@@ -85,6 +91,7 @@ export class NotificationsProvider extends Disposable {
 		if (gitHub === undefined) {
 			return undefined;
 		}
+
 		await gitHub.octokit.call(
 			gitHub.octokit.api.activity.markThreadAsRead,
 			{
@@ -102,6 +109,7 @@ export class NotificationsProvider extends Disposable {
 		if (gitHub === undefined) {
 			return undefined;
 		}
+
 		if (this._repositoriesManager.folderManagers.length === 0) {
 			return undefined;
 		}
@@ -140,11 +148,13 @@ export class NotificationsProvider extends Disposable {
 		if (!(typeof url === "string")) {
 			return undefined;
 		}
+
 		const issueOrPrNumber = url.split("/").pop();
 
 		if (issueOrPrNumber === undefined) {
 			return undefined;
 		}
+
 		const folderManager =
 			this._repositoriesManager.getManagerForRepository(
 				notification.owner,
@@ -219,17 +229,22 @@ export class NotificationsProvider extends Disposable {
 				if (!issueModel) {
 					continue;
 				}
+
 				let notificationMessage = this._getBasePrompt(
 					issueModel,
 					notificationIndex,
 				);
+
 				notificationMessage += await this._getLabelsPrompt(issueModel);
+
 				notificationMessage +=
 					await this._getCommentsPrompt(issueModel);
+
 				messages.push(
 					vscode.LanguageModelChatMessage.User(notificationMessage),
 				);
 			}
+
 			messages.push(
 				vscode.LanguageModelChatMessage.User(
 					"Please provide the priority for each notification in a separate text code block. Remember to place the title and the reasoning outside of the text code block.",
@@ -281,15 +296,18 @@ ${model.body}
 		if (!labels) {
 			return "";
 		}
+
 		let labelsMessage = "";
 
 		if (labels.length > 0) {
 			const labelListAsString = labels
 				.map((label) => label.name)
 				.join(", ");
+
 			labelsMessage = `
 • Labels: ${labelListAsString}`;
 		}
+
 		return labelsMessage;
 	}
 
@@ -301,6 +319,7 @@ ${model.body}
 		if (!issueComments || issueComments.length === 0) {
 			return "";
 		}
+
 		let commentsMessage = `
 
 The following is the data concerning the at most last 5 comments for the notification:`;
@@ -311,14 +330,17 @@ The following is the data concerning the at most last 5 comments for the notific
 
 		for (let i = lowerCommentIndexBound; i < issueComments.length; i++) {
 			const comment = issueComments.at(i)!;
+
 			commentsMessage += `
 
 Comment ${index} for notification:
 • Body:
 ${comment.body}
 • Reaction Count: ${comment.reactionCount}`;
+
 			index += 1;
 		}
+
 		return commentsMessage;
 	}
 

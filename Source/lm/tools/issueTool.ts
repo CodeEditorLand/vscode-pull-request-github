@@ -11,15 +11,19 @@ import { RepositoriesManager } from "../../github/repositoriesManager";
 
 interface IssueToolParameters {
 	issueNumber: number;
+
 	repo?: {
 		owner: string;
+
 		name: string;
 	};
 }
 
 interface IssueResult {
 	title: string;
+
 	body: string;
+
 	comments: {
 		body: string;
 	}[];
@@ -46,21 +50,27 @@ export class IssueTool
 			!options.parameters.repo.name.includes("name")
 		) {
 			owner = options.parameters.repo.owner;
+
 			name = options.parameters.repo.name;
+
 			folderManager = this.repositoriesManager.getManagerForRepository(
 				options.parameters.repo.owner,
 				options.parameters.repo.name,
 			);
 		} else if (this.repositoriesManager.folderManagers.length > 0) {
 			folderManager = this.repositoriesManager.folderManagers[0];
+
 			owner = folderManager.gitHubRepositories[0].remote.owner;
+
 			name = folderManager.gitHubRepositories[0].remote.repositoryName;
 		}
+
 		if (!folderManager || !owner || !name) {
 			throw new Error(
 				`No folder manager found for ${owner}/${name}. Make sure to have the repository open.`,
 			);
 		}
+
 		const issue = await folderManager.resolveIssue(
 			owner,
 			name,
@@ -73,6 +83,7 @@ export class IssueTool
 				`No issue found for ${owner}/${name}/${options.parameters.issueNumber}. Make sure the issue exists.`,
 			);
 		}
+
 		const result: IssueResult = {
 			title: issue.title,
 			body: issue.body,

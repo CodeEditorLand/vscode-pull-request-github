@@ -16,13 +16,17 @@ import { PreReviewState } from "../src/github/views";
 
 export interface RemoteInfo {
 	owner: string;
+
 	repositoryName: string;
 }
 
 export interface CreateParams {
 	availableBaseRemotes: RemoteInfo[];
+
 	availableCompareRemotes: RemoteInfo[];
+
 	branchesForRemote: string[];
+
 	branchesForCompare: string[];
 
 	defaultBaseRemote?: RemoteInfo;
@@ -38,65 +42,107 @@ export interface CreateParams {
 	defaultDescription?: string;
 
 	pendingTitle?: string;
+
 	pendingDescription?: string;
+
 	baseRemote?: RemoteInfo;
+
 	baseBranch?: string;
+
 	compareRemote?: RemoteInfo;
+
 	compareBranch?: string;
+
 	isDraftDefault: boolean;
+
 	isDraft?: boolean;
+
 	labels?: ILabel[];
+
 	isDarkTheme?: boolean;
 
 	validate?: boolean;
+
 	showTitleValidationError?: boolean;
+
 	createError?: string;
 
 	autoMergeDefault: boolean;
+
 	autoMerge?: boolean;
+
 	autoMergeMethod?: MergeMethod;
+
 	allowAutoMerge?: boolean;
 
 	defaultMergeMethod?: MergeMethod;
+
 	mergeMethodsAvailability?: MergeMethodsAvailability;
 }
 
 export interface ScrollPosition {
 	x: number;
+
 	y: number;
 }
 
 export interface CreatePullRequest {
 	title: string;
+
 	body: string;
+
 	owner: string;
+
 	repo: string;
+
 	base: string;
+
 	compareBranch: string;
+
 	compareOwner: string;
+
 	compareRepo: string;
+
 	draft: boolean;
+
 	autoMerge: boolean;
+
 	autoMergeMethod?: MergeMethod;
+
 	labels: ILabel[];
 }
 
 export interface CreatePullRequestNew {
 	title: string;
+
 	body: string;
+
 	owner: string;
+
 	repo: string;
+
 	base: string;
+
 	compareBranch: string;
+
 	compareOwner: string;
+
 	compareRepo: string;
+
 	draft: boolean;
+
 	autoMerge: boolean;
+
 	autoMergeMethod?: MergeMethod;
+
 	labels: ILabel[];
+
 	projects: IProject[];
+
 	assignees: IAccount[];
+
 	reviewers: (IAccount | ITeam)[];
+
 	milestone?: IMilestone;
 }
 
@@ -104,7 +150,9 @@ export interface CreatePullRequestNew {
 
 export interface CreateParamsNew {
 	canModifyBranches: boolean;
+
 	actionDetail?: string;
+
 	associatedExistingPullRequest?: number;
 
 	defaultBaseRemote?: RemoteInfo;
@@ -118,58 +166,91 @@ export interface CreateParamsNew {
 	defaultTitle?: string;
 
 	defaultDescription?: string;
+
 	pendingTitle?: string;
+
 	pendingDescription?: string;
+
 	baseRemote?: RemoteInfo;
+
 	baseBranch?: string;
+
 	remoteCount?: number;
+
 	compareRemote?: RemoteInfo;
+
 	compareBranch?: string;
+
 	isDraftDefault: boolean;
+
 	isDraft?: boolean;
+
 	labels?: ILabel[];
+
 	projects?: IProject[];
+
 	assignees?: IAccount[];
+
 	reviewers?: (IAccount | ITeam)[];
+
 	milestone?: IMilestone;
+
 	isDarkTheme?: boolean;
+
 	generateTitleAndDescriptionTitle: string | undefined;
+
 	initializeWithGeneratedTitleAndDescription: boolean;
+
 	preReviewState: PreReviewState;
+
 	preReviewer: string | undefined;
 
 	validate?: boolean;
+
 	showTitleValidationError?: boolean;
+
 	createError?: string;
 
 	autoMergeDefault: boolean;
+
 	autoMerge?: boolean;
+
 	autoMergeMethod?: MergeMethod;
+
 	allowAutoMerge?: boolean;
 
 	defaultMergeMethod?: MergeMethod;
+
 	mergeMethodsAvailability?: MergeMethodsAvailability;
+
 	baseHasMergeQueue: boolean;
 
 	creating: boolean;
+
 	reviewing: boolean;
 }
 
 export interface ChooseRemoteAndBranchArgs {
 	currentRemote: RemoteInfo | undefined;
+
 	currentBranch: string | undefined;
 }
 
 export interface ChooseBaseRemoteAndBranchResult {
 	baseRemote: RemoteInfo;
+
 	baseBranch: string;
 
 	defaultBaseBranch: string;
 
 	defaultMergeMethod: MergeMethod;
+
 	allowAutoMerge: boolean;
+
 	mergeMethodsAvailability: MergeMethodsAvailability;
+
 	autoMergeDefault: boolean;
+
 	baseHasMergeQueue: boolean;
 
 	defaultTitle: string;
@@ -179,6 +260,7 @@ export interface ChooseBaseRemoteAndBranchResult {
 
 export interface ChooseCompareRemoteAndBranchResult {
 	compareRemote: RemoteInfo;
+
 	compareBranch: string;
 
 	defaultCompareBranch: string;
@@ -190,6 +272,7 @@ export interface TitleAndDescriptionArgs {
 
 export interface TitleAndDescriptionResult {
 	title: string | undefined;
+
 	description: string | undefined;
 }
 

@@ -19,10 +19,15 @@ import { TemporaryState } from "./temporaryState";
 
 export interface ReviewUriParams {
 	path: string;
+
 	ref?: string;
+
 	commit?: string;
+
 	base: boolean;
+
 	isOutdated: boolean;
+
 	rootPath: string;
 }
 
@@ -32,12 +37,19 @@ export function fromReviewUri(query: string): ReviewUriParams {
 
 export interface PRUriParams {
 	baseCommit: string;
+
 	headCommit: string;
+
 	isBase: boolean;
+
 	fileName: string;
+
 	prNumber: number;
+
 	status: GitChangeType;
+
 	remoteName: string;
+
 	previousFileName?: string;
 }
 
@@ -45,6 +57,7 @@ export function fromPRUri(uri: vscode.Uri): PRUriParams | undefined {
 	if (uri.query === "") {
 		return undefined;
 	}
+
 	try {
 		return JSON.parse(uri.query) as PRUriParams;
 	} catch (e) {}
@@ -58,6 +71,7 @@ export function fromPRNodeUri(uri: vscode.Uri): PRNodeUriParams | undefined {
 	if (uri.query === "") {
 		return undefined;
 	}
+
 	try {
 		return JSON.parse(uri.query) as PRNodeUriParams;
 	} catch (e) {}
@@ -65,14 +79,18 @@ export function fromPRNodeUri(uri: vscode.Uri): PRNodeUriParams | undefined {
 
 export interface GitHubUriParams {
 	fileName: string;
+
 	branch: string;
+
 	owner?: string;
+
 	isEmpty?: boolean;
 }
 export function fromGitHubURI(uri: vscode.Uri): GitHubUriParams | undefined {
 	if (uri.query === "") {
 		return undefined;
 	}
+
 	try {
 		return JSON.parse(uri.query) as GitHubUriParams;
 	} catch (e) {}
@@ -91,7 +109,9 @@ export function toGitHubUri(
 
 export interface GitUriOptions {
 	replaceFileExtension?: boolean;
+
 	submoduleOf?: string;
+
 	base: boolean;
 }
 
@@ -174,9 +194,13 @@ export async function asTempStorageURI(
 			path,
 		}: {
 			commit: string;
+
 			baseCommit: string;
+
 			headCommit: string;
+
 			isBase: string;
+
 			path: string;
 		} = JSON.parse(uri.query);
 
@@ -185,6 +209,7 @@ export async function asTempStorageURI(
 		if (!KnownMediaExtensions.includes(ext)) {
 			return;
 		}
+
 		const ref =
 			uri.scheme === Schemes.Review
 				? commit
@@ -248,6 +273,7 @@ export namespace DataUri {
 		await vscode.workspace.fs.createDirectory(cacheLocation(context));
 
 		const file = fileCacheUri(context, user);
+
 		await vscode.workspace.fs.writeFile(file, contents);
 
 		return file;
@@ -285,10 +311,12 @@ export namespace DataUri {
 
 		try {
 			const log = await vscode.workspace.fs.readFile(cacheLog);
+
 			cacheLogOrder = JSON.parse(log.toString());
 		} catch (e) {
 			cacheLogOrder = [];
 		}
+
 		const startingCacheSize = cacheLogOrder.length;
 
 		const results = await Promise.all(
@@ -298,6 +326,7 @@ export namespace DataUri {
 				if (imageSourceUrl === undefined) {
 					return undefined;
 				}
+
 				let innerImageContents: Buffer | undefined;
 
 				let cacheMiss: boolean = false;
@@ -311,22 +340,26 @@ export namespace DataUri {
 					if (!fileContents) {
 						throw new Error("Temporary state not initialized");
 					}
+
 					innerImageContents = Buffer.from(fileContents);
 				} catch (e) {
 					if (localOnly) {
 						return;
 					}
+
 					cacheMiss = true;
 
 					const doFetch = async () => {
 						const response = await fetch(imageSourceUrl.toString());
 
 						const buffer = await response.arrayBuffer();
+
 						await writeAvatarToCache(
 							context,
 							user,
 							new Uint8Array(buffer),
 						);
+
 						innerImageContents = Buffer.from(buffer);
 					};
 
@@ -337,13 +370,17 @@ export namespace DataUri {
 						await doFetch();
 					}
 				}
+
 				if (!innerImageContents) {
 					return undefined;
 				}
+
 				if (cacheMiss) {
 					const icon = iconFilename(user);
+
 					cacheLogOrder.push(icon);
 				}
+
 				const innerImageEncoded = `data:image/jpeg;size:${innerImageContents.byteLength};base64,${innerImageContents.toString("base64")}`;
 
 				const contentsString = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -367,6 +404,7 @@ export namespace DataUri {
 		) {
 			// The cache is getting big, we should clean it up.
 			const toDelete = cacheLogOrder.splice(0, 50);
+
 			await Promise.all(
 				toDelete.map(async (id) => {
 					try {
@@ -424,8 +462,11 @@ export function toReviewUri(
 
 export interface FileChangeNodeUriParams {
 	prNumber: number;
+
 	fileName: string;
+
 	previousFileName?: string;
+
 	status?: GitChangeType;
 }
 
@@ -455,6 +496,7 @@ export function fromFileChangeNodeUri(
 	if (uri.query === "") {
 		return undefined;
 	}
+
 	try {
 		return JSON.parse(uri.query) as FileChangeNodeUriParams;
 	} catch (e) {}
@@ -505,6 +547,7 @@ export function createPRNodeIdentifier(
 	} else {
 		identifier = `${pullRequest.remote}:${pullRequest.prNumber}`;
 	}
+
 	return identifier;
 }
 
@@ -542,6 +585,7 @@ export function fromNotificationUri(
 	if (uri.scheme !== Schemes.Notification) {
 		return;
 	}
+
 	try {
 		return {
 			key: uri.path,

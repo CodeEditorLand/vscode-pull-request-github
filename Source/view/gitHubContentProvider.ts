@@ -25,11 +25,13 @@ async function getGitFileContent(
 				.fsPath,
 		);
 	}
+
 	return new TextEncoder().encode(content);
 }
 
 interface FileData {
 	file: Uint8Array;
+
 	modified: boolean;
 }
 
@@ -39,6 +41,7 @@ export abstract class ChangesContentProvider
 	protected _onDidChangeFile = new vscode.EventEmitter<
 		vscode.FileChangeEvent[]
 	>();
+
 	onDidChangeFile = this._onDidChangeFile.event;
 
 	public readonly changedFiles = new Map<string, FileData>(); // uri key
@@ -47,6 +50,7 @@ export abstract class ChangesContentProvider
 
 	set editableBranch(value: string | undefined) {
 		this.changedFiles.clear();
+
 		this._editableBranch = value;
 	}
 
@@ -71,6 +75,7 @@ export abstract class ChangesContentProvider
 				});
 			}
 		}
+
 		return this.changedFiles.get(uri.toString())?.file;
 	}
 
@@ -146,6 +151,7 @@ export class GitHubContentProvider
 		if (!owner) {
 			return this._gitHubRepositories[0];
 		}
+
 		return this._gitHubRepositories.find(
 			(repository) =>
 				compareIgnoreCase(repository.remote.owner, owner) === 0,
@@ -172,10 +178,12 @@ export class GitHubContentProvider
 				`No GitHub repository found for owner ${asParams!.owner}`,
 			);
 		}
+
 		const content = await repo.getFile(
 			asParams!.fileName,
 			asParams!.branch,
 		);
+
 		this.changedFiles.set(uri.toString(), {
 			file: content,
 			modified: false,
@@ -195,6 +203,7 @@ export class GitHubContentProvider
 				changes.set(vscode.Uri.parse(uri).path, fileData.file);
 			}
 		}
+
 		return this._gitHubRepositories[0].commit(
 			branch,
 			commitMessage,
@@ -224,6 +233,7 @@ export class GitContentProvider
 			params.branch,
 			!!params.isEmpty,
 		);
+
 		this.changedFiles.set(uri.toString(), {
 			file: content,
 			modified: false,
@@ -254,11 +264,15 @@ export class GitContentProvider
 					this.folderRepositoryManager.repository.rootUri,
 					vscode.Uri.parse(uri).path,
 				);
+
 				await vscode.workspace.fs.writeFile(fileUri, fileData.file);
+
 				uris.push(fileUri.fsPath);
 			}
 		}
+
 		await this.folderRepositoryManager.repository.add(uris);
+
 		await this.folderRepositoryManager.repository.commit(commitMessage);
 
 		if (this.folderRepositoryManager.repository.state.HEAD?.upstream) {
@@ -271,6 +285,7 @@ export class GitContentProvider
 
 			return true;
 		}
+
 		return false;
 	}
 }

@@ -22,6 +22,7 @@ class IssueDocumentLink extends vscode.DocumentLink {
 		range: vscode.Range,
 		public readonly mappedLink: {
 			readonly value: string;
+
 			readonly parsed: ParsedIssue;
 		},
 		public readonly uri: vscode.Uri,
@@ -88,13 +89,17 @@ export class IssueLinkProvider implements vscode.DocumentLinkProvider {
 							{ value: match[0], parsed },
 							document.uri,
 						);
+
 						links.push(link);
 					}
 				}
+
 				lineOffset += searchResult + (match ? match[0].length : 0);
+
 				lineSubstring = line.substring(lineOffset, line.length);
 			}
 		}
+
 		return links;
 	}
 
@@ -108,6 +113,7 @@ export class IssueLinkProvider implements vscode.DocumentLinkProvider {
 			if (!folderManager) {
 				return;
 			}
+
 			const issue = await getIssue(
 				this.stateManager,
 				folderManager,
@@ -120,6 +126,7 @@ export class IssueLinkProvider implements vscode.DocumentLinkProvider {
 					vscode.Uri.parse(issue.html_url),
 				);
 			}
+
 			return link;
 		}
 	}

@@ -16,6 +16,7 @@ import {
 
 export interface CommentHandler {
 	commentController: vscode.CommentController;
+
 	hasCommentThread(thread: GHPRCommentThread): boolean;
 
 	createOrReplyComment(
@@ -23,22 +24,26 @@ export interface CommentHandler {
 		input: string,
 		isSingleComment: boolean,
 	): Promise<void>;
+
 	editComment(
 		thread: GHPRCommentThread,
 		comment: GHPRComment | TemporaryComment,
 	): Promise<void>;
+
 	deleteComment(
 		thread: GHPRCommentThread,
 		comment: GHPRComment | TemporaryComment,
 	): Promise<void>;
 
 	startReview(thread: GHPRCommentThread, input: string): Promise<void>;
+
 	openReview(thread: GHPRCommentThread): Promise<void>;
 
 	resolveReviewThread(
 		thread: GHPRCommentThread,
 		input?: string,
 	): Promise<void>;
+
 	unresolveReviewThread(
 		thread: GHPRCommentThread,
 		input?: string,
@@ -47,6 +52,7 @@ export interface CommentHandler {
 
 export interface CommentReply {
 	thread: GHPRCommentThread;
+
 	text: string;
 }
 
@@ -91,6 +97,7 @@ export function resolveCommentHandler(
 			possibleHandlers.push(commentHandler);
 		}
 	}
+
 	if (possibleHandlers.length > 0) {
 		possibleHandlers.sort((a, b) => {
 			return b.repoRootUri.length - a.repoRootUri.length;
@@ -98,6 +105,7 @@ export function resolveCommentHandler(
 
 		return possibleHandlers[0].handler;
 	}
+
 	Logger.warn(
 		`Unable to find handler for comment thread ${commentThread.gitHubThreadId}`,
 	);

@@ -82,6 +82,7 @@ const ISSUE_CLOSING_KEYWORDS = new RegExp(
 
 export interface BasePullRequestDataModel {
 	baseOwner: string;
+
 	repositoryName: string;
 }
 
@@ -92,9 +93,11 @@ export abstract class BaseCreatePullRequestViewProvider<
 	implements vscode.WebviewViewProvider
 {
 	protected static readonly ID = "CreatePullRequestViewProvider";
+
 	public override readonly viewType = "github:createPullRequestWebview";
 
 	protected _onDone = new vscode.EventEmitter<PullRequestModel | undefined>();
+
 	readonly onDone: vscode.Event<PullRequestModel | undefined> =
 		this._onDone.event;
 
@@ -117,6 +120,7 @@ export abstract class BaseCreatePullRequestViewProvider<
 		_token: vscode.CancellationToken,
 	) {
 		super.resolveWebviewView(webviewView, _context, _token);
+
 		webviewView.webview.html = this._getHtmlForWebview();
 
 		if (this._firstLoad) {
@@ -160,6 +164,7 @@ export abstract class BaseCreatePullRequestViewProvider<
 		if (pullRequestLabelSettings.workspaceValue) {
 			defaultLabelValues.push(...pullRequestLabelSettings.workspaceValue);
 		}
+
 		if (pullRequestLabelSettings.globalValue) {
 			defaultLabelValues.push(...pullRequestLabelSettings.globalValue);
 		}
@@ -207,6 +212,7 @@ export abstract class BaseCreatePullRequestViewProvider<
 	}
 
 	private initializeWhenVisibleDisposable: vscode.Disposable | undefined;
+
 	public async initializeParams(reset: boolean = false): Promise<void> {
 		if (
 			this._view?.visible === false &&
@@ -215,7 +221,9 @@ export abstract class BaseCreatePullRequestViewProvider<
 			this.initializeWhenVisibleDisposable =
 				this._view?.onDidChangeVisibility(() => {
 					this.initializeWhenVisibleDisposable?.dispose();
+
 					this.initializeWhenVisibleDisposable = undefined;
+
 					void this.initializeParams();
 				});
 
@@ -226,17 +234,21 @@ export abstract class BaseCreatePullRequestViewProvider<
 			// First clear all state ASAP
 			this._postMessage({ command: "reset" });
 		}
+
 		await this.initializeParamsPromise();
 	}
 
 	private _alreadyInitializing: Promise<CreateParamsNew> | undefined;
+
 	private async initializeParamsPromise(): Promise<CreateParamsNew> {
 		if (!this._alreadyInitializing) {
 			this._alreadyInitializing = this.doInitializeParams();
+
 			this._alreadyInitializing.then(() => {
 				this._alreadyInitializing = undefined;
 			});
 		}
+
 		return this._alreadyInitializing;
 	}
 
@@ -312,7 +324,9 @@ export abstract class BaseCreatePullRequestViewProvider<
 		const lastCreateMethod:
 			| {
 					autoMerge: boolean;
+
 					mergeMethod: MergeMethod | undefined;
+
 					isDraft: boolean;
 			  }
 			| undefined =
@@ -340,7 +354,9 @@ export abstract class BaseCreatePullRequestViewProvider<
 		if (defaultCreateOption === "lastUsed") {
 			defaultMergeMethod =
 				lastCreateMethod?.mergeMethod ?? repoMergeMethod;
+
 			isDraftDefault = !!lastCreateMethod?.isDraft;
+
 			autoMergeDefault =
 				mergeConfiguration.viewerCanAutoMerge &&
 				!!lastCreateMethod?.autoMerge;
@@ -349,6 +365,7 @@ export abstract class BaseCreatePullRequestViewProvider<
 		} else if (defaultCreateOption === "createAutoMerge") {
 			autoMergeDefault = mergeConfiguration.viewerCanAutoMerge;
 		}
+
 		commands.setContext(contexts.CREATE_PR_PERMISSIONS, viewerPermission);
 
 		const useCopilot: boolean =
@@ -373,6 +390,7 @@ export abstract class BaseCreatePullRequestViewProvider<
 				{ providerTitle: defaultTitleAndDescriptionProvider },
 			);
 		}
+
 		const preReviewer = this._folderRepositoryManager.getAutoReviewer();
 
 		this.labels = labels;
@@ -434,6 +452,7 @@ export abstract class BaseCreatePullRequestViewProvider<
 		if (!configuration) {
 			return;
 		}
+
 		const resolved = await variableSubstitution(
 			configuration,
 			pr,
@@ -448,6 +467,7 @@ export abstract class BaseCreatePullRequestViewProvider<
 		if (!resolved) {
 			return;
 		}
+
 		try {
 			await pr.addAssignees([resolved]);
 		} catch (e) {
@@ -501,6 +521,7 @@ export abstract class BaseCreatePullRequestViewProvider<
 					users.push(reviewer.id);
 				}
 			}
+
 			await pr.requestReview(users, teams);
 		}
 	}
@@ -544,6 +565,7 @@ export abstract class BaseCreatePullRequestViewProvider<
 	}
 
 	private milestone: IMilestone | undefined;
+
 	public async addMilestone(): Promise<void> {
 		const remote = await this.getBaseRemote();
 
@@ -567,6 +589,7 @@ export abstract class BaseCreatePullRequestViewProvider<
 	}
 
 	private reviewers: (IAccount | ITeam)[] = [];
+
 	public async addReviewers(): Promise<void> {
 		let quickPick:
 			| vscode.QuickPick<
@@ -588,6 +611,7 @@ export abstract class BaseCreatePullRequestViewProvider<
 				this._folderRepositoryManager.getCurrentUser(),
 				this._folderRepositoryManager.getOrgTeamsCount(repo),
 			]);
+
 			quickPick = await reviewersQuickPick(
 				this._folderRepositoryManager,
 				remote.remoteName,
@@ -599,6 +623,7 @@ export abstract class BaseCreatePullRequestViewProvider<
 				}),
 				[],
 			);
+
 			quickPick.busy = false;
 
 			const acceptPromise = asPromise<void>(quickPick.onDidAccept).then(
@@ -616,10 +641,12 @@ export abstract class BaseCreatePullRequestViewProvider<
 			const allReviewers = await Promise.race<
 				(vscode.QuickPickItem & { user: IAccount | ITeam })[] | void
 			>([acceptPromise, hidePromise]);
+
 			quickPick.busy = true;
 
 			if (allReviewers) {
 				this.reviewers = allReviewers.map((item) => item.user);
+
 				this._postMessage({
 					command: "set-reviewers",
 					params: { reviewers: this.reviewers },
@@ -627,14 +654,17 @@ export abstract class BaseCreatePullRequestViewProvider<
 			}
 		} catch (e) {
 			Logger.error(formatError(e));
+
 			vscode.window.showErrorMessage(formatError(e));
 		} finally {
 			quickPick?.hide();
+
 			quickPick?.dispose();
 		}
 	}
 
 	private assignees: IAccount[] = [];
+
 	public async addAssignees(): Promise<void> {
 		const remote = await this.getBaseRemote();
 
@@ -668,22 +698,28 @@ export abstract class BaseCreatePullRequestViewProvider<
 
 						return true;
 					}
+
 					return false;
 				});
+
 			this.assignees = addedAssignees;
+
 			this._postMessage({
 				command: "set-assignees",
 				params: { assignees: this.assignees },
 			});
 		}
 	}
+
 	private projects: IProject[] = [];
+
 	public async addProjects(): Promise<void> {
 		const githubRepo = this.getBaseGitHubRepo();
 
 		if (!githubRepo) {
 			return;
 		}
+
 		await new Promise<void>((resolve) => {
 			getProjectFromQuickPick(
 				this._folderRepositoryManager,
@@ -691,10 +727,12 @@ export abstract class BaseCreatePullRequestViewProvider<
 				this.projects,
 				async (projects) => {
 					this.projects = projects;
+
 					this._postMessage({
 						command: "set-projects",
 						params: { projects: this.projects },
 					});
+
 					resolve();
 				},
 			);
@@ -702,6 +740,7 @@ export abstract class BaseCreatePullRequestViewProvider<
 	}
 
 	private labels: ILabel[] = [];
+
 	public async addLabels(): Promise<void> {
 		let newLabels: ILabel[] = [];
 
@@ -723,7 +762,9 @@ export abstract class BaseCreatePullRequestViewProvider<
 			const addedLabels: ILabel[] = labelsToAdd.map(
 				(label) => newLabels.find((l) => l.name === label.label)!,
 			);
+
 			this.labels = addedLabels;
+
 			this._postMessage({
 				command: "set-labels",
 				params: { labels: this.labels },
@@ -739,6 +780,7 @@ export abstract class BaseCreatePullRequestViewProvider<
 		if (!label) return;
 
 		const previousLabelsLength = this.labels.length;
+
 		this.labels = this.labels.filter((l) => l.name !== label.name);
 
 		if (previousLabelsLength === this.labels.length) return;
@@ -846,6 +888,7 @@ export abstract class BaseCreatePullRequestViewProvider<
 
 	override dispose() {
 		super.dispose();
+
 		this._postMessage({ command: "reset" });
 	}
 
@@ -877,6 +920,7 @@ export abstract class BaseCreatePullRequestViewProvider<
 
 function serializeRemoteInfo(remote: {
 	owner: string;
+
 	repositoryName: string;
 }) {
 	return { owner: remote.owner, repositoryName: remote.repositoryName };
@@ -922,14 +966,18 @@ export class CreatePullRequestViewProvider
 								this.model.repositoryName,
 							) === 0,
 					)?.remote;
+
 					baseRemote = gitHubRemote
 						? serializeRemoteInfo(gitHubRemote)
 						: undefined;
+
 					baseBranch = this.model.baseBranch;
 				}
+
 				if (e.baseBranch) {
 					baseBranch = e.baseBranch;
 				}
+
 				let compareRemote: RemoteInfo | undefined;
 
 				let compareBranch: string | undefined;
@@ -946,14 +994,18 @@ export class CreatePullRequestViewProvider
 								this.model.repositoryName,
 							) === 0,
 					)?.remote;
+
 					compareRemote = gitHubRemote
 						? serializeRemoteInfo(gitHubRemote)
 						: undefined;
+
 					compareBranch = this.model.compareBranch;
 				}
+
 				if (e.compareBranch) {
 					compareBranch = e.compareBranch;
 				}
+
 				const params: Partial<CreateParamsNew> = {
 					baseRemote,
 					baseBranch,
@@ -984,7 +1036,9 @@ export class CreatePullRequestViewProvider
 
 		if (branchChanged || branchRemoteChanged) {
 			this._defaultCompareBranch = compareBranch!.name!;
+
 			this.model.setCompareBranch(compareBranch!.name);
+
 			this.changeBranch(compareBranch!.name!, false).then(
 				(titleAndDescription) => {
 					const params: Partial<CreateParamsNew> = {
@@ -1071,6 +1125,7 @@ export class CreatePullRequestViewProvider
 
 		let useBranchName =
 			this._pullRequestDefaults.base === compareBranch.name;
+
 		Logger.debug(
 			`Compare branch name: ${compareBranch.name}, Base branch name: ${this._pullRequestDefaults.base}`,
 			CreatePullRequestViewProvider.ID,
@@ -1114,6 +1169,7 @@ export class CreatePullRequestViewProvider
 				totalNonMergeCommits.length > 1
 			) {
 				const defaultBranch = await origin.getDefaultBranch();
+
 				useBranchName = defaultBranch !== compareBranch.name;
 			}
 
@@ -1174,6 +1230,7 @@ export class CreatePullRequestViewProvider
 				CreatePullRequestViewProvider.ID,
 			);
 		}
+
 		return { title, description };
 	}
 
@@ -1202,6 +1259,7 @@ export class CreatePullRequestViewProvider
 		) {
 			return undefined;
 		}
+
 		const githubRepo = this._folderRepositoryManager.findRepo(
 			(repo) =>
 				compareIgnoreCase(repo.remote.owner, owner) === 0 &&
@@ -1246,7 +1304,9 @@ export class CreatePullRequestViewProvider
 
 	protected override async getCreateParams(): Promise<CreateParamsNew> {
 		const params = await super.getCreateParams();
+
 		this.model.baseOwner = params.defaultBaseRemote!.owner;
+
 		this.model.baseBranch = params.defaultBaseBranch!;
 
 		return params;
@@ -1301,6 +1361,7 @@ export class CreatePullRequestViewProvider
 		// TODO: @alexr00 - Add sorting so that the most likely to be used branch (ex main or release if base) is at the top of the list.
 		const branchPicks: (vscode.QuickPickItem & {
 			remote?: RemoteInfo;
+
 			branch?: string;
 		})[] = branches.map((branch) => {
 			const branchName =
@@ -1308,6 +1369,7 @@ export class CreatePullRequestViewProvider
 
 			const pick: vscode.QuickPickItem & {
 				remote: RemoteInfo;
+
 				branch: string;
 			} = {
 				iconPath: new vscode.ThemeIcon("git-branch"),
@@ -1321,10 +1383,12 @@ export class CreatePullRequestViewProvider
 
 			return pick;
 		});
+
 		branchPicks.unshift({
 			kind: vscode.QuickPickItemKind.Separator,
 			label: `${githubRepository.remote.owner}/${githubRepository.remote.repositoryName}`,
 		});
+
 		branchPicks.unshift({
 			iconPath: new vscode.ThemeIcon("repo"),
 			label: changeRepoMessage,
@@ -1355,7 +1419,9 @@ export class CreatePullRequestViewProvider
 
 			const baseBranchChanged =
 				baseRemoteChanged || this.model.baseBranch !== result.branch;
+
 			this.model.baseOwner = result.remote.owner;
+
 			this.model.baseBranch = result.branch;
 
 			const compareBranch =
@@ -1398,18 +1464,23 @@ export class CreatePullRequestViewProvider
 				const lastCreateMethod:
 					| {
 							autoMerge: boolean;
+
 							mergeMethod: MergeMethod | undefined;
+
 							isDraft: boolean;
 					  }
 					| undefined =
 					this._folderRepositoryManager.context.workspaceState.get<
 						| {
 								autoMerge: boolean;
+
 								mergeMethod: MergeMethod;
+
 								isDraft;
 						  }
 						| undefined
 					>(PREVIOUS_CREATE_METHOD, undefined);
+
 				autoMergeDefault =
 					(defaultCreateOption === "lastUsed" &&
 						lastCreateMethod?.autoMerge) ||
@@ -1440,6 +1511,7 @@ export class CreatePullRequestViewProvider
 					"pr.create.changedBaseRemote",
 				);
 			}
+
 			if (baseBranchChanged) {
 				/* __GDPR__
 				"pr.create.changedBaseBranch" : {}
@@ -1450,6 +1522,7 @@ export class CreatePullRequestViewProvider
 			}
 		} else {
 			await this.changeBranch(result.branch, false);
+
 			chooseResult = {
 				compareRemote: result.remote,
 				compareBranch: result.branch,
@@ -1462,6 +1535,7 @@ export class CreatePullRequestViewProvider
 				"pr.create.changedCompare",
 			);
 		}
+
 		return chooseResult;
 	}
 
@@ -1497,8 +1571,11 @@ export class CreatePullRequestViewProvider
 		quickPick.placeholder = githubRepository
 			? branchPlaceholder
 			: remotePlaceholder;
+
 		quickPick.show();
+
 		quickPick.busy = true;
+
 		quickPick.items = githubRepository
 			? await this.branchPicks(
 					githubRepository,
@@ -1512,7 +1589,9 @@ export class CreatePullRequestViewProvider
 					(item) => item.branch === message.args.currentBranch,
 				)
 			: undefined;
+
 		quickPick.activeItems = activeItem ? [activeItem] : [];
+
 		quickPick.busy = false;
 
 		const remoteAndBranch: Promise<
@@ -1522,12 +1601,16 @@ export class CreatePullRequestViewProvider
 				if (quickPick.selectedItems.length === 0) {
 					return;
 				}
+
 				const selectedPick = quickPick.selectedItems[0];
 
 				if (selectedPick.label === chooseDifferentRemote) {
 					quickPick.busy = true;
+
 					quickPick.items = await this.remotePicks(isBase);
+
 					quickPick.busy = false;
+
 					quickPick.placeholder = githubRepository
 						? repositoryPlaceholder
 						: remotePlaceholder;
@@ -1539,26 +1622,33 @@ export class CreatePullRequestViewProvider
 						selectedPick as vscode.QuickPickItem & {
 							remote: RemoteInfo;
 						};
+
 					quickPick.busy = true;
+
 					githubRepository = this._folderRepositoryManager.findRepo(
 						(repo) =>
 							repo.remote.owner === selectedRemote.remote.owner &&
 							repo.remote.repositoryName ===
 								selectedRemote.remote.repositoryName,
 					)!;
+
 					quickPick.items = await this.branchPicks(
 						githubRepository,
 						chooseDifferentRemote,
 						isBase,
 					);
+
 					quickPick.placeholder = branchPlaceholder;
+
 					quickPick.busy = false;
 				} else if (selectedPick.branch && selectedPick.remote) {
 					const selectedBranch =
 						selectedPick as vscode.QuickPickItem & {
 							remote: RemoteInfo;
+
 							branch: string;
 						};
+
 					resolve({
 						remote: selectedBranch.remote,
 						branch: selectedBranch.branch,
@@ -1575,6 +1665,7 @@ export class CreatePullRequestViewProvider
 
 		if (!result || !githubRepository) {
 			quickPick.hide();
+
 			quickPick.dispose();
 
 			return;
@@ -1589,6 +1680,7 @@ export class CreatePullRequestViewProvider
 		);
 
 		quickPick.hide();
+
 		quickPick.dispose();
 
 		return this._replyMessage(message, chooseResult);
@@ -1610,6 +1702,7 @@ export class CreatePullRequestViewProvider
 				const owner = tryParse.owner ?? this.model.baseOwner;
 
 				const name = tryParse.name ?? this.model.repositoryName;
+
 				issues.push(
 					new Promise((resolve) => {
 						this._folderRepositoryManager
@@ -1631,17 +1724,21 @@ export class CreatePullRequestViewProvider
 				);
 			}
 		}
+
 		if (issues.length) {
 			return (await Promise.all(issues)).filter((issue) => !!issue) as {
 				content: string;
+
 				reference: string;
 			}[];
 		}
+
 		return undefined;
 	}
 
 	private async getCommitsAndPatches(): Promise<{
 		commitMessages: string[];
+
 		patches: { patch: string; fileUri: string; previousFileUri?: string }[];
 	}> {
 		let commitMessages: string[];
@@ -1663,6 +1760,7 @@ export class CreatePullRequestViewProvider
 						if (!file.patch) {
 							return;
 						}
+
 						const fileUri = vscode.Uri.joinPath(
 							this._folderRepositoryManager.repository.rootUri,
 							file.filename,
@@ -1703,20 +1801,27 @@ export class CreatePullRequestViewProvider
 				),
 			]);
 		}
+
 		const filteredPatches: {
 			patch: string;
+
 			fileUri: string;
+
 			previousFileUri?: string;
 		}[] = patches.filter<{
 			patch: string;
+
 			fileUri: string;
+
 			previousFileUri?: string;
 		}>(
 			(
 				patch,
 			): patch is {
 				patch: string;
+
 				fileUri: string;
+
 				previousFileUri?: string;
 			} => !!patch,
 		);
@@ -1727,6 +1832,7 @@ export class CreatePullRequestViewProvider
 	private lastGeneratedTitleAndDescription:
 		| { title?: string; description?: string; providerTitle: string }
 		| undefined;
+
 	private async getTitleAndDescriptionFromProvider(
 		token: vscode.CancellationToken,
 		searchTerm?: string,
@@ -1764,6 +1870,7 @@ export class CreatePullRequestViewProvider
 						{ providerTitle: provider?.title },
 					);
 				}
+
 				return result;
 			} catch (e) {
 				Logger.error(
@@ -1779,12 +1886,14 @@ export class CreatePullRequestViewProvider
 	private generatingCancellationToken:
 		| vscode.CancellationTokenSource
 		| undefined;
+
 	private async generateTitleAndDescription(
 		message: IRequestMessage<TitleAndDescriptionArgs>,
 	): Promise<void> {
 		if (this.generatingCancellationToken) {
 			this.generatingCancellationToken.cancel();
 		}
+
 		this.generatingCancellationToken = new vscode.CancellationTokenSource();
 
 		const result = await Promise.race([
@@ -1803,13 +1912,16 @@ export class CreatePullRequestViewProvider
 
 		const generated: {
 			title: string | undefined;
+
 			description: string | undefined;
 		} = { title: undefined, description: undefined };
 
 		if (result !== true) {
 			generated.title = result?.title;
+
 			generated.description = result?.description;
 		}
+
 		return this._replyMessage(message, {
 			title: generated?.title,
 			description: generated?.description,
@@ -1830,6 +1942,7 @@ export class CreatePullRequestViewProvider
 		if (!preReviewer) {
 			return;
 		}
+
 		const { commitMessages, patches } = await this.getCommitsAndPatches();
 
 		const result = await preReviewer.provider.provideReviewerComments(
@@ -1857,6 +1970,7 @@ export class CreatePullRequestViewProvider
 	private reviewingCancellationToken:
 		| vscode.CancellationTokenSource
 		| undefined;
+
 	private async preReview(message: IRequestMessage<any>): Promise<void> {
 		return CreatePullRequestViewProvider.withProgress(async () => {
 			await commands.setContext("pr:preReviewing", true);
@@ -1864,6 +1978,7 @@ export class CreatePullRequestViewProvider
 			if (this.reviewingCancellationToken) {
 				this.reviewingCancellationToken.cancel();
 			}
+
 			this.reviewingCancellationToken =
 				new vscode.CancellationTokenSource();
 
@@ -1879,6 +1994,7 @@ export class CreatePullRequestViewProvider
 			]);
 
 			this.reviewingCancellationToken = undefined;
+
 			await commands.setContext("pr:preReviewing", false);
 
 			return this._replyMessage(message, result);
@@ -1907,6 +2023,7 @@ export class CreatePullRequestViewProvider
 					if (!localRemote.pushUrl) {
 						return false;
 					}
+
 					const testRemote = new GitHubRemote(
 						localRemote.name,
 						localRemote.pushUrl,
@@ -1924,6 +2041,7 @@ export class CreatePullRequestViewProvider
 
 						return true;
 					}
+
 					return false;
 				},
 			);
@@ -1933,11 +2051,13 @@ export class CreatePullRequestViewProvider
 				`Found push remote ${pushRemote.name} for ${compareOwner}/${compareRepositoryName} and branch ${compareBranchName}`,
 				CreatePullRequestViewProvider.ID,
 			);
+
 			await this._folderRepositoryManager.repository.push(
 				pushRemote.name,
 				compareBranchName,
 				true,
 			);
+
 			await this._folderRepositoryManager.repository.status();
 
 			return {
@@ -1956,6 +2076,7 @@ export class CreatePullRequestViewProvider
 		if (!this.lastGeneratedTitleAndDescription) {
 			return;
 		}
+
 		const usedGeneratedTitle: boolean =
 			!!this.lastGeneratedTitleAndDescription.title &&
 			(this.lastGeneratedTitleAndDescription.title === title ||
@@ -2021,6 +2142,7 @@ export class CreatePullRequestViewProvider
 				return false;
 			}
 		}
+
 		return true;
 	}
 
@@ -2037,6 +2159,7 @@ export class CreatePullRequestViewProvider
 				"Not continuing past checking for file changes.",
 				CreatePullRequestViewProvider.ID,
 			);
+
 			await this._replyMessage(message, {});
 
 			return;
@@ -2045,13 +2168,16 @@ export class CreatePullRequestViewProvider
 		// Save create method
 		const createMethod: {
 			autoMerge: boolean;
+
 			mergeMethod: MergeMethod | undefined;
+
 			isDraft: boolean;
 		} = {
 			autoMerge: message.args.autoMerge,
 			mergeMethod: message.args.autoMergeMethod,
 			isDraft: message.args.draft,
 		};
+
 		this._folderRepositoryManager.context.workspaceState.update(
 			PREVIOUS_CREATE_METHOD,
 			createMethod,
@@ -2064,6 +2190,7 @@ export class CreatePullRequestViewProvider
 					commands.setContext(contexts.CREATING, true);
 
 					let totalIncrement = 0;
+
 					progress.report({
 						message: vscode.l10n.t("Checking for upstream branch"),
 						increment: totalIncrement,
@@ -2141,6 +2268,7 @@ export class CreatePullRequestViewProvider
 										vscode.ConfigurationTarget.Global,
 									);
 							}
+
 							if (
 								messageResult === alwaysPublish ||
 								messageResult === publish
@@ -2149,6 +2277,7 @@ export class CreatePullRequestViewProvider
 									message: vscode.l10n.t("Pushing branch"),
 									increment: 10,
 								});
+
 								totalIncrement += 10;
 
 								const pushResult = await this.pushUpstream(
@@ -2160,6 +2289,7 @@ export class CreatePullRequestViewProvider
 								if (pushResult) {
 									existingCompareUpstream =
 										pushResult.compareUpstream;
+
 									headRepo = pushResult.repo;
 								} else {
 									this._throwError(
@@ -2172,6 +2302,7 @@ export class CreatePullRequestViewProvider
 								}
 							}
 						}
+
 						if (!existingCompareUpstream) {
 							this._throwError(
 								message,
@@ -2181,6 +2312,7 @@ export class CreatePullRequestViewProvider
 									compareRepositoryName,
 								),
 							);
+
 							progress.report({
 								message: vscode.l10n.t(
 									"Pull request cancelled",
@@ -2204,13 +2336,16 @@ export class CreatePullRequestViewProvider
 							message: vscode.l10n.t("Creating pull request"),
 							increment: 70 - totalIncrement,
 						});
+
 						totalIncrement += 70 - totalIncrement;
 
 						const head = `${headRepo.remote.owner}:${compareBranchName}`;
+
 						this.checkGeneratedTitleAndDescription(
 							message.args.title,
 							message.args.body,
 						);
+
 						createdPR =
 							await this._folderRepositoryManager.createPullRequest(
 								{ ...message.args, head },
@@ -2236,6 +2371,7 @@ export class CreatePullRequestViewProvider
 									"GraphQL error: ".length,
 								);
 							}
+
 							this._throwError(message, errorMessage);
 						} else {
 							if (
@@ -2260,15 +2396,18 @@ export class CreatePullRequestViewProvider
 
 						if (createdPR) {
 							this._onDone.fire(createdPR);
+
 							completeMessage = vscode.l10n.t(
 								"Pull request created",
 							);
 						} else {
 							await this._replyMessage(message, {});
+
 							completeMessage = vscode.l10n.t(
 								"Unable to create pull request",
 							);
 						}
+
 						progress.report({
 							message: completeMessage,
 							increment: 100 - totalIncrement,
@@ -2293,6 +2432,7 @@ export class CreatePullRequestViewProvider
 					await this._folderRepositoryManager.repository.getBranch(
 						newBranch,
 					);
+
 				await this.model.setCompareBranch(newBranch);
 			} catch (e) {
 				vscode.window.showErrorMessage(

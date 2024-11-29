@@ -38,9 +38,11 @@ export class ReviewsManager extends Disposable {
 			_credentialStore,
 			() => this._reviewManagers,
 		);
+
 		gitContentProvider.registerTextDocumentContentFallback(
 			this.provideTextDocumentContent.bind(this),
 		);
+
 		this._register(
 			vscode.workspace.registerFileSystemProvider(
 				Schemes.Review,
@@ -48,7 +50,9 @@ export class ReviewsManager extends Disposable {
 				{ isReadonly: true },
 			),
 		);
+
 		this.registerListeners();
+
 		this._register(this._prsTreeDataProvider);
 	}
 
@@ -62,6 +66,7 @@ export class ReviewsManager extends Disposable {
 				if (e.affectsConfiguration("githubPullRequests.showInSCM")) {
 					if (this._prFileChangesProvider) {
 						this._prFileChangesProvider.dispose();
+
 						this._prFileChangesProvider =
 							new PullRequestChangesTreeDataProvider(
 								this._gitApi,
@@ -74,6 +79,7 @@ export class ReviewsManager extends Disposable {
 					}
 
 					this._prsTreeDataProvider.dispose();
+
 					this._prsTreeDataProvider = this._register(
 						new PullRequestsTreeDataProvider(
 							this._telemetry,
@@ -81,6 +87,7 @@ export class ReviewsManager extends Disposable {
 							this._reposManager,
 						),
 					);
+
 					this._prsTreeDataProvider.initialize(
 						this._reviewManagers.map(
 							(manager) => manager.reviewModel,
@@ -105,6 +112,7 @@ export class ReviewsManager extends Disposable {
 				return reviewManager.provideTextDocumentContent(uri);
 			}
 		}
+
 		return "";
 	}
 
@@ -124,13 +132,17 @@ export class ReviewsManager extends Disposable {
 					index,
 					this._reviewManagers.length,
 				);
+
 				this._reviewManagers = this._reviewManagers.slice(0, index);
+
 				this._reviewManagers.push(reviewManager);
+
 				this._reviewManagers.push(...arrayEnd);
 
 				return;
 			}
 		}
+
 		this._reviewManagers.push(reviewManager);
 	}
 
@@ -143,7 +155,9 @@ export class ReviewsManager extends Disposable {
 
 		if (reviewManagerIndex >= 0) {
 			const manager = this._reviewManagers[reviewManagerIndex];
+
 			this._reviewManagers.splice(reviewManagerIndex);
+
 			manager.dispose();
 		}
 	}

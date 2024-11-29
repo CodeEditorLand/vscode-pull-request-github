@@ -80,8 +80,11 @@ export interface CommentReactionHandler {
 
 export type ParsedIssue = {
 	owner: string | undefined;
+
 	name: string | undefined;
+
 	issueNumber: number;
+
 	commentNumber?: number;
 };
 
@@ -91,6 +94,7 @@ export function parseIssueExpressionOutput(
 	if (!output) {
 		return undefined;
 	}
+
 	const issue: ParsedIssue = {
 		owner: undefined,
 		name: undefined,
@@ -99,14 +103,19 @@ export function parseIssueExpressionOutput(
 
 	if (output.length === 7) {
 		issue.owner = output[2];
+
 		issue.name = output[3];
+
 		issue.issueNumber = parseInt(output[5]);
 
 		return issue;
 	} else if (output.length === 16) {
 		issue.owner = output[3] || output[11];
+
 		issue.name = output[4] || output[12];
+
 		issue.issueNumber = parseInt(output[7] || output[14]);
+
 		issue.commentNumber =
 			output[9] !== undefined ? parseInt(output[9]) : undefined;
 
@@ -126,6 +135,7 @@ export function threadRange(
 	} else if (!endCharacter) {
 		endCharacter = 0;
 	}
+
 	return new vscode.Range(startLine, 0, endLine, endCharacter);
 }
 
@@ -161,13 +171,17 @@ export function createVSCodeCommentThreadForReviewThread(
 	} else if (thread.viewerCanUnresolve && thread.isResolved) {
 		vscodeThread.contextValue = "canUnresolve";
 	}
+
 	if (thread.isOutdated) {
 		vscodeThread.contextValue += "outdated";
+
 		applicability = vscode.CommentThreadApplicability.Outdated;
 	}
+
 	vscodeThread.state = { resolved, applicability };
 
 	updateCommentThreadLabel(vscodeThread as GHPRCommentThread);
+
 	vscodeThread.collapsibleState = getCommentCollapsibleState(
 		thread,
 		undefined,
@@ -209,12 +223,15 @@ export function getCommentCollapsibleState(
 	) {
 		return vscode.CommentThreadCollapsibleState.Collapsed;
 	}
+
 	if (expand === undefined) {
 		const config = vscode.workspace
 			.getConfiguration(PR_SETTINGS_NAMESPACE)
 			?.get(COMMENT_EXPAND_STATE_SETTING);
+
 		expand = config === COMMENT_EXPAND_STATE_EXPAND_VALUE;
 	}
+
 	return expand
 		? vscode.CommentThreadCollapsibleState.Expanded
 		: vscode.CommentThreadCollapsibleState.Collapsed;
@@ -230,6 +247,7 @@ export function updateThreadWithRange(
 	if (!vscodeThread.range) {
 		return;
 	}
+
 	const editors = vscode.window.visibleTextEditors;
 
 	for (let editor of editors) {
@@ -242,6 +260,7 @@ export function updateThreadWithRange(
 				vscodeThread.range.end.line,
 				endLine.text.length,
 			);
+
 			updateThread(
 				context,
 				vscodeThread,
@@ -282,6 +301,7 @@ export function updateThread(
 			applicability: vscodeThread.state?.applicability,
 		};
 	}
+
 	vscodeThread.collapsibleState = getCommentCollapsibleState(
 		reviewThread,
 		expand,
@@ -290,6 +310,7 @@ export function updateThread(
 	if (range) {
 		vscodeThread.range = range;
 	}
+
 	if (
 		vscodeThread.comments.length === reviewThread.comments.length &&
 		vscodeThread.comments.every(
@@ -305,6 +326,7 @@ export function updateThread(
 			if (comment instanceof GHPRComment) {
 				comment.update(reviewThread.comments[index]);
 			}
+
 			index++;
 		}
 	} else {
@@ -313,6 +335,7 @@ export function updateThread(
 				new GHPRComment(context, c, vscodeThread, githubRepositories),
 		);
 	}
+
 	updateCommentThreadLabel(vscodeThread);
 }
 
@@ -330,6 +353,7 @@ export function updateCommentThreadLabel(thread: GHPRCommentThread) {
 		)
 			.map((comment) => `@${comment.originalAuthor.name}`)
 			.join(", ");
+
 		thread.label = vscode.l10n.t("Participants: {0}", participantsList);
 	} else {
 		thread.label = vscode.l10n.t("Start discussion");
@@ -378,6 +402,7 @@ export function updateCommentReactions(
 				iconPath: reaction.icon || "",
 			};
 		}
+
 		if (
 			!reactionsHaveUpdates &&
 			(!previousReactions ||
@@ -387,8 +412,10 @@ export function updateCommentReactions(
 		) {
 			reactionsHaveUpdates = true;
 		}
+
 		return newReaction;
 	});
+
 	comment.reactions = newReactions;
 
 	return reactionsHaveUpdates;
@@ -609,7 +636,9 @@ export function parseCommentDiffHunk(comment: IComment): DiffHunk[] {
 
 	while (!diffHunkIter.done) {
 		const diffHunk = diffHunkIter.value;
+
 		diffHunks.push(diffHunk);
+
 		diffHunkIter = diffHunkReader.next();
 	}
 
@@ -715,6 +744,7 @@ export function parseGraphQLComment(
 	};
 
 	const diffHunks = parseCommentDiffHunk(c);
+
 	c.diffHunks = diffHunks;
 
 	return c;
@@ -797,10 +827,15 @@ function parseRef(
 function parseAuthor(
 	author: {
 		login: string;
+
 		url: string;
+
 		avatarUrl: string;
+
 		email?: string;
+
 		id: string;
+
 		name?: string;
 	} | null,
 	githubRepository: GitHubRepository,
@@ -836,6 +871,7 @@ export function parseGraphQLReviewers(
 	if (!data.repository) {
 		return [];
 	}
+
 	const reviewers: (IAccount | ITeam)[] = [];
 
 	for (const reviewer of data.repository.pullRequest.reviewRequests.nodes) {
@@ -860,6 +896,7 @@ export function parseGraphQLReviewers(
 						].name)
 					: undefined,
 			};
+
 			reviewers.push(account);
 		} else if (reviewer.requestedReviewer) {
 			const team: ITeam = {
@@ -874,9 +911,11 @@ export function parseGraphQLReviewers(
 				org: remote.owner,
 				slug: reviewer.requestedReviewer.slug,
 			};
+
 			reviewers.push(team);
 		}
 	}
+
 	return reviewers;
 }
 
@@ -910,6 +949,7 @@ export function parseProjectItems(
 	if (!projects) {
 		return undefined;
 	}
+
 	return projects.map((project) => {
 		return {
 			id: project.id,
@@ -922,9 +962,13 @@ export function parseMilestone(
 	milestone:
 		| {
 				title: string;
+
 				dueOn?: string;
+
 				createdAt: string;
+
 				id: string;
+
 				number: number;
 		  }
 		| undefined,
@@ -932,6 +976,7 @@ export function parseMilestone(
 	if (!milestone) {
 		return undefined;
 	}
+
 	return {
 		title: milestone.title,
 		dueOn: milestone.dueOn,
@@ -947,6 +992,7 @@ export function parseMergeQueueEntry(
 	if (!mergeQueueEntry) {
 		return null;
 	}
+
 	let state: MergeQueueState;
 
 	switch (mergeQueueEntry.state) {
@@ -955,27 +1001,32 @@ export function parseMergeQueueEntry(
 
 			break;
 		}
+
 		case "LOCKED": {
 			state = MergeQueueState.Locked;
 
 			break;
 		}
+
 		case "QUEUED": {
 			state = MergeQueueState.Queued;
 
 			break;
 		}
+
 		case "MERGEABLE": {
 			state = MergeQueueState.Mergeable;
 
 			break;
 		}
+
 		case "UNMERGEABLE": {
 			state = MergeQueueState.Unmergeable;
 
 			break;
 		}
 	}
+
 	return {
 		position: mergeQueueEntry.position,
 		state,
@@ -1029,6 +1080,7 @@ export function parseMergeability(
 
 			break;
 	}
+
 	if (parsed !== PullRequestMergeability.Conflict) {
 		if (mergeStateStatus === "BLOCKED") {
 			parsed = PullRequestMergeability.NotMergeable;
@@ -1036,6 +1088,7 @@ export function parseMergeability(
 			parsed = PullRequestMergeability.Behind;
 		}
 	}
+
 	return parsed;
 }
 
@@ -1103,11 +1156,13 @@ export function parseGraphQLPullRequest(
 		reactionCount: graphQLPullRequest.reactions.totalCount,
 		commentCount: graphQLPullRequest.comments.totalCount,
 	};
+
 	pr.mergeCommitMeta = parseCommitMeta(
 		graphQLPullRequest.baseRepository.mergeCommitTitle,
 		graphQLPullRequest.baseRepository.mergeCommitMessage,
 		pr,
 	);
+
 	pr.squashCommitMeta = parseCommitMeta(
 		graphQLPullRequest.baseRepository.squashMergeCommitTitle,
 		graphQLPullRequest.baseRepository.squashMergeCommitMessage,
@@ -1138,32 +1193,38 @@ function parseCommitMeta(
 
 			break;
 		}
+
 		case GraphQL.DefaultCommitTitle.mergeMessage: {
 			title = `Merge pull request #${pullRequest.number} from ${pullRequest.head?.label ?? ""}`;
 
 			break;
 		}
+
 		case GraphQL.DefaultCommitTitle.commitOrPrTitle: {
 			if (pullRequest.commits.length === 1) {
 				title = `${pullRequest.commits[0].message.split("\n")[0]} ${prNumberPostfix}`;
 			} else {
 				title = `${pullRequest.title} ${prNumberPostfix}`;
 			}
+
 			break;
 		}
 	}
+
 	switch (descriptionSource) {
 		case GraphQL.DefaultCommitMessage.prBody: {
 			description = pullRequest.body;
 
 			break;
 		}
+
 		case GraphQL.DefaultCommitMessage.commitMessages: {
 			if (
 				pullRequest.commits.length === 1 &&
 				titleSource === GraphQL.DefaultCommitTitle.commitOrPrTitle
 			) {
 				const split = pullRequest.commits[0].message.split("\n");
+
 				description =
 					split.length > 1 ? split.slice(1).join("\n").trim() : "";
 			} else {
@@ -1171,14 +1232,17 @@ function parseCommitMeta(
 					.map((commit) => `* ${commit.message}`)
 					.join("\n\n");
 			}
+
 			break;
 		}
+
 		case GraphQL.DefaultCommitMessage.prTitle: {
 			description = pullRequest.title;
 
 			break;
 		}
 	}
+
 	return { title, description };
 }
 
@@ -1199,11 +1263,16 @@ function parseComments(
 	if (!comments) {
 		return;
 	}
+
 	const parsedComments: {
 		author: IAccount;
+
 		body: string;
+
 		databaseId: number;
+
 		reactionCount: number;
+
 		createdAt: string;
 	}[] = [];
 
@@ -1274,6 +1343,7 @@ function parseSuggestedReviewers(
 	if (!suggestedReviewers) {
 		return [];
 	}
+
 	const ret: ISuggestedReviewer[] = suggestedReviewers.map(
 		(suggestedReviewer) => {
 			return {
@@ -1343,12 +1413,14 @@ export function parseGraphQLTimelineEvents(
 	githubRepository: GitHubRepository,
 ): Common.TimelineEvent[] {
 	const normalizedEvents: Common.TimelineEvent[] = [];
+
 	events.forEach((event) => {
 		const type = convertGraphQLEventType(event.__typename);
 
 		switch (type) {
 			case Common.EventType.Commented:
 				const commentEvent = event as GraphQL.IssueComment;
+
 				normalizedEvents.push({
 					htmlUrl: commentEvent.url,
 					body: commentEvent.body,
@@ -1366,6 +1438,7 @@ export function parseGraphQLTimelineEvents(
 
 			case Common.EventType.Reviewed:
 				const reviewEvent = event as GraphQL.Review;
+
 				normalizedEvents.push({
 					event: type,
 					comments: [],
@@ -1383,6 +1456,7 @@ export function parseGraphQLTimelineEvents(
 
 			case Common.EventType.Committed:
 				const commitEv = event as GraphQL.Commit;
+
 				normalizedEvents.push({
 					id: commitEv.id,
 					event: type,
@@ -1476,6 +1550,7 @@ function parseGraphQLCommitContributions(
 	commitComments: GraphQL.ContributionsCollection,
 ): { createdAt: Date; repoNameWithOwner: string }[] {
 	const items: { createdAt: Date; repoNameWithOwner: string }[] = [];
+
 	commitComments.commitContributionsByRepository.forEach((repoCommits) => {
 		repoCommits.contributions.nodes.forEach((commit) => {
 			items.push({
@@ -1490,7 +1565,9 @@ function parseGraphQLCommitContributions(
 
 export function getReactionGroup(): {
 	title: string;
+
 	label: string;
+
 	icon?: vscode.Uri;
 }[] {
 	const ret = [
@@ -1569,6 +1646,7 @@ export async function restPaginate<R extends OctokitTypes.RequestInterface, T>(
 		hasNextPage =
 			!!result.headers.link &&
 			result.headers.link.indexOf('rel="next"') > -1;
+
 		page += 1;
 	} while (hasNextPage);
 
@@ -1622,6 +1700,7 @@ export function parseGraphQLViewerPermission(
 				.viewerPermission as ViewerPermission;
 		}
 	}
+
 	return ViewerPermission.Unknown;
 }
 
@@ -1649,6 +1728,7 @@ export function getRepositoryForFile(
 			foundRepos.push(repository);
 		}
 	}
+
 	if (foundRepos.length > 0) {
 		foundRepos.sort(
 			(a, b) => b.rootUri.path.length - a.rootUri.path.length,
@@ -1656,6 +1736,7 @@ export function getRepositoryForFile(
 
 		return foundRepos[0];
 	}
+
 	return undefined;
 }
 
@@ -1694,6 +1775,7 @@ export function parseReviewers(
 
 		if (reviewEvent.state && !seen.get(reviewer.login)) {
 			seen.set(reviewer.login, true);
+
 			reviewers.push({
 				reviewer: reviewer,
 				state: reviewEvent.state,
@@ -1711,6 +1793,7 @@ export function parseReviewers(
 			const reviewer = reviewers.find(
 				(r) => reviewerId(r.reviewer) === reviewerId(request),
 			);
+
 			reviewer!.state = "REQUESTED";
 		}
 	});
@@ -1740,6 +1823,7 @@ export function parseNotification(
 	if (!notification.subject.url) {
 		return undefined;
 	}
+
 	const owner = notification.repository.owner.login;
 
 	const name = notification.repository.name;
@@ -1795,6 +1879,7 @@ export function insertNewCommitsSinceReview(
 					id: latestReviewCommitOid,
 					event: Common.EventType.NewCommitsSinceReview,
 				});
+
 				timelineEvents.splice(
 					lastViewerReviewIndex + 1,
 					0,
@@ -1807,6 +1892,7 @@ export function insertNewCommitsSinceReview(
 				timelineEvents[i].event === Common.EventType.Committed
 			) {
 				interReviewCommits.unshift(timelineEvents[i]);
+
 				timelineEvents.splice(i, 1);
 			} else if (
 				!comittedDuringReview &&
@@ -1815,6 +1901,7 @@ export function insertNewCommitsSinceReview(
 					currentUser
 			) {
 				lastViewerReviewIndex = i;
+
 				comittedDuringReview = true;
 			}
 		}
@@ -1855,6 +1942,7 @@ export function getEnterpriseUri(): vscode.Uri | undefined {
 		if (uri.scheme === "http") {
 			uri = uri.with({ scheme: "https" });
 		}
+
 		return uri;
 	}
 }
@@ -1975,6 +2063,7 @@ export async function variableSubstitution(
 
 					break;
 			}
+
 			Logger.debug(`${match} -> ${result}`, "VariableSubstitution");
 
 			return result;
@@ -1999,8 +2088,10 @@ export function getIssueNumberLabel(
 				issue.remote.repositoryName.toLowerCase())
 	) {
 		parsedIssue.owner = issue.remote.owner;
+
 		parsedIssue.name = issue.remote.repositoryName;
 	}
+
 	return getIssueNumberLabelFromParsed(parsedIssue);
 }
 
@@ -2031,7 +2122,9 @@ export async function findDotComAndEnterpriseRemotes(
 	folderManagers: FolderRepositoryManager[],
 ): Promise<{
 	dotComRemotes: Remote[];
+
 	enterpriseRemotes: Remote[];
+
 	unknownRemotes: Remote[];
 }> {
 	// Check if we have found any github.com remotes
@@ -2051,8 +2144,10 @@ export async function findDotComAndEnterpriseRemotes(
 				enterpriseRemotes.push(remote);
 			}
 		}
+
 		unknownRemotes.push(...(await manager.computeAllUnknownRemotes()));
 	}
+
 	return { dotComRemotes, enterpriseRemotes, unknownRemotes };
 }
 

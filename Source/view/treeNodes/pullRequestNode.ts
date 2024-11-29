@@ -43,6 +43,7 @@ export class PRNode
 	private _fileChanges:
 		| (RemoteFileChangeNode | InMemFileChangeNode)[]
 		| undefined;
+
 	private _commentController?: vscode.CommentController;
 
 	private _inMemPRContentProvider?: vscode.Disposable;
@@ -69,11 +70,15 @@ export class PRNode
 		private _notificationProvider: NotificationProvider,
 	) {
 		super(parent);
+
 		this.registerSinceReviewChange();
+
 		this.registerConfigurationChange();
+
 		this._register(
 			this.pullRequestModel.onDidInvalidate(() => this.refresh(this)),
 		);
+
 		this._register(
 			this._folderReposManager.onDidChangeActivePullRequest((e) => {
 				if (
@@ -89,6 +94,7 @@ export class PRNode
 	// #region Tree
 	override async getChildren(): Promise<TreeNode[]> {
 		super.getChildren();
+
 		Logger.debug(
 			`Fetch children of PRNode #${this.pullRequestModel.number}`,
 			PRNode.ID,
@@ -137,7 +143,9 @@ export class PRNode
 			if (layout === "tree") {
 				// tree view
 				const dirNode = new DirectoryTreeNode(this, "");
+
 				this._fileChanges.forEach((f) => dirNode.addFile(f));
+
 				dirNode.finalize();
 
 				if (dirNode.label === "") {
@@ -193,6 +201,7 @@ export class PRNode
 
 	public async reopenNewPrDiffs(pullRequest: PullRequestModel) {
 		let hasOpenDiff: boolean = false;
+
 		vscode.window.tabGroups.all.map((tabGroup) => {
 			tabGroup.tabs.map((tab) => {
 				if (
@@ -218,6 +227,7 @@ export class PRNode
 								modifiedParams.headCommit
 						) {
 							hasOpenDiff = true;
+
 							vscode.window.tabGroups
 								.close(tab)
 								.then((_) =>
@@ -258,6 +268,7 @@ export class PRNode
 		}
 
 		await this.pullRequestModel.githubRepository.ensureCommentsController();
+
 		this._commentController =
 			this.pullRequestModel.githubRepository.commentsController!;
 
@@ -328,6 +339,7 @@ export class PRNode
 			this._folderReposManager.activePullRequest.fileChanges.size > 0
 		) {
 			this.pullRequestModel = this._folderReposManager.activePullRequest;
+
 			rawChanges.push(
 				...this._folderReposManager.activePullRequest.fileChanges.values(),
 			);
@@ -413,6 +425,7 @@ export class PRNode
 				.get<boolean>(SHOW_PULL_REQUEST_NUMBER_IN_TREE, false)
 		) {
 			labelPrefix += `#${formattedPRNumber}: `;
+
 			tooltipPrefix += `#${formattedPRNumber}: `;
 		}
 
@@ -522,6 +535,7 @@ export class PRNode
 
 	override dispose(): void {
 		super.dispose();
+
 		this._commentController = undefined;
 	}
 }

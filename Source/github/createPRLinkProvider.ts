@@ -137,6 +137,7 @@ export class GitHubCreatePullRequestLinkProvider
 
 						break;
 					}
+
 					case neverShow: {
 						vscode.workspace
 							.getConfiguration(PR_SETTINGS_NAMESPACE)
@@ -145,10 +146,12 @@ export class GitHubCreatePullRequestLinkProvider
 								"github",
 								vscode.ConfigurationTarget.Global,
 							);
+
 						this.openLink(link);
 
 						break;
 					}
+
 					default:
 						this.openLink(link);
 				}

@@ -36,12 +36,15 @@ export namespace TreeUtils {
 			const prModel = checkedNodes[0].pullRequest;
 
 			const filenames = checkedNodes.map((n) => n.fileName);
+
 			prModel.markFiles(filenames, true, "viewed");
 		}
+
 		if (uncheckedNodes.length > 0) {
 			const prModel = uncheckedNodes[0].pullRequest;
 
 			const filenames = uncheckedNodes.map((n) => n.fileName);
+
 			prModel.markFiles(filenames, true, "unviewed");
 		}
 	}

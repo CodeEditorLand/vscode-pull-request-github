@@ -34,6 +34,7 @@ const ISSUES_KEY = "issues";
 
 export interface IssueState {
 	branch?: string;
+
 	hasDraftPR?: boolean;
 }
 
@@ -43,6 +44,7 @@ interface TimeStampedIssueState extends IssueState {
 
 interface IssuesState {
 	issues: Record<string, TimeStampedIssueState>;
+
 	branches: Record<
 		string,
 		{ owner: string; repositoryName: string; number: number }
@@ -52,7 +54,9 @@ interface IssuesState {
 // eslint-disable-next-line no-template-curly-in-string
 const DEFAULT_QUERY_CONFIGURATION_VALUE: {
 	label: string;
+
 	query: string;
+
 	groupBy: QueryGroup[];
 }[] = [
 	{
@@ -68,11 +72,17 @@ export class IssueItem extends IssueModel {
 
 interface SingleRepoState {
 	lastHead?: string;
+
 	lastBranch?: string;
+
 	currentIssue?: CurrentIssue;
+
 	issueCollection: Map<string, Promise<IssueQueryResult>>;
+
 	maxIssueNumber: number;
+
 	userMap?: Promise<Map<string, IAccount>>;
+
 	folderManager: FolderRepositoryManager;
 }
 
@@ -80,33 +90,45 @@ export type QueryGroup = "repository" | "milestone";
 
 export interface IssueQueryResult {
 	groupBy: QueryGroup[];
+
 	issues: IssueItem[] | undefined;
 }
 
 export class StateManager {
 	public readonly resolvedIssues: Map<string, LRUCache<string, IssueModel>> =
 		new Map();
+
 	private _singleRepoStates: Map<string, SingleRepoState | undefined> =
 		new Map();
+
 	private _onRefreshCacheNeeded: vscode.EventEmitter<void> =
 		new vscode.EventEmitter();
+
 	public onRefreshCacheNeeded: vscode.Event<void> =
 		this._onRefreshCacheNeeded.event;
+
 	private _onDidChangeIssueData: vscode.EventEmitter<void> =
 		new vscode.EventEmitter();
+
 	public onDidChangeIssueData: vscode.Event<void> =
 		this._onDidChangeIssueData.event;
+
 	private _queries: {
 		label: string;
+
 		query: string;
+
 		groupBy?: QueryGroup[];
 	}[] = [];
 
 	private _onDidChangeCurrentIssue: vscode.EventEmitter<void> =
 		new vscode.EventEmitter();
+
 	public readonly onDidChangeCurrentIssue: vscode.Event<void> =
 		this._onDidChangeCurrentIssue.event;
+
 	private initializePromise: Promise<void> | undefined;
+
 	private statusBarItem?: vscode.StatusBarItem;
 
 	getIssueCollection(
@@ -138,14 +160,17 @@ export class StateManager {
 		if (state) {
 			return state;
 		}
+
 		if (!folderManager) {
 			folderManager = this.manager.getManagerForFile(uri)!;
 		}
+
 		state = {
 			issueCollection: new Map(),
 			maxIssueNumber: 0,
 			folderManager,
 		};
+
 		this._singleRepoStates.set(uri.path, state);
 
 		return state;
@@ -159,8 +184,10 @@ export class StateManager {
 					const disposable =
 						this.manager.credentialStore.onDidGetSession(() => {
 							disposable.dispose();
+
 							this.doInitialize();
 						});
+
 					resolve();
 				} else if (
 					this.manager.state === ReposManagerState.RepositoriesLoaded
@@ -174,14 +201,17 @@ export class StateManager {
 						) {
 							this.doInitialize().then(() => {
 								disposable.dispose();
+
 								resolve();
 							});
 						}
 					});
+
 					this.context.subscriptions.push(disposable);
 				}
 			});
 		}
+
 		return this.initializePromise;
 	}
 
@@ -227,9 +257,11 @@ export class StateManager {
 					await that.setCurrentIssue(state, undefined, true);
 				}
 			}
+
 			state.lastHead = repository.state.HEAD
 				? repository.state.HEAD.commit
 				: undefined;
+
 			state.lastBranch = repository.state.HEAD
 				? repository.state.HEAD.name
 				: undefined;
@@ -246,9 +278,11 @@ export class StateManager {
 		this.context.subscriptions.push(
 			this.gitAPI.onDidOpenRepository((repository) => {
 				updateRepository(this, repository);
+
 				addChangeEvent(this, repository);
 			}),
 		);
+
 		this.gitAPI.repositories.forEach((repository) => {
 			addChangeEvent(this, repository);
 		});
@@ -268,6 +302,7 @@ export class StateManager {
 
 	private async doInitialize() {
 		this.cleanIssueState();
+
 		this._queries = vscode.workspace
 			.getConfiguration(ISSUES_SETTINGS_NAMESPACE, null)
 			.get(QUERIES, DEFAULT_QUERY_CONFIGURATION_VALUE);
@@ -275,6 +310,7 @@ export class StateManager {
 		if (this._queries.length === 0) {
 			this._queries = DEFAULT_QUERY_CONFIGURATION_VALUE;
 		}
+
 		this.context.subscriptions.push(
 			vscode.workspace.onDidChangeConfiguration((change) => {
 				if (
@@ -285,6 +321,7 @@ export class StateManager {
 					this._queries = vscode.workspace
 						.getConfiguration(ISSUES_SETTINGS_NAMESPACE, null)
 						.get(QUERIES, DEFAULT_QUERY_CONFIGURATION_VALUE);
+
 					this._onRefreshCacheNeeded.fire();
 				} else if (
 					change.affectsConfiguration(
@@ -295,8 +332,11 @@ export class StateManager {
 				}
 			}),
 		);
+
 		this.registerRepositoryChangeEvent();
+
 		await this.setAllIssueData();
+
 		this.context.subscriptions.push(
 			this.onRefreshCacheNeeded(async () => {
 				await this.refresh();
@@ -332,9 +372,11 @@ export class StateManager {
 					folderManager.repository.rootUri,
 					folderManager,
 				);
+
 			singleRepoState.lastHead = folderManager.repository.state.HEAD
 				? folderManager.repository.state.HEAD.commit
 				: undefined;
+
 			this._singleRepoStates.set(
 				folderManager.repository.rootUri.path,
 				singleRepoState,
@@ -369,6 +411,7 @@ export class StateManager {
 				if (state.branches && state.branches[issueState]) {
 					delete state.branches[issueState];
 				}
+
 				delete state.issues[issueState];
 			}
 		}
@@ -388,6 +431,7 @@ export class StateManager {
 				userMap.set(account.login, account);
 			});
 		}
+
 		return userMap;
 	}
 
@@ -395,11 +439,13 @@ export class StateManager {
 		if (!this.initializePromise) {
 			return Promise.resolve(new Map());
 		}
+
 		const state = this.getOrCreateSingleRepoState(uri);
 
 		if (!state.userMap || (await state.userMap).size === 0) {
 			state.userMap = this.getUsers(uri);
 		}
+
 		return state.userMap;
 	}
 
@@ -424,6 +470,7 @@ export class StateManager {
 			folderManager.repository.rootUri,
 			folderManager,
 		);
+
 		singleRepoState.issueCollection.clear();
 
 		const enterpriseRemotes = parseRepositoryRemotes(
@@ -458,8 +505,11 @@ export class StateManager {
 				singleRepoState.issueCollection.set(query.label, items);
 			}
 		}
+
 		singleRepoState.maxIssueNumber = await folderManager.getMaxIssue();
+
 		singleRepoState.lastHead = folderManager.repository.state.HEAD?.commit;
+
 		singleRepoState.lastBranch = folderManager.repository.state.HEAD?.name;
 	}
 
@@ -469,10 +519,13 @@ export class StateManager {
 	): Promise<IssueItem[] | undefined> {
 		return new Promise(async (resolve) => {
 			const issues = await folderManager.getIssues(query);
+
 			this._onDidChangeIssueData.fire();
+
 			resolve(
 				issues?.items.map((item) => {
 					const issueItem: IssueItem = item as IssueItem;
+
 					issueItem.uri = folderManager.repository.rootUri;
 
 					return issueItem;
@@ -503,6 +556,7 @@ export class StateManager {
 			// No remote, don't try to set the current issue
 			return;
 		}
+
 		if (branchName === defaults.base) {
 			await this.setCurrentIssue(singleRepoState, undefined, false);
 
@@ -539,6 +593,7 @@ export class StateManager {
 						silent,
 					);
 				}
+
 				return;
 			}
 		}
@@ -569,6 +624,7 @@ export class StateManager {
 		if (this.isSettingIssue && issue === undefined) {
 			return;
 		}
+
 		this.isSettingIssue = true;
 
 		if (repoState instanceof FolderRepositoryManager) {
@@ -579,8 +635,10 @@ export class StateManager {
 			if (!state) {
 				return;
 			}
+
 			repoState = state;
 		}
+
 		try {
 			if (
 				repoState.currentIssue &&
@@ -588,9 +646,11 @@ export class StateManager {
 			) {
 				return;
 			}
+
 			if (repoState.currentIssue) {
 				await repoState.currentIssue.stopWorking(checkoutDefaultBranch);
 			}
+
 			if (issue) {
 				this.context.subscriptions.push(
 					issue.onDidChangeCurrentIssueState(() =>
@@ -598,6 +658,7 @@ export class StateManager {
 					),
 				);
 			}
+
 			this.context.workspaceState.update(
 				CURRENT_ISSUE_KEY,
 				issue?.issue.number,
@@ -605,8 +666,10 @@ export class StateManager {
 
 			if (!issue || (await issue.startWorking(silent))) {
 				repoState.currentIssue = issue;
+
 				this.updateStatusBar();
 			}
+
 			this._onDidChangeCurrentIssue.fire();
 		} catch (e) {
 			// Error has already been surfaced
@@ -623,20 +686,27 @@ export class StateManager {
 		if (!shouldShowStatusBarItem) {
 			if (this.statusBarItem) {
 				this.statusBarItem.hide();
+
 				this.statusBarItem.dispose();
+
 				this.statusBarItem = undefined;
 			}
+
 			return;
 		}
+
 		if (shouldShowStatusBarItem && !this.statusBarItem) {
 			this.statusBarItem = vscode.window.createStatusBarItem(
 				"github.issues.status",
 				vscode.StatusBarAlignment.Left,
 				0,
 			);
+
 			this.statusBarItem.name = vscode.l10n.t("GitHub Active Issue");
 		}
+
 		const statusBarItem = this.statusBarItem!;
+
 		statusBarItem.text = vscode.l10n.t(
 			"{0} Issue {1}",
 			"$(issues)",
@@ -646,10 +716,13 @@ export class StateManager {
 				)
 				.join(", "),
 		);
+
 		statusBarItem.tooltip = currentIssues
 			.map((issue) => issue.issue.title)
 			.join(", ");
+
 		statusBarItem.command = "issue.statusBar";
+
 		statusBarItem.show();
 	}
 
@@ -670,6 +743,7 @@ export class StateManager {
 
 	async setSavedIssueState(issue: IssueModel, issueState: IssueState) {
 		const state: IssuesState = this.getSavedState();
+
 		state.issues[`${issue.number}`] = {
 			...issueState,
 			stateModifiedTime: new Date().valueOf(),
@@ -679,12 +753,14 @@ export class StateManager {
 			if (!state.branches) {
 				state.branches = Object.create(null);
 			}
+
 			state.branches[issueState.branch] = {
 				number: issue.number,
 				owner: issue.remote.owner,
 				repositoryName: issue.remote.repositoryName,
 			};
 		}
+
 		return this.context.workspaceState.update(
 			ISSUES_KEY,
 			JSON.stringify(state),

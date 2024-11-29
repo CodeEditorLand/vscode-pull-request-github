@@ -17,7 +17,9 @@ import { PullRequestCommentController } from "./pullRequestCommentController";
 
 interface PullRequestCommentHandlerInfo {
 	handler: PullRequestCommentController & CommentReactionHandler;
+
 	refCount: number;
+
 	dispose: () => void;
 }
 
@@ -28,13 +30,16 @@ export class PRCommentControllerRegistry
 	private _prCommentHandlers: {
 		[key: number]: PullRequestCommentHandlerInfo;
 	} = {};
+
 	private _prCommentingRangeProviders: {
 		[key: number]: vscode.CommentingRangeProvider2;
 	} = {};
+
 	private readonly _activeChangeListeners: Map<
 		FolderRepositoryManager,
 		vscode.Disposable
 	> = new Map();
+
 	public readonly resourceHints = { schemes: [Schemes.Pr] };
 
 	constructor(
@@ -42,7 +47,9 @@ export class PRCommentControllerRegistry
 		private readonly _telemetry: ITelemetry,
 	) {
 		super();
+
 		this.commentsController.commentingRangeProvider = this;
+
 		this.commentsController.reactionHandler =
 			this.toggleReaction.bind(this);
 	}
@@ -96,6 +103,7 @@ export class PRCommentControllerRegistry
 	public unregisterCommentController(prNumber: number): void {
 		if (this._prCommentHandlers[prNumber]) {
 			this._prCommentHandlers[prNumber].dispose();
+
 			delete this._prCommentHandlers[prNumber];
 		}
 	}
@@ -128,6 +136,7 @@ export class PRCommentControllerRegistry
 			this.commentsController,
 			this._telemetry,
 		);
+
 		this._prCommentHandlers[prNumber] = {
 			handler,
 			refCount: 1,
@@ -140,6 +149,7 @@ export class PRCommentControllerRegistry
 
 				if (this._prCommentHandlers[prNumber].refCount === 0) {
 					this._prCommentHandlers[prNumber].handler.dispose();
+
 					delete this._prCommentHandlers[prNumber];
 				}
 			},
@@ -163,11 +173,13 @@ export class PRCommentControllerRegistry
 
 	override dispose() {
 		super.dispose();
+
 		Object.keys(this._prCommentHandlers).forEach((key) => {
 			this._prCommentHandlers[key].handler.dispose();
 		});
 
 		this._prCommentingRangeProviders = {};
+
 		this._prCommentHandlers = {};
 	}
 }

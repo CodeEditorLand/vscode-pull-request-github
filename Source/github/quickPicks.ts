@@ -42,6 +42,7 @@ async function getItems<T extends IAccount | ITeam | ISuggestedReviewer>(
 
 		if (!skipList.has(id)) {
 			filteredUsers.push(user);
+
 			skipList.add(id);
 		}
 	}
@@ -85,6 +86,7 @@ async function getItems<T extends IAccount | ITeam | ISuggestedReviewer>(
 			iconPath: avatars[i] ?? userThemeIcon(user),
 		});
 	}
+
 	return alreadyAssignedItems;
 }
 
@@ -176,6 +178,7 @@ export async function getAssigneesQuickPickItems(
 
 	if (assignableUsers.length) {
 		const tooManyAssignable = assignableUsers.length > 80;
+
 		assigneePromises.push(
 			getItems<IAccount>(
 				folderRepositoryManager.context,
@@ -206,6 +209,7 @@ export async function getAssigneesQuickPickItems(
 				label: vscode.l10n.t("Users"),
 			});
 		}
+
 		assignees.unshift({
 			label: vscode.l10n.t("Assign yourself"),
 			user: currentUser,
@@ -280,6 +284,7 @@ async function getReviewersQuickPickItems(
 	);
 
 	const tooManyAssignable = assignableUsers.length > 60;
+
 	reviewersPromises.push(
 		getItems<IAccount | ITeam>(
 			folderRepositoryManager.context,
@@ -323,9 +328,13 @@ export async function reviewersQuickPick(
 	const quickMaxTeamReviewers = 100;
 
 	const defaultPlaceholder = vscode.l10n.t("Add reviewers");
+
 	quickPick.busy = true;
+
 	quickPick.canSelectMany = true;
+
 	quickPick.matchOnDescription = true;
+
 	quickPick.placeholder = defaultPlaceholder;
 
 	if (isInOrganization) {
@@ -336,6 +345,7 @@ export async function reviewersQuickPick(
 			},
 		];
 	}
+
 	quickPick.show();
 
 	const updateItems = async (refreshKind: TeamReviewerRefreshKind) => {
@@ -346,6 +356,7 @@ export async function reviewersQuickPick(
 		}, 3000);
 
 		const start = performance.now();
+
 		quickPick.items = await getReviewersQuickPickItems(
 			folderRepositoryManager,
 			remoteName,
@@ -355,12 +366,16 @@ export async function reviewersQuickPick(
 			suggestedReviewers,
 			refreshKind,
 		);
+
 		Logger.appendLine(
 			`Setting quick pick reviewers took ${performance.now() - start}ms`,
 			"QuickPicks",
 		);
+
 		clearTimeout(slowWarning);
+
 		quickPick.selectedItems = quickPick.items.filter((item) => item.picked);
+
 		quickPick.placeholder = defaultPlaceholder;
 	};
 
@@ -369,11 +384,15 @@ export async function reviewersQuickPick(
 			? TeamReviewerRefreshKind.Try
 			: TeamReviewerRefreshKind.None,
 	);
+
 	quickPick.onDidTriggerButton(() => {
 		quickPick.busy = true;
+
 		quickPick.ignoreFocusOut = true;
+
 		updateItems(TeamReviewerRefreshKind.Force).then(() => {
 			quickPick.ignoreFocusOut = false;
+
 			quickPick.busy = false;
 		});
 	});
@@ -383,6 +402,7 @@ export async function reviewersQuickPick(
 
 type ProjectQuickPickItem = vscode.QuickPickItem & {
 	id: string;
+
 	project: IProject;
 };
 
@@ -437,6 +457,7 @@ export async function getProjectFromQuickPick(
 				) {
 					selectedItems.push(item);
 				}
+
 				return item;
 			});
 
@@ -444,16 +465,24 @@ export async function getProjectFromQuickPick(
 		}
 
 		const quickPick = vscode.window.createQuickPick();
+
 		quickPick.busy = true;
+
 		quickPick.canSelectMany = true;
+
 		quickPick.title = vscode.l10n.t("Set projects");
+
 		quickPick.show();
+
 		quickPick.items = await getProjectOptions();
+
 		quickPick.selectedItems = selectedItems;
+
 		quickPick.busy = false;
 
 		// Kick off a cache refresh
 		folderRepoManager.getOrgProjects(true);
+
 		quickPick.onDidAccept(async () => {
 			quickPick.hide();
 
@@ -476,6 +505,7 @@ export async function getProjectFromQuickPick(
 
 type MilestoneQuickPickItem = vscode.QuickPickItem & {
 	id: string;
+
 	milestone: IMilestone;
 };
 
@@ -530,6 +560,7 @@ export async function getMilestoneFromQuickPick(
 				if (currentMilestone && currentMilestone.id === result.id) {
 					selectedItem = item;
 				}
+
 				return item;
 			});
 
@@ -538,38 +569,50 @@ export async function getMilestoneFromQuickPick(
 					label: "Milestones",
 					kind: vscode.QuickPickItemKind.Separator,
 				});
+
 				milestonesItems.unshift(removeMilestoneItem);
 			}
+
 			return milestonesItems;
 		}
 
 		const quickPick = vscode.window.createQuickPick();
+
 		quickPick.busy = true;
+
 		quickPick.canSelectMany = false;
+
 		quickPick.title = vscode.l10n.t("Set milestone");
+
 		quickPick.buttons = [
 			{
 				iconPath: new vscode.ThemeIcon("add"),
 				tooltip: "Create",
 			},
 		];
+
 		quickPick.onDidTriggerButton((_) => {
 			quickPick.hide();
 
 			const inputBox = vscode.window.createInputBox();
+
 			inputBox.title = vscode.l10n.t("Create new milestone");
+
 			inputBox.placeholder = vscode.l10n.t("New milestone title");
 
 			if (quickPick.value !== "") {
 				inputBox.value = quickPick.value;
 			}
+
 			inputBox.show();
+
 			inputBox.onDidAccept(async () => {
 				inputBox.hide();
 
 				if (inputBox.value === "") {
 					return;
 				}
+
 				if (inputBox.value.length > 255) {
 					vscode.window.showErrorMessage(
 						vscode.l10n.t(
@@ -592,6 +635,7 @@ export async function getMilestoneFromQuickPick(
 						return;
 					}
 				}
+
 				try {
 					const milestone =
 						await folderRepositoryManager.createMilestone(
@@ -625,12 +669,15 @@ export async function getMilestoneFromQuickPick(
 		});
 
 		quickPick.show();
+
 		quickPick.items = await getMilestoneOptions();
+
 		quickPick.activeItems = selectedItem
 			? [selectedItem]
 			: currentMilestone
 				? [quickPick.items[1]]
 				: [quickPick.items[0]];
+
 		quickPick.busy = false;
 
 		quickPick.onDidAccept(async () => {

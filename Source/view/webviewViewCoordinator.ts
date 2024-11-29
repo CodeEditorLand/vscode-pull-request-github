@@ -13,13 +13,16 @@ import { ReviewManager } from "./reviewManager";
 
 export class WebviewViewCoordinator extends Disposable {
 	private _webviewViewProvider?: PullRequestViewProvider;
+
 	private _pullRequestModel: Map<
 		PullRequestModel,
 		{
 			folderRepositoryManager: FolderRepositoryManager;
+
 			reviewManager: ReviewManager;
 		}
 	> = new Map();
+
 	private readonly _currentDisposables: Disposable[] = [];
 
 	constructor(private _context: vscode.ExtensionContext) {
@@ -28,11 +31,13 @@ export class WebviewViewCoordinator extends Disposable {
 
 	public override dispose() {
 		super.dispose();
+
 		this.reset();
 	}
 
 	reset() {
 		disposeAll(this._currentDisposables);
+
 		this._webviewViewProvider = undefined;
 	}
 
@@ -50,6 +55,7 @@ export class WebviewViewCoordinator extends Disposable {
 			),
 			this._currentDisposables,
 		);
+
 		addDisposable(
 			vscode.window.registerWebviewViewProvider(
 				this._webviewViewProvider.viewType,
@@ -57,6 +63,7 @@ export class WebviewViewCoordinator extends Disposable {
 			),
 			this._currentDisposables,
 		);
+
 		addDisposable(
 			vscode.commands.registerCommand(
 				"pr.refreshActivePullRequest",
@@ -77,10 +84,12 @@ export class WebviewViewCoordinator extends Disposable {
 		if (replace) {
 			this._pullRequestModel.delete(replace);
 		}
+
 		this._pullRequestModel.set(pullRequestModel, {
 			folderRepositoryManager,
 			reviewManager,
 		});
+
 		this.updatePullRequest();
 	}
 
@@ -92,6 +101,7 @@ export class WebviewViewCoordinator extends Disposable {
 
 			return;
 		}
+
 		const { folderRepositoryManager, reviewManager } =
 			this._pullRequestModel.get(pullRequestModel)!;
 
@@ -108,6 +118,7 @@ export class WebviewViewCoordinator extends Disposable {
 
 	public removePullRequest(pullRequestModel: PullRequestModel) {
 		const oldHead = Array.from(this._pullRequestModel.keys())[0];
+
 		this._pullRequestModel.delete(pullRequestModel);
 
 		const newHead = Array.from(this._pullRequestModel.keys())[0];

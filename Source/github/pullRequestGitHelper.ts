@@ -34,18 +34,23 @@ const PullRequestRemoteRegex = /branch\.(.+)\.remote/;
 
 export interface PullRequestMetadata {
 	owner: string;
+
 	repositoryName: string;
+
 	prNumber: number;
 }
 
 export interface BaseBranchMetadata {
 	owner: string;
+
 	repositoryName: string;
+
 	branch: string;
 }
 
 export class PullRequestGitHelper {
 	static ID = "PullRequestGitHelper";
+
 	static async checkoutFromFork(
 		repository: Repository,
 		pullRequest: PullRequestModel & IResolvedPullRequestModel,
@@ -65,12 +70,14 @@ export class PullRequestGitHelper {
 				`Branch ${localBranchName} is from a fork. Create a remote first.`,
 				PullRequestGitHelper.ID,
 			);
+
 			progress.report({
 				message: vscode.l10n.t(
 					"Creating git remote for {0}",
 					`${pullRequest.remote.owner}/${pullRequest.remote.repositoryName}`,
 				),
 			});
+
 			remoteName = await PullRequestGitHelper.createRemote(
 				repository,
 				pullRequest.remote,
@@ -80,23 +87,30 @@ export class PullRequestGitHelper {
 
 		// fetch the branch
 		const ref = `${pullRequest.head.ref}:${localBranchName}`;
+
 		Logger.debug(
 			`Fetch ${remoteName}/${pullRequest.head.ref}:${localBranchName} - start`,
 			PullRequestGitHelper.ID,
 		);
+
 		progress.report({ message: vscode.l10n.t("Fetching branch {0}", ref) });
+
 		await repository.fetch(remoteName, ref);
+
 		Logger.debug(
 			`Fetch ${remoteName}/${pullRequest.head.ref}:${localBranchName} - done`,
 			PullRequestGitHelper.ID,
 		);
+
 		progress.report({ message: vscode.l10n.t("Checking out {0}", ref) });
+
 		await repository.checkout(localBranchName);
 		// set remote tracking branch for the local branch
 		await repository.setBranchUpstream(
 			localBranchName,
 			`refs/remotes/${remoteName}/${pullRequest.head.ref}`,
 		);
+
 		await PullRequestGitHelper.associateBranchWithPullRequest(
 			repository,
 			pullRequest,
@@ -153,15 +167,19 @@ export class PullRequestGitHelper {
 
 				return;
 			}
+
 			Logger.debug(`Checkout ${branchName}`, PullRequestGitHelper.ID);
+
 			progress.report({
 				message: vscode.l10n.t("Checking out {0}", branchName),
 			});
+
 			await repository.checkout(branchName);
 
 			if (!branch.upstream) {
 				// this branch is not associated with upstream yet
 				const trackedBranchName = `refs/remotes/${remoteName}/${branchName}`;
+
 				await repository.setBranchUpstream(
 					branchName,
 					trackedBranchName,
@@ -174,9 +192,11 @@ export class PullRequestGitHelper {
 				branch.ahead === 0
 			) {
 				Logger.debug(`Pull from upstream`, PullRequestGitHelper.ID);
+
 				progress.report({
 					message: vscode.l10n.t("Pulling {0}", branchName),
 				});
+
 				await repository.pull();
 			}
 		} catch (err) {
@@ -187,13 +207,16 @@ export class PullRequestGitHelper {
 			);
 
 			const trackedBranchName = `refs/remotes/${remoteName}/${branchName}`;
+
 			Logger.appendLine(
 				`Fetch tracked branch ${trackedBranchName}`,
 				PullRequestGitHelper.ID,
 			);
+
 			progress.report({
 				message: vscode.l10n.t("Fetching branch {0}", branchName),
 			});
+
 			await repository.fetch(remoteName, branchName);
 
 			const trackedBranch = await repository.getBranch(trackedBranchName);
@@ -204,11 +227,13 @@ export class PullRequestGitHelper {
 					branchName,
 				),
 			});
+
 			await repository.createBranch(
 				branchName,
 				true,
 				trackedBranch.commit,
 			);
+
 			await repository.setBranchUpstream(branchName, trackedBranchName);
 		}
 
@@ -247,9 +272,11 @@ export class PullRequestGitHelper {
 		if (branchInfos && branchInfos.length) {
 			// let's immediately checkout to branchInfos[0].branch
 			const branchName = branchInfos[0].branch!;
+
 			progress.report({
 				message: vscode.l10n.t("Checking out branch {0}", branchName),
 			});
+
 			await repository.checkout(branchName);
 
 			// respect the git setting to fetch before checkout
@@ -269,9 +296,11 @@ export class PullRequestGitHelper {
 				const remote = readConfig(`branch.${branchName}.remote`);
 
 				const ref = readConfig(`branch.${branchName}.merge`);
+
 				progress.report({
 					message: vscode.l10n.t("Fetching branch {0}", branchName),
 				});
+
 				await repository.fetch(remote, ref);
 			}
 
@@ -289,9 +318,11 @@ export class PullRequestGitHelper {
 				branchStatus.ahead === 0
 			) {
 				Logger.debug(`Pull from upstream`, PullRequestGitHelper.ID);
+
 				progress.report({
 					message: vscode.l10n.t("Pulling branch {0}", branchName),
 				});
+
 				await repository.pull();
 			}
 
@@ -306,8 +337,11 @@ export class PullRequestGitHelper {
 		pullRequest: PullRequestModel,
 	): Promise<{
 		branch: string;
+
 		remote?: string;
+
 		createdForPullRequest?: boolean;
+
 		remoteInUse?: boolean;
 	} | null> {
 		let branchName: string | null = null;
@@ -402,6 +436,7 @@ export class PullRequestGitHelper {
 				return null;
 			}
 		}
+
 		return null;
 	}
 
@@ -433,6 +468,7 @@ export class PullRequestGitHelper {
 				};
 			}
 		}
+
 		return undefined;
 	}
 
@@ -477,10 +513,13 @@ export class PullRequestGitHelper {
 			repository,
 			cloneUrl.owner,
 		);
+
 		cloneUrl.update({
 			type: baseRemote.gitProtocol.type,
 		});
+
 		await repository.addRemote(remoteName, cloneUrl.toString()!);
+
 		await repository.setConfig(
 			`remote.${remoteName}.${PullRequestRemoteMetadataKey}`,
 			"true",
@@ -502,6 +541,7 @@ export class PullRequestGitHelper {
 			const isForPR = await repository.getConfig(
 				`remote.${remoteName}.${PullRequestRemoteMetadataKey}`,
 			);
+
 			Logger.debug(
 				`Check if remote '${remoteName}' is created for pull request - end`,
 				PullRequestGitHelper.ID,
@@ -526,6 +566,7 @@ export class PullRequestGitHelper {
 		while (true) {
 			try {
 				await repository.getBranch(result);
+
 				result = `${branchName}-${number++}`;
 			} catch (err) {
 				break;
@@ -576,7 +617,9 @@ export class PullRequestGitHelper {
 					PullRequestGitHelper.ID,
 				);
 			}
+
 			const prConfigKey = `branch.${branchName}.${PullRequestMetadataKey}`;
+
 			await repository.setConfig(
 				prConfigKey,
 				pullRequest
@@ -607,6 +650,7 @@ export class PullRequestGitHelper {
 			);
 
 			const prConfigKey = `branch.${branch}.${BaseBranchMetadataKey}`;
+
 			await repository.setConfig(
 				prConfigKey,
 				PullRequestGitHelper.buildBaseBranchMetadata(

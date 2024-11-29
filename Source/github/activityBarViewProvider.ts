@@ -33,6 +33,7 @@ export class PullRequestViewProvider
 	implements vscode.WebviewViewProvider
 {
 	public override readonly viewType = "github:activePullRequest";
+
 	private _existingReviewers: ReviewState[] = [];
 
 	constructor(
@@ -71,18 +72,21 @@ export class PullRequestViewProvider
 				(e: { body: string }) => this.approvePullRequestCommand(e),
 			),
 		);
+
 		this._register(
 			vscode.commands.registerCommand(
 				"review.comment",
 				(e: { body: string }) => this.submitReviewCommand(e),
 			),
 		);
+
 		this._register(
 			vscode.commands.registerCommand(
 				"review.requestChanges",
 				(e: { body: string }) => this.requestChangesCommand(e),
 			),
 		);
+
 		this._register(
 			vscode.commands.registerCommand("review.approveOnDotCom", () => {
 				return openPullRequestOnGitHub(
@@ -91,6 +95,7 @@ export class PullRequestViewProvider
 				);
 			}),
 		);
+
 		this._register(
 			vscode.commands.registerCommand(
 				"review.requestChangesOnDotCom",
@@ -110,6 +115,7 @@ export class PullRequestViewProvider
 		_token: vscode.CancellationToken,
 	) {
 		super.resolveWebviewView(webviewView, _context, _token);
+
 		webviewView.webview.html = this._getHtmlForWebview();
 
 		this.updatePullRequest(this._item);
@@ -133,6 +139,7 @@ export class PullRequestViewProvider
 
 			return this._replyMessage(message, {});
 		}
+
 		const mergeSucceeded =
 			await this._folderRepositoryManager.tryMergeBaseIntoHead(
 				this._item,
@@ -149,7 +156,9 @@ export class PullRequestViewProvider
 
 		do {
 			mergability = (await this._item.getMergeability()).mergeability;
+
 			attemptsRemaining--;
+
 			await new Promise((c) => setTimeout(c, 1000));
 		} while (
 			attemptsRemaining > 0 &&
@@ -160,7 +169,9 @@ export class PullRequestViewProvider
 			events: await this._item.getTimelineEvents(),
 			mergeable: mergability,
 		};
+
 		await this.refresh();
+
 		this._replyMessage(message, result);
 	}
 
@@ -234,6 +245,7 @@ export class PullRequestViewProvider
 
 			const prBranch =
 				this._folderRepositoryManager.repository.state.HEAD?.name;
+
 			await this._folderRepositoryManager.checkoutDefaultBranch(
 				defaultBranch,
 			);
@@ -264,11 +276,14 @@ export class PullRequestViewProvider
 
 			if (reviewer && isTeam(reviewer.reviewer)) {
 				id = reviewer.reviewer.id;
+
 				reviewerArray = teamReviewers;
 			} else if (reviewer && !isTeam(reviewer.reviewer)) {
 				id = reviewer.reviewer.id;
+
 				reviewerArray = userReviewers;
 			}
+
 			if (
 				reviewerArray &&
 				id &&
@@ -281,10 +296,12 @@ export class PullRequestViewProvider
 				}
 			}
 		}
+
 		this._item.requestReview(userReviewers, teamReviewers).then(() => {
 			if (targetReviewer) {
 				targetReviewer.state = "REQUESTED";
 			}
+
 			this._replyMessage(message, {
 				reviewers: this._existingReviewers,
 			});
@@ -296,6 +313,7 @@ export class PullRequestViewProvider
 			{ location: { viewId: "github:activePullRequest" } },
 			async () => {
 				await this._item.initializeReviewThreadCache();
+
 				await this.updatePullRequest(this._item);
 			},
 		);
@@ -313,16 +331,20 @@ export class PullRequestViewProvider
 	}
 
 	private _prDisposables: vscode.Disposable[] | undefined = undefined;
+
 	private registerPrSpecificListeners(pullRequestModel: PullRequestModel) {
 		if (this._prDisposables !== undefined) {
 			disposeAll(this._prDisposables);
 		}
+
 		this._prDisposables = [];
+
 		this._prDisposables.push(
 			pullRequestModel.onDidInvalidate(() =>
 				this.updatePullRequest(pullRequestModel),
 			),
 		);
+
 		this._prDisposables.push(
 			pullRequestModel.onDidChangePendingReviewState(() =>
 				this.updatePullRequest(pullRequestModel),
@@ -331,14 +353,17 @@ export class PullRequestViewProvider
 	}
 
 	private _updatePendingVisibility: vscode.Disposable | undefined = undefined;
+
 	public async updatePullRequest(
 		pullRequestModel: PullRequestModel,
 	): Promise<void> {
 		if (this._view && !this._view.visible) {
 			this._updatePendingVisibility?.dispose();
+
 			this._updatePendingVisibility = this._view.onDidChangeVisibility(
 				async () => {
 					this.updatePullRequest(pullRequestModel);
+
 					this._updatePendingVisibility?.dispose();
 				},
 			);
@@ -350,6 +375,7 @@ export class PullRequestViewProvider
 		) {
 			this.registerPrSpecificListeners(pullRequestModel);
 		}
+
 		this._item = pullRequestModel;
 
 		return Promise.all([
@@ -421,6 +447,7 @@ export class PullRequestViewProvider
 				const defaultMergeMethod = getDefaultMergeMethod(
 					mergeMethodsAvailability,
 				);
+
 				this._existingReviewers = parseReviewers(
 					requestedReviewers ?? [],
 					timelineEvents ?? [],
@@ -551,10 +578,12 @@ export class PullRequestViewProvider
 			command: "pr.submitting-review",
 			lastReviewType: reviewType,
 		};
+
 		this._postMessage(submittingMessage);
 
 		try {
 			const review = await action(context.body);
+
 			this.updateReviewers(review);
 
 			const reviewMessage = {
@@ -562,12 +591,15 @@ export class PullRequestViewProvider
 				review,
 				reviewers: this._existingReviewers,
 			};
+
 			await this._postMessage(reviewMessage);
 		} catch (e) {
 			vscode.window.showErrorMessage(
 				vscode.l10n.t("Submitting review failed. {0}", formatError(e)),
 			);
+
 			this._throwError(undefined, `${formatError(e)}`);
+
 			this._postMessage({ command: "pr.append-review" });
 		}
 	}
@@ -578,7 +610,9 @@ export class PullRequestViewProvider
 	) {
 		try {
 			const review = await action(message.args);
+
 			this.updateReviewers(review);
+
 			this._replyMessage(message, {
 				review: review,
 				reviewers: this._existingReviewers,
@@ -587,6 +621,7 @@ export class PullRequestViewProvider
 			vscode.window.showErrorMessage(
 				vscode.l10n.t("Submitting review failed. {0}", formatError(e)),
 			);
+
 			this._throwError(message, `${formatError(e)}`);
 		}
 	}
@@ -678,6 +713,7 @@ export class PullRequestViewProvider
 						formatError(e),
 					),
 				);
+
 				this._throwError(message, {});
 			});
 	}
@@ -728,6 +764,7 @@ export class PullRequestViewProvider
 						formatError(e),
 					),
 				);
+
 				this._throwError(message, {});
 			});
 	}

@@ -18,12 +18,14 @@ export abstract class TreeDecorationProvider
 	private _onDidChangeFileDecorations: vscode.EventEmitter<
 		vscode.Uri | vscode.Uri[]
 	> = this._register(new vscode.EventEmitter<vscode.Uri | vscode.Uri[]>());
+
 	onDidChangeFileDecorations?:
 		| vscode.Event<vscode.Uri | vscode.Uri[] | undefined>
 		| undefined = this._onDidChangeFileDecorations.event;
 
 	constructor() {
 		super();
+
 		this._register(vscode.window.registerFileDecorationProvider(this));
 	}
 
@@ -56,12 +58,15 @@ export abstract class TreeDecorationProvider
 				fileChange.status,
 				fileChange.previousFileName,
 			);
+
 			this._onDidChangeFileDecorations.fire(fileChangeUri);
+
 			this._onDidChangeFileDecorations.fire(
 				fileChangeUri.with({
 					scheme: folderManager.repository.rootUri.scheme,
 				}),
 			);
+
 			this._onDidChangeFileDecorations.fire(
 				fileChangeUri.with({ scheme: Schemes.Pr, authority: "" }),
 			);
@@ -71,7 +76,9 @@ export abstract class TreeDecorationProvider
 
 export class TreeDecorationProviders extends Disposable {
 	private _gitHubReposListeners: vscode.Disposable[] = [];
+
 	private _pullRequestListeners: vscode.Disposable[] = [];
+
 	private _pullRequestPropertyChangeListeners: vscode.Disposable[] = [];
 
 	private _providers: TreeDecorationProvider[] = [];
@@ -82,6 +89,7 @@ export class TreeDecorationProviders extends Disposable {
 
 	public registerProviders(provider: TreeDecorationProvider[]) {
 		this._providers.push(...provider);
+
 		this._registerListeners();
 	}
 
@@ -122,14 +130,18 @@ export class TreeDecorationProviders extends Disposable {
 					);
 				})
 				.flat();
+
 			this._pullRequestPropertyChangeListeners.push(...listeners);
 		});
 	}
 
 	private _registerRepositoriesChangedListeners() {
 		disposeAll(this._gitHubReposListeners);
+
 		disposeAll(this._pullRequestListeners);
+
 		disposeAll(this._pullRequestPropertyChangeListeners);
+
 		this._repositoriesManager.folderManagers.forEach((folderManager) => {
 			this._gitHubReposListeners.push(
 				folderManager.onDidChangeRepositories(() => {
@@ -141,6 +153,7 @@ export class TreeDecorationProviders extends Disposable {
 
 	private _registerListeners() {
 		this._registerRepositoriesChangedListeners();
+
 		this._register(
 			this._repositoriesManager.onDidChangeFolderRepositories(() => {
 				this._registerRepositoriesChangedListeners();
@@ -150,9 +163,13 @@ export class TreeDecorationProviders extends Disposable {
 
 	override dispose() {
 		super.dispose();
+
 		disposeAll(this._gitHubReposListeners);
+
 		disposeAll(this._pullRequestListeners);
+
 		disposeAll(this._pullRequestPropertyChangeListeners);
+
 		disposeAll(this._providers);
 	}
 }

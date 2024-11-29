@@ -84,24 +84,35 @@ import { WebviewViewCoordinator } from "./webviewViewCoordinator";
 
 export class ReviewManager extends Disposable {
 	public static ID = "Review";
+
 	private readonly _localToDispose: vscode.Disposable[] = [];
 
 	private readonly _reviewModel: ReviewModel = new ReviewModel();
+
 	private _lastCommitSha?: string;
+
 	private _validateStatusInProgress?: Promise<void>;
+
 	private _reviewCommentController: ReviewCommentController | undefined;
+
 	private _quickDiffProvider: vscode.Disposable | undefined;
+
 	private _inMemGitHubContentProvider: vscode.Disposable | undefined;
 
 	private _statusBarItem: vscode.StatusBarItem;
+
 	private _prNumber?: number;
+
 	private _isShowingLastReviewChanges: boolean = false;
+
 	private _previousRepositoryState: {
 		HEAD: Branch | undefined;
+
 		remotes: Remote[];
 	};
 
 	private _switchingToReviewMode: boolean;
+
 	private _changesSinceLastReviewProgress: ProgressHelper =
 		new ProgressHelper();
 	/**
@@ -139,12 +150,14 @@ export class ReviewManager extends Disposable {
 		private _gitApi: GitApiImpl,
 	) {
 		super();
+
 		this._switchingToReviewMode = false;
 
 		this._previousRepositoryState = {
 			HEAD: _repository.state.HEAD,
 			remotes: parseRepositoryRemotes(this._repository),
 		};
+
 		this._register(toDisposable(() => disposeAll(this._localToDispose)));
 
 		this.registerListeners();
@@ -152,6 +165,7 @@ export class ReviewManager extends Disposable {
 		if (_gitApi.state === "initialized") {
 			this.updateState(true);
 		}
+
 		this.pollForStatusChange();
 	}
 
@@ -234,6 +248,7 @@ export class ReviewManager extends Disposable {
 		this._register(
 			this._folderRepoManager.onDidChangeActivePullRequest((_) => {
 				this.updateFocusedViewMode();
+
 				this.registerQuickDiff();
 			}),
 		);
@@ -275,6 +290,7 @@ export class ReviewManager extends Disposable {
 								metadata.parent?.name,
 					) ?? githubRepository;
 			}
+
 			return PullRequestGitHelper.associateBaseBranchWithBranch(
 				this.repository,
 				newHead.name,
@@ -293,14 +309,17 @@ export class ReviewManager extends Disposable {
 		) {
 			if (this._quickDiffProvider) {
 				this._quickDiffProvider.dispose();
+
 				this._quickDiffProvider = undefined;
 			}
+
 			const label = this._folderRepoManager.activePullRequest
 				? vscode.l10n.t(
 						"GitHub pull request #{0}",
 						this._folderRepoManager.activePullRequest.number,
 					)
 				: vscode.l10n.t("GitHub pull request");
+
 			this._register(
 				(this._quickDiffProvider =
 					vscode.window.registerQuickDiffProvider(
@@ -333,6 +352,7 @@ export class ReviewManager extends Disposable {
 				"github.pullrequest.status",
 				vscode.StatusBarAlignment.Left,
 			);
+
 			this._statusBarItem.name = vscode.l10n.t(
 				"GitHub Active Pull Request",
 			);
@@ -358,6 +378,7 @@ export class ReviewManager extends Disposable {
 				) {
 					await this.updateComments();
 				}
+
 				this.pollForStatusChange();
 			},
 			1000 * 60 * 5,
@@ -375,8 +396,10 @@ export class ReviewManager extends Disposable {
 		if (this.switchingToReviewMode) {
 			return;
 		}
+
 		if (!this._validateStatusInProgress) {
 			Logger.appendLine("Validate state in progress", this.id);
+
 			this._validateStatusInProgress = this.validateStatusAndSetContext(
 				silent,
 				updateLayout,
@@ -385,6 +408,7 @@ export class ReviewManager extends Disposable {
 			return this._validateStatusInProgress;
 		} else {
 			Logger.appendLine("Queuing additional validate state", this.id);
+
 			this._validateStatusInProgress =
 				this._validateStatusInProgress.then(async (_) => {
 					return await this.validateStatusAndSetContext(
@@ -409,7 +433,9 @@ export class ReviewManager extends Disposable {
 				() => {
 					if (timeout) {
 						clearTimeout(timeout);
+
 						timeout = undefined;
+
 						Logger.error(
 							"Timeout occurred while validating state.",
 							this.id,
@@ -427,6 +453,7 @@ export class ReviewManager extends Disposable {
 							},
 						);
 					}
+
 					resolve();
 				},
 				1000 * 60 * 2,
@@ -440,8 +467,10 @@ export class ReviewManager extends Disposable {
 					.then(() => {
 						if (timeout) {
 							clearTimeout(timeout);
+
 							timeout = undefined;
 						}
+
 						resolve();
 					});
 			});
@@ -475,6 +504,7 @@ export class ReviewManager extends Disposable {
 			// 1 day
 			return false;
 		}
+
 		const { base } =
 			await this._folderRepoManager.getPullRequestDefaults(
 				currentBranchName,
@@ -483,6 +513,7 @@ export class ReviewManager extends Disposable {
 		if (base !== currentBranchName) {
 			return false;
 		}
+
 		await this._context.workspaceState.update(
 			lastOfferTimeKey,
 			currentTime,
@@ -517,6 +548,7 @@ export class ReviewManager extends Disposable {
 			);
 
 			setting.push(currentBranchName);
+
 			await settingNamespace.update(IGNORE_PR_BRANCHES, setting);
 
 			return true;
@@ -528,12 +560,15 @@ export class ReviewManager extends Disposable {
 
 			return false;
 		}
+
 		return false;
 	}
 
 	private async getUpstreamUrlAndName(branch: Branch): Promise<{
 		url: string | undefined;
+
 		branchName: string | undefined;
+
 		remoteName: string | undefined;
 	}> {
 		if (branch.upstream) {
@@ -557,6 +592,7 @@ export class ReviewManager extends Disposable {
 				if (upstreamBranch) {
 					branchName = upstreamBranch.substring("refs/heads/".length);
 				}
+
 				return { url, branchName, remoteName: undefined };
 			} catch (e) {
 				Logger.appendLine(
@@ -593,6 +629,7 @@ export class ReviewManager extends Disposable {
 			Logger.appendLine(
 				`Found matching pull request metadata on GitHub for current branch ${branch.name}. Repo: ${metadataFromGithub.owner}/${metadataFromGithub.repositoryName} PR: ${metadataFromGithub.prNumber}`,
 			);
+
 			await PullRequestGitHelper.associateBranchWithPullRequest(
 				this._repository,
 				metadataFromGithub.model,
@@ -610,6 +647,7 @@ export class ReviewManager extends Disposable {
 			this._prNumber = metadata.prNumber;
 
 			const { owner, repositoryName } = metadata;
+
 			Logger.appendLine("Resolving pull request", this.id);
 
 			let pr = await this._folderRepoManager.resolvePullRequest(
@@ -624,11 +662,14 @@ export class ReviewManager extends Disposable {
 				!(await pr.githubRepository.hasBranch(pr.base.name))
 			) {
 				await this.clear(true);
+
 				this._prNumber = undefined;
+
 				Logger.appendLine("This PR is no longer valid", this.id);
 
 				return;
 			}
+
 			return pr;
 		} catch (e) {
 			Logger.appendLine(
@@ -651,6 +692,7 @@ export class ReviewManager extends Disposable {
 		Logger.appendLine("Validating state...", this.id);
 
 		const oldLastCommitSha = this._lastCommitSha;
+
 		this._lastCommitSha = undefined;
 
 		if (!(await this._folderRepoManager.updateRepositories(false))) {
@@ -684,6 +726,7 @@ export class ReviewManager extends Disposable {
 				`Branch ${branch.name} is ignored in ${IGNORE_PR_BRANCHES}.`,
 				this.id,
 			);
+
 			await this.clear(true);
 
 			return;
@@ -697,6 +740,7 @@ export class ReviewManager extends Disposable {
 				`No matching pull request metadata found locally for current branch ${branch.name}`,
 				this.id,
 			);
+
 			matchingPullRequestMetadata =
 				await this.checkGitHubForPrBranch(branch);
 		}
@@ -706,10 +750,12 @@ export class ReviewManager extends Disposable {
 				`No matching pull request metadata found on GitHub for current branch ${branch.name}`,
 				this.id,
 			);
+
 			await this.clear(true);
 
 			return;
 		}
+
 		Logger.appendLine(
 			`Found matching pull request metadata for current branch ${branch.name}. Repo: ${matchingPullRequestMetadata.owner}/${matchingPullRequestMetadata.repositoryName} PR: ${matchingPullRequestMetadata.prNumber}`,
 			this.id,
@@ -722,6 +768,7 @@ export class ReviewManager extends Disposable {
 				`Current branch ${this._repository.state.HEAD.name} hasn't setup remote yet`,
 				this.id,
 			);
+
 			await this.clear(true);
 
 			return;
@@ -745,6 +792,7 @@ export class ReviewManager extends Disposable {
 
 			return;
 		}
+
 		Logger.appendLine(
 			`Resolved PR #${matchingPullRequestMetadata.prNumber}, state is ${pr.state}`,
 			this.id,
@@ -780,6 +828,7 @@ export class ReviewManager extends Disposable {
 		) {
 			return;
 		}
+
 		this._isShowingLastReviewChanges = pr.showChangesSinceReview;
 
 		if (previousPrNumber !== pr.number) {
@@ -790,6 +839,7 @@ export class ReviewManager extends Disposable {
 
 		if (pr.isClosed && !useReviewConfiguration.closed) {
 			Logger.appendLine("This PR is closed", this.id);
+
 			await this.clear(true);
 
 			return;
@@ -797,6 +847,7 @@ export class ReviewManager extends Disposable {
 
 		if (pr.isMerged && !useReviewConfiguration.merged) {
 			Logger.appendLine("This PR is merged", this.id);
+
 			await this.clear(true);
 
 			return;
@@ -812,11 +863,14 @@ export class ReviewManager extends Disposable {
 		}
 
 		const previousActive = this._folderRepoManager.activePullRequest;
+
 		this._folderRepoManager.activePullRequest = pr;
+
 		this._lastCommitSha = pr.head.sha;
 
 		if (this._isFirstLoad) {
 			this._isFirstLoad = false;
+
 			this._folderRepoManager.checkBranchUpToDate(pr, true);
 		}
 
@@ -831,6 +885,7 @@ export class ReviewManager extends Disposable {
 		}
 		// Don't await. Events will be fired as part of the initialization.
 		this.initializePullRequestData(pr);
+
 		await this.changesInPrDataProvider.addPrToView(
 			this._folderRepoManager,
 			pr,
@@ -840,6 +895,7 @@ export class ReviewManager extends Disposable {
 		);
 
 		Logger.appendLine(`Register comments provider`, this.id);
+
 		await this.registerCommentController();
 
 		this._activePrViewCoordinator.setPullRequest(
@@ -848,30 +904,40 @@ export class ReviewManager extends Disposable {
 			this,
 			previousActive,
 		);
+
 		this._localToDispose.push(
 			pr.onDidChangeChangesSinceReview(async (_) => {
 				this._changesSinceLastReviewProgress.startProgress();
+
 				this.changesInPrDataProvider.refresh();
+
 				await this.updateComments();
+
 				await this.reopenNewReviewDiffs();
+
 				this._changesSinceLastReviewProgress.endProgress();
 			}),
 		);
+
 		Logger.appendLine(`Register in memory content provider`, this.id);
+
 		await this.registerGitHubInMemContentProvider();
 
 		this.statusBarItem.text =
 			"$(git-pull-request) " +
 			vscode.l10n.t("Pull Request #{0}", pr.number);
+
 		this.statusBarItem.command = {
 			command: "pr.openDescription",
 			title: vscode.l10n.t("View Pull Request Description"),
 			arguments: [pr],
 		};
+
 		Logger.appendLine(
 			`Display pull request status bar indicator.`,
 			this.id,
 		);
+
 		this.statusBarItem.show();
 
 		this.layout(
@@ -879,6 +945,7 @@ export class ReviewManager extends Disposable {
 			updateLayout,
 			this.justSwitchedToReviewMode ? false : silent,
 		);
+
 		this.justSwitchedToReviewMode = false;
 	}
 
@@ -891,7 +958,9 @@ export class ReviewManager extends Disposable {
 			this._context.workspaceState.get<boolean>(FOCUS_REVIEW_MODE);
 
 		Logger.appendLine(`Using focus mode = ${isFocusMode}.`, this.id);
+
 		Logger.appendLine(`State validation silent = ${silent}.`, this.id);
+
 		Logger.appendLine(
 			`PR show should show = ${this._showPullRequest.shouldShow}.`,
 			this.id,
@@ -910,14 +979,17 @@ export class ReviewManager extends Disposable {
 					if (shouldShow) {
 						this._doFocusShow(pr, updateLayout);
 					}
+
 					showPRChangedDisposable.dispose();
 				});
+
 			this._localToDispose.push(showPRChangedDisposable);
 		}
 	}
 
 	private async reopenNewReviewDiffs() {
 		let hasOpenDiff = false;
+
 		await Promise.all(
 			vscode.window.tabGroups.all
 				.map((tabGroup) => {
@@ -934,6 +1006,7 @@ export class ReviewManager extends Disposable {
 										localChange.fileName === fileName.path
 									) {
 										hasOpenDiff = true;
+
 										vscode.window.tabGroups
 											.close(tab)
 											.then((_) =>
@@ -948,6 +1021,7 @@ export class ReviewManager extends Disposable {
 								}
 							}
 						}
+
 						return Promise.resolve(undefined);
 					});
 				})
@@ -981,9 +1055,11 @@ export class ReviewManager extends Disposable {
 					}
 				}
 			}
+
 			const change = fileChangeToShow.length
 				? fileChangeToShow[0]
 				: this._reviewModel.localFileChanges[0];
+
 			change.openDiff(this._folderRepoManager);
 		}
 	}
@@ -997,6 +1073,7 @@ export class ReviewManager extends Disposable {
 		if (shouldShowCommentsView !== "never" && pr.hasComments) {
 			commands.executeCommand("workbench.action.focusCommentsPanel");
 		}
+
 		this._activePrViewCoordinator.show(pr);
 
 		if (updateLayout) {
@@ -1013,6 +1090,7 @@ export class ReviewManager extends Disposable {
 					const localFileChangesDisposable =
 						this._reviewModel.onDidChangeLocalFileChanges(() => {
 							localFileChangesDisposable.dispose();
+
 							this.openDiff();
 						});
 				}
@@ -1031,6 +1109,7 @@ export class ReviewManager extends Disposable {
 		// Go through all open editors and find pr scheme editors that belong to the active pull request.
 		// Close the editors, and reopen them from the pull request.
 		const reopenFilenames: Set<[PRUriParams, PRUriParams]> = new Set();
+
 		await Promise.all(
 			vscode.window.tabGroups.all
 				.map((tabGroup) => {
@@ -1063,6 +1142,7 @@ export class ReviewManager extends Disposable {
 								}
 							}
 						}
+
 						return Promise.resolve(undefined);
 					});
 				})
@@ -1085,6 +1165,7 @@ export class ReviewManager extends Disposable {
 									preview: false,
 								}),
 							);
+
 							reopenFilenames.delete(prFileChange);
 
 							break;
@@ -1093,6 +1174,7 @@ export class ReviewManager extends Disposable {
 				}
 			}
 		}
+
 		return Promise.all(reopenPromises);
 	}
 
@@ -1109,6 +1191,7 @@ export class ReviewManager extends Disposable {
 		if (!change) {
 			return;
 		}
+
 		const suggestions: (SuggestionInformation & {
 			diffLine: vscode.LineChange;
 		})[] = [];
@@ -1129,6 +1212,7 @@ export class ReviewManager extends Disposable {
 				line.originalEndLineNumber < line.originalStartLineNumber
 					? line.originalStartLineNumber
 					: line.originalEndLineNumber;
+
 			suggestions.push({
 				suggestionContent: content,
 				originalLineLength:
@@ -1137,6 +1221,7 @@ export class ReviewManager extends Disposable {
 				diffLine: line,
 			});
 		}
+
 		await Promise.all(
 			suggestions.map(async (suggestion) => {
 				try {
@@ -1144,6 +1229,7 @@ export class ReviewManager extends Disposable {
 						editor.uri,
 						suggestion,
 					);
+
 					await vscode.commands.executeCommand(
 						"git.revertSelectedRanges",
 						suggestion.diffLine,
@@ -1173,13 +1259,16 @@ export class ReviewManager extends Disposable {
 			if (line.type === DiffChangeType.Control) {
 				continue;
 			}
+
 			if (line.type === DiffChangeType.Context) {
 				oldLineNumber++;
+
 				oldLength--;
 			} else {
 				break;
 			}
 		}
+
 		let j = hunk.diffLines.length - 1;
 
 		for (; j >= 0; j--) {
@@ -1198,22 +1287,29 @@ export class ReviewManager extends Disposable {
 			if (i > 1) {
 				// include from the beginning of the hunk
 				i--;
+
 				oldLineNumber--;
+
 				oldLength++;
 			} else if (j < hunk.diffLines.length - 1) {
 				// include from the end of the hunk
 				j++;
+
 				oldLength++;
 			} else {
 				// include entire context
 				i = 1;
+
 				j = hunk.diffLines.length - 1;
 			}
+
 			slice = hunk.diffLines.slice(i, j + 1);
 		}
 
 		hunk.diffLines = slice;
+
 		hunk.oldLength = oldLength;
+
 		hunk.oldLineNumber = oldLineNumber;
 	}
 
@@ -1244,6 +1340,7 @@ export class ReviewManager extends Disposable {
 		let diff: DiffHunk[] = [];
 
 		const convertedFiles: vscode.Uri[] = [];
+
 		await vscode.window.withProgress(
 			{
 				location: vscode.ProgressLocation.Window,
@@ -1261,6 +1358,7 @@ export class ReviewManager extends Disposable {
 							) {
 								return;
 							}
+
 							diff = parsePatch(
 								await this._folderRepoManager.repository.diffWithHEAD(
 									changeFile.uri.fsPath,
@@ -1268,6 +1366,7 @@ export class ReviewManager extends Disposable {
 							)
 								.map((hunk) => splitIntoSmallerHunks(hunk))
 								.flat();
+
 							await Promise.allSettled(
 								diff.map(async (hunk) => {
 									try {
@@ -1277,6 +1376,7 @@ export class ReviewManager extends Disposable {
 												hunk,
 											),
 										);
+
 										convertedFiles.push(changeFile.uri);
 									} catch (e) {
 										hasError = true;
@@ -1291,6 +1391,7 @@ export class ReviewManager extends Disposable {
 
 		if (!hasError) {
 			const checkoutAllFilesResponse = vscode.l10n.t("Reset all changes");
+
 			vscode.window
 				.showInformationMessage(
 					vscode.l10n.t(
@@ -1384,6 +1485,7 @@ export class ReviewManager extends Disposable {
 		await this._folderRepoManager.checkBranchUpToDate(pr, false);
 
 		await this.initializePullRequestData(pr);
+
 		await this._reviewCommentController?.update();
 
 		return Promise.resolve(void 0);
@@ -1449,6 +1551,7 @@ export class ReviewManager extends Disposable {
 				pr,
 				changeModel,
 			);
+
 			nodes.push(changedItem);
 		}
 
@@ -1460,14 +1563,17 @@ export class ReviewManager extends Disposable {
 	): Promise<void> {
 		try {
 			const contentChanges = await pr.getFileChangesInfo();
+
 			this._reviewModel.localFileChanges = await this.getLocalChangeNodes(
 				pr,
 				contentChanges,
 			);
+
 			await Promise.all([
 				pr.initializeReviewThreadCacheAndReviewComments(),
 				pr.initializePullRequestFileViewState(),
 			]);
+
 			this._folderRepoManager.setFileViewedContext();
 
 			const outdatedComments = pr.comments.filter(
@@ -1543,6 +1649,7 @@ export class ReviewManager extends Disposable {
 					obsoleteFileChanges.push(obsoleteFileChange);
 				}
 			}
+
 			this._reviewModel.obsoleteFileChanges = obsoleteFileChanges;
 
 			return Promise.resolve(void 0);
@@ -1554,6 +1661,7 @@ export class ReviewManager extends Disposable {
 	private async registerGitHubInMemContentProvider() {
 		try {
 			this._inMemGitHubContentProvider?.dispose();
+
 			this._inMemGitHubContentProvider = undefined;
 
 			const pr = this._folderRepoManager.activePullRequest;
@@ -1561,6 +1669,7 @@ export class ReviewManager extends Disposable {
 			if (!pr) {
 				return;
 			}
+
 			const rawChanges = await pr.getFileChangesInfo();
 
 			const mergeBase = pr.mergeBase;
@@ -1568,6 +1677,7 @@ export class ReviewManager extends Disposable {
 			if (!mergeBase) {
 				return;
 			}
+
 			const changes = rawChanges.map((change) => {
 				if (change instanceof SlimFileChange) {
 					return new RemoteFileChangeModel(
@@ -1576,6 +1686,7 @@ export class ReviewManager extends Disposable {
 						pr,
 					);
 				}
+
 				return new InMemFileChangeModel(
 					this._folderRepoManager,
 					pr as PullRequestModel & IResolvedPullRequestModel,
@@ -1594,6 +1705,7 @@ export class ReviewManager extends Disposable {
 						if (!params) {
 							return "";
 						}
+
 						const fileChange = changes.find(
 							(contentChange) =>
 								contentChange.fileName === params.fileName,
@@ -1644,6 +1756,7 @@ export class ReviewManager extends Disposable {
 						if (changedLocalFilesChangesDisposable) {
 							changedLocalFilesChangesDisposable.dispose();
 						}
+
 						await this.doRegisterCommentController();
 					}
 				},
@@ -1671,12 +1784,16 @@ export class ReviewManager extends Disposable {
 			`Switch to Pull Request #${pr.number} - start`,
 			this.id,
 		);
+
 		this.statusBarItem.text = vscode.l10n.t(
 			"{0} Switching to Review Mode",
 			"$(sync~spin)",
 		);
+
 		this.statusBarItem.command = undefined;
+
 		this.statusBarItem.show();
+
 		this.switchingToReviewMode = true;
 
 		try {
@@ -1716,6 +1833,7 @@ export class ReviewManager extends Disposable {
 			}
 		} catch (e) {
 			Logger.error(`Checkout failed #${JSON.stringify(e)}`, this.id);
+
 			this.switchingToReviewMode = false;
 
 			if (e.message === "User aborted") {
@@ -1752,6 +1870,7 @@ export class ReviewManager extends Disposable {
 			} else {
 				this.statusBarItem.hide();
 			}
+
 			return;
 		}
 
@@ -1762,31 +1881,40 @@ export class ReviewManager extends Disposable {
 					"Fetching additional data: {0}",
 					`pr/${pr.number}`,
 				);
+
 			this.statusBarItem.command = undefined;
+
 			this.statusBarItem.show();
 
 			await this._folderRepoManager.fulfillPullRequestMissingInfo(pr);
+
 			this._upgradePullRequestEditors(pr);
 
 			/* __GDPR__
 				"pr.checkout" : {}
 			*/
 			this._telemetry.sendTelemetryEvent("pr.checkout");
+
 			Logger.appendLine(
 				`Switch to Pull Request #${pr.number} - done`,
 				this.id,
 			);
 		} finally {
 			this.setStatusForPr(pr);
+
 			await this._repository.status();
 		}
 	}
 
 	private setStatusForPr(pr: PullRequestModel) {
 		this.switchingToReviewMode = false;
+
 		this.justSwitchedToReviewMode = true;
+
 		this.statusBarItem.text = vscode.l10n.t("Pull Request #{0}", pr.number);
+
 		this.statusBarItem.command = undefined;
+
 		this.statusBarItem.show();
 	}
 
@@ -1825,6 +1953,7 @@ export class ReviewManager extends Disposable {
 			if (!fork) {
 				return;
 			}
+
 			selectedRemote = (
 				await this._folderRepoManager.getGitHubRemotes()
 			).find((element) => element.remoteName === fork);
@@ -1833,12 +1962,16 @@ export class ReviewManager extends Disposable {
 		if (!selectedRemote) {
 			return;
 		}
+
 		const remote: Remote = selectedRemote;
 
 		return new Promise<Branch | undefined>(async (resolve) => {
 			const inputBox = vscode.window.createInputBox();
+
 			inputBox.value = branch.name!;
+
 			inputBox.ignoreFocusOut = true;
+
 			inputBox.prompt =
 				potentialTargetRemotes.length === 1
 					? vscode.l10n.t(
@@ -1871,10 +2004,14 @@ export class ReviewManager extends Disposable {
 
 				inputBox.busy = false;
 			};
+
 			await validate(branch.name!);
+
 			inputBox.onDidChangeValue(validate.bind(this));
+
 			inputBox.onDidAccept(async () => {
 				inputBox.validationMessage = undefined;
+
 				inputBox.hide();
 
 				try {
@@ -1971,6 +2108,7 @@ export class ReviewManager extends Disposable {
 
 				if (defaultUpstream) {
 					const { owner, name } = defaultUpstream;
+
 					remoteQuickPick.picked =
 						remoteQuickPick.owner === owner &&
 						remoteQuickPick.name === name;
@@ -1979,6 +2117,7 @@ export class ReviewManager extends Disposable {
 						defaultUpstreamWasARemote = true;
 					}
 				}
+
 				return remoteQuickPick;
 			},
 		);
@@ -2021,6 +2160,7 @@ export class ReviewManager extends Disposable {
 					this.changesInPrDataProvider.getDescriptionNode(
 						this._folderRepoManager,
 					);
+
 				await openDescription(
 					this._telemetry,
 					createdPR,
@@ -2040,11 +2180,14 @@ export class ReviewManager extends Disposable {
 							defaultBranch,
 						);
 					}
+
 					if (postCreate === "checkoutDefaultBranchAndShow") {
 						await commands.executeCommand("pr:github.focus");
+
 						await this._folderRepoManager.checkoutDefaultBranch(
 							defaultBranch,
 						);
+
 						await this._pullRequestsTree.expandPullRequest(
 							createdPR,
 						);
@@ -2058,6 +2201,7 @@ export class ReviewManager extends Disposable {
 					}
 				}
 			}
+
 			await this.updateState(false, false);
 		};
 
@@ -2080,6 +2224,7 @@ export class ReviewManager extends Disposable {
 		const descriptionNode = this.changesInPrDataProvider.getDescriptionNode(
 			this._folderRepoManager,
 		);
+
 		await openDescription(
 			this._telemetry,
 			pullRequest,
@@ -2104,6 +2249,7 @@ export class ReviewManager extends Disposable {
 				FOCUS_REVIEW_MODE,
 				true,
 			);
+
 			await this._context.workspaceState.update(FOCUS_REVIEW_MODE, true);
 		} else {
 			vscode.commands.executeCommand(
@@ -2111,6 +2257,7 @@ export class ReviewManager extends Disposable {
 				FOCUS_REVIEW_MODE,
 				false,
 			);
+
 			this._context.workspaceState.update(FOCUS_REVIEW_MODE, false);
 		}
 	}
@@ -2132,6 +2279,7 @@ export class ReviewManager extends Disposable {
 			}
 
 			this._prNumber = undefined;
+
 			this._folderRepoManager.activePullRequest = undefined;
 
 			if (this._statusBarItem) {
@@ -2145,12 +2293,16 @@ export class ReviewManager extends Disposable {
 			// comments are recalculated when getting the data and the change decoration fired then,
 			// so comments only needs to be emptied in this case.
 			activePullRequest?.clear();
+
 			this._folderRepoManager.setFileViewedContext();
 		}
 
 		this._reviewCommentController?.dispose();
+
 		this._reviewCommentController = undefined;
+
 		this._inMemGitHubContentProvider?.dispose();
+
 		this._inMemGitHubContentProvider = undefined;
 	}
 
@@ -2232,6 +2384,7 @@ export class ReviewManager extends Disposable {
 							.map((diffLine) => diffLine.text),
 					)
 					.reduce((prev, curr) => prev.concat(...curr), []);
+
 				ret.push(...lines);
 			}
 
@@ -2254,6 +2407,7 @@ export class ReviewManager extends Disposable {
 
 	override dispose() {
 		super.dispose();
+
 		this.clear(true);
 	}
 
@@ -2289,17 +2443,22 @@ export class ReviewManager extends Disposable {
 
 export class ShowPullRequest {
 	private _shouldShow: boolean = false;
+
 	private _onChangedShowValue: vscode.EventEmitter<boolean> =
 		new vscode.EventEmitter();
+
 	public readonly onChangedShowValue: vscode.Event<boolean> =
 		this._onChangedShowValue.event;
 
 	constructor() {}
+
 	get shouldShow(): boolean {
 		return this._shouldShow;
 	}
+
 	set shouldShow(shouldShow: boolean) {
 		const oldShowValue = this._shouldShow;
+
 		this._shouldShow = shouldShow;
 
 		if (oldShowValue !== this._shouldShow) {

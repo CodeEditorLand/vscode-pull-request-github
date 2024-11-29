@@ -18,8 +18,11 @@ import { GitHubRepository } from "./githubRepository";
 
 interface MergeEditorInputData {
 	uri: vscode.Uri;
+
 	title?: string;
+
 	detail?: string;
+
 	description?: string;
 }
 
@@ -34,15 +37,19 @@ class MergeOutputProvider
 	implements vscode.FileSystemProvider
 {
 	private _createTime: number = 0;
+
 	private _modifiedTimes: Map<string, number> = new Map();
+
 	private _mergedFiles: Map<string, Uint8Array> = new Map();
 
 	get mergeResults(): Map<string, Uint8Array> {
 		return this._mergedFiles;
 	}
+
 	private _onDidChangeFile = this._register(
 		new vscode.EventEmitter<vscode.FileChangeEvent[]>(),
 	);
+
 	onDidChangeFile: vscode.Event<vscode.FileChangeEvent[]> =
 		this._onDidChangeFile.event;
 
@@ -50,12 +57,15 @@ class MergeOutputProvider
 		private readonly _conflictResolutionModel: ConflictResolutionModel,
 	) {
 		super();
+
 		this._createTime = new Date().getTime();
 	}
+
 	watch(
 		_uri: vscode.Uri,
 		_options: {
 			readonly recursive: boolean;
+
 			readonly excludes: readonly string[];
 		},
 	): vscode.Disposable {
@@ -64,6 +74,7 @@ class MergeOutputProvider
 			dispose: () => {},
 		};
 	}
+
 	stat(uri: vscode.Uri): vscode.FileStat {
 		return {
 			type: vscode.FileType.File,
@@ -72,19 +83,24 @@ class MergeOutputProvider
 			size: this._mergedFiles.get(uri.path)?.length ?? 0,
 		};
 	}
+
 	readDirectory(_uri: vscode.Uri): [string, vscode.FileType][] {
 		throw new Error("Method not implemented.");
 	}
+
 	createDirectory(_uri: vscode.Uri): void {
 		throw new Error("Method not implemented.");
 	}
+
 	async readFile(uri: vscode.Uri): Promise<Uint8Array> {
 		if (!this._mergedFiles.has(uri.path)) {
 			// If the result file contains a conflict marker then the merge editor will automagically compute the merge result.
 			this.updateFile(uri.path, buffer.Buffer.from(ORIGINAL_FILE));
 		}
+
 		return this._mergedFiles.get(uri.path)!;
 	}
+
 	writeFile(
 		uri: vscode.Uri,
 		content: Uint8Array,
@@ -92,9 +108,11 @@ class MergeOutputProvider
 	): void {
 		this.updateFile(uri.path, content);
 	}
+
 	delete(_uri: vscode.Uri, _options: { readonly recursive: boolean }): void {
 		throw new Error("Method not implemented.");
 	}
+
 	rename(
 		_oldUri: vscode.Uri,
 		_newUri: vscode.Uri,
@@ -105,6 +123,7 @@ class MergeOutputProvider
 
 	private updateFile(file: string, contents: Uint8Array): void {
 		this._mergedFiles.set(file, contents);
+
 		this._modifiedTimes.set(file, new Date().getTime());
 	}
 
@@ -119,13 +138,16 @@ class MergeOutputProvider
 				}),
 				type: vscode.FileChangeType.Changed,
 			});
+
 			this.updateFile(file, buffer.Buffer.from(ORIGINAL_FILE));
 		}
+
 		this._onDidChangeFile.fire(fileEvents);
 	}
 
 	override dispose(): void {
 		super.dispose();
+
 		this._mergedFiles.clear();
 	}
 }
@@ -139,6 +161,7 @@ export class ConflictResolutionCoordinator extends Disposable {
 		private readonly _githubRepositories: GitHubRepository[],
 	) {
 		super();
+
 		this._mergeOutputProvider = this._register(
 			new MergeOutputProvider(this._conflictResolutionModel),
 		);
@@ -174,6 +197,7 @@ export class ConflictResolutionCoordinator extends Disposable {
 			input2: base,
 			output: mergeOutput,
 		};
+
 		await commands.executeCommand("_open.mergeEditor", options);
 	}
 
@@ -185,12 +209,14 @@ export class ConflictResolutionCoordinator extends Disposable {
 				{ isReadonly: true },
 			),
 		);
+
 		this._register(
 			vscode.workspace.registerFileSystemProvider(
 				this._conflictResolutionModel.mergeScheme,
 				this._mergeOutputProvider,
 			),
 		);
+
 		this._register(
 			vscode.commands.registerCommand(
 				"pr.resolveConflict",
@@ -199,6 +225,7 @@ export class ConflictResolutionCoordinator extends Disposable {
 				},
 			),
 		);
+
 		this._register(
 			vscode.commands.registerCommand(
 				"pr.acceptMerge",
@@ -207,6 +234,7 @@ export class ConflictResolutionCoordinator extends Disposable {
 				},
 			),
 		);
+
 		this._register(
 			vscode.commands.registerCommand(
 				"pr.exitConflictResolutionMode",
@@ -227,11 +255,13 @@ export class ConflictResolutionCoordinator extends Disposable {
 				},
 			),
 		);
+
 		this._register(
 			vscode.commands.registerCommand("pr.completeMerge", async () => {
 				return this.exitConflictResolutionMode(true);
 			}),
 		);
+
 		this._register(
 			new ConflictResolutionTreeView(this._conflictResolutionModel),
 		);
@@ -241,6 +271,7 @@ export class ConflictResolutionCoordinator extends Disposable {
 		if (!(uri instanceof vscode.Uri)) {
 			return;
 		}
+
 		const { activeTab } = vscode.window.tabGroups.activeTabGroup;
 
 		if (
@@ -258,6 +289,7 @@ export class ConflictResolutionCoordinator extends Disposable {
 			const contents = new TextDecoder().decode(
 				this._mergeOutputProvider.mergeResults.get(uri.path)!,
 			);
+
 			this._conflictResolutionModel.addResolution(
 				uri.path.substring(1),
 				contents,
@@ -270,8 +302,11 @@ export class ConflictResolutionCoordinator extends Disposable {
 			"pr.conflictResolution.start" : {}
 		*/
 		this._telemetry.sendTelemetryEvent("pr.conflictResolution.start");
+
 		await commands.setContext(contexts.RESOLVING_CONFLICTS, true);
+
 		this.register();
+
 		this.openConflict(this._conflictResolutionModel.startingConflicts[0]);
 	}
 
@@ -290,6 +325,7 @@ export class ConflictResolutionCoordinator extends Disposable {
 		});
 
 		this._mergeOutputProvider.clear();
+
 		await commands.setContext(contexts.RESOLVING_CONFLICTS, false);
 
 		const tabsToClose: vscode.Tab[] = [];
@@ -305,8 +341,11 @@ export class ConflictResolutionCoordinator extends Disposable {
 				}
 			}
 		}
+
 		await vscode.window.tabGroups.close(tabsToClose);
+
 		this._onExitConflictResolutionMode.fire(allConflictsResolved);
+
 		this.dispose();
 	}
 

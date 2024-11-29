@@ -55,6 +55,7 @@ export function openFileCommand(
 	if (activeTextEditor && activeTextEditor.document.uri.path === uri.path) {
 		opts.selection = activeTextEditor.selection;
 	}
+
 	return {
 		command: "vscode.open",
 		arguments: [uri, opts],
@@ -81,6 +82,7 @@ async function openDiffCommand(
 		if (status === GitChangeType.ADD) {
 			parentURI = EMPTY_IMAGE_URI;
 		}
+
 		if (status === GitChangeType.DELETE) {
 			headURI = EMPTY_IMAGE_URI;
 		}
@@ -109,14 +111,20 @@ export class FileChangeNode extends TreeNode implements vscode.TreeItem {
 		| vscode.Uri
 		| { light: string | vscode.Uri; dark: string | vscode.Uri }
 		| vscode.ThemeIcon;
+
 	public fileChangeResourceUri: vscode.Uri;
+
 	public contextValue: string;
+
 	public command: vscode.Command;
+
 	public opts: vscode.TextDocumentShowOptions;
 
 	public checkboxState: {
 		state: vscode.TreeItemCheckboxState;
+
 		tooltip?: string;
+
 		accessibilityInformation: vscode.AccessibilityInformation;
 	};
 
@@ -152,13 +160,19 @@ export class FileChangeNode extends TreeNode implements vscode.TreeItem {
 		const viewed =
 			this.pullRequest.fileChangeViewedState[this.changeModel.fileName] ??
 			ViewedState.UNVIEWED;
+
 		this.contextValue = `${Schemes.FileChange}:${GitChangeType[this.changeModel.status]}:${
 			viewed === ViewedState.VIEWED ? "viewed" : "unviewed"
 		}`;
+
 		this.label = path.basename(this.changeModel.fileName);
+
 		this.iconPath = vscode.ThemeIcon.File;
+
 		this.opts = {};
+
 		this.updateShowOptions();
+
 		this.fileChangeResourceUri = toResourceUri(
 			vscode.Uri.file(this.changeModel.fileName),
 			this.pullRequest.number,
@@ -168,6 +182,7 @@ export class FileChangeNode extends TreeNode implements vscode.TreeItem {
 				? this.changeModel.change.previousFileName
 				: undefined,
 		);
+
 		this.updateViewed(viewed);
 
 		this.childrenDisposables.push(
@@ -193,6 +208,7 @@ export class FileChangeNode extends TreeNode implements vscode.TreeItem {
 
 				if (matchingChange) {
 					this.updateViewed(matchingChange.viewed);
+
 					this.refresh(this);
 				}
 			}),
@@ -224,9 +240,11 @@ export class FileChangeNode extends TreeNode implements vscode.TreeItem {
 
 	updateViewed(viewed: ViewedState) {
 		this.changeModel.updateViewed(viewed);
+
 		this.contextValue = `${Schemes.FileChange}:${GitChangeType[this.changeModel.status]}:${
 			viewed === ViewedState.VIEWED ? "viewed" : "unviewed"
 		}`;
+
 		this.checkboxState =
 			viewed === ViewedState.VIEWED
 				? {
@@ -249,6 +267,7 @@ export class FileChangeNode extends TreeNode implements vscode.TreeItem {
 							),
 						},
 					};
+
 		this.pullRequestManager.setFileViewedContext();
 	}
 
@@ -258,6 +277,7 @@ export class FileChangeNode extends TreeNode implements vscode.TreeItem {
 			!fromCheckboxChanged,
 			"viewed",
 		);
+
 		this.pullRequestManager.setFileViewedContext();
 	}
 
@@ -267,6 +287,7 @@ export class FileChangeNode extends TreeNode implements vscode.TreeItem {
 			!fromCheckboxChanged,
 			"unviewed",
 		);
+
 		this.pullRequestManager.setFileViewedContext();
 	}
 
@@ -275,6 +296,7 @@ export class FileChangeNode extends TreeNode implements vscode.TreeItem {
 			newState === vscode.TreeItemCheckboxState.Checked
 				? ViewedState.VIEWED
 				: ViewedState.UNVIEWED;
+
 		this.updateViewed(viewed);
 	}
 
@@ -300,6 +322,7 @@ export class FileChangeNode extends TreeNode implements vscode.TreeItem {
 			const endLine =
 				reviewThreadsForNode[0].endLine ??
 				reviewThreadsForNode[0].originalEndLine;
+
 			this.opts.selection = new vscode.Range(startLine, 0, endLine, 0);
 		} else {
 			delete this.opts.selection;
@@ -352,6 +375,7 @@ export class RemoteFileChangeNode
 		if (description === ".") {
 			description = "";
 		}
+
 		return description;
 	}
 
@@ -362,6 +386,7 @@ export class RemoteFileChangeNode
 		changeModel: RemoteFileChangeModel,
 	) {
 		super(parent, folderRepositoryManager, pullRequest, changeModel);
+
 		this.fileChangeResourceUri = toResourceUri(
 			vscode.Uri.parse(changeModel.blobUrl!),
 			changeModel.pullRequest.number,
@@ -369,6 +394,7 @@ export class RemoteFileChangeNode
 			changeModel.status,
 			changeModel.previousFileName,
 		);
+
 		this.command = {
 			command: "pr.openFileOnGitHub",
 			title: "Open File on GitHub",
@@ -463,6 +489,7 @@ export class GitFileChangeNode
 	}
 
 	private _useViewChangesCommand = false;
+
 	public useViewChangesCommand() {
 		this._useViewChangesCommand = true;
 	}
@@ -594,9 +621,13 @@ export class GitFileChangeNode
  */
 export class GitHubFileChangeNode extends TreeNode implements vscode.TreeItem {
 	public description: string;
+
 	public iconPath: vscode.ThemeIcon;
+
 	public fileChangeResourceUri: vscode.Uri;
+
 	public readonly tooltip: string;
+
 	public command: vscode.Command;
 
 	constructor(
@@ -611,9 +642,13 @@ export class GitHubFileChangeNode extends TreeNode implements vscode.TreeItem {
 		super(parent);
 
 		const scheme = isLocal ? Schemes.GitPr : Schemes.GithubPr;
+
 		this.label = fileName;
+
 		this.tooltip = fileName;
+
 		this.iconPath = vscode.ThemeIcon.File;
+
 		this.fileChangeResourceUri = vscode.Uri.file(fileName).with({
 			scheme,
 			query: JSON.stringify({ status, fileName }),

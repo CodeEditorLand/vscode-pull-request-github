@@ -22,6 +22,7 @@ export class IssueSummarizationTool
 				invocationMessage: vscode.l10n.t("Summarizing issue"),
 			};
 		}
+
 		const shortenedTitle = options.input.title.length > 40;
 
 		const maxLengthTitle = shortenedTitle
@@ -59,6 +60,7 @@ Patch: ${fileChange.patch}
 `;
 			}
 		}
+
 		const comments = options.input.comments;
 
 		if (comments) {
@@ -70,6 +72,7 @@ Body: ${comment.body}
 `;
 			}
 		}
+
 		const models = await vscode.lm.selectChatModels({
 			vendor: "copilot",
 			family: "gpt-4o",
@@ -87,11 +90,13 @@ Body: ${comment.body}
 					this.summarizeInstructions(repo, owner),
 				),
 			];
+
 			messages.push(
 				vscode.LanguageModelChatMessage.User(
 					`The issue or pull request information is as follows:`,
 				),
 			);
+
 			messages.push(
 				vscode.LanguageModelChatMessage.User(issueOrPullRequestInfo),
 			);

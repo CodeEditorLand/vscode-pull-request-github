@@ -44,6 +44,7 @@ export function getCommentingRanges(
 						endingLine = getZeroBased(diffLine.oldLineNumber);
 					} else {
 						startingLine = getZeroBased(diffLine.oldLineNumber);
+
 						endingLine = getZeroBased(diffLine.oldLineNumber);
 					}
 				} else {
@@ -54,7 +55,9 @@ export function getCommentingRanges(
 						ranges.push(
 							new vscode.Range(startingLine, 0, endingLine, 0),
 						);
+
 						startingLine = undefined;
+
 						endingLine = undefined;
 					}
 				}
@@ -62,7 +65,9 @@ export function getCommentingRanges(
 
 			if (startingLine !== undefined && endingLine !== undefined) {
 				ranges.push(new vscode.Range(startingLine, 0, endingLine, 0));
+
 				startingLine = undefined;
+
 				endingLine = undefined;
 			} else if (ranges.length === 0) {
 				Logger.debug(
@@ -73,7 +78,9 @@ export function getCommentingRanges(
 		} else {
 			if (diffHunk.newLineNumber) {
 				startingLine = getZeroBased(diffHunk.newLineNumber);
+
 				length = getZeroBased(diffHunk.newLength);
+
 				ranges.push(
 					new vscode.Range(startingLine, 0, startingLine + length, 0),
 				);

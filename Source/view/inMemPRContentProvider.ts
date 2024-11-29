@@ -75,6 +75,7 @@ export class InMemPRFileSystemProvider extends RepositoryFileSystemProvider {
 					pr,
 				);
 			}
+
 			return new InMemFileChangeModel(
 				folderRepositoryManager,
 				pr as PullRequestModel & IResolvedPullRequestModel,
@@ -92,6 +93,7 @@ export class InMemPRFileSystemProvider extends RepositoryFileSystemProvider {
 		return new Promise<void>((resolve) => {
 			const timeout = setTimeout(() => {
 				disposable.dispose();
+
 				resolve();
 			}, milliseconds);
 
@@ -99,7 +101,9 @@ export class InMemPRFileSystemProvider extends RepositoryFileSystemProvider {
 				(e) => {
 					if (e === ReposManagerState.RepositoriesLoaded) {
 						clearTimeout(timeout);
+
 						disposable.dispose();
+
 						resolve();
 					}
 				},
@@ -119,12 +123,14 @@ export class InMemPRFileSystemProvider extends RepositoryFileSystemProvider {
 		) {
 			await this.waitForRepos(4000);
 		}
+
 		const folderRepositoryManager =
 			this.reposManagers.getManagerForFile(uri);
 
 		if (!folderRepositoryManager) {
 			return;
 		}
+
 		let repo = folderRepositoryManager.findRepo(
 			(repo) => repo.remote.remoteName === prUriParams.remoteName,
 		);
@@ -133,13 +139,16 @@ export class InMemPRFileSystemProvider extends RepositoryFileSystemProvider {
 			// Depending on the git provider, we might not have a GitHub repo right away, even if we already have git repos.
 			// This can take a long time.
 			await this.waitForGitHubRepos(folderRepositoryManager, 10000);
+
 			repo = folderRepositoryManager.findRepo(
 				(repo) => repo.remote.remoteName === prUriParams.remoteName,
 			);
 		}
+
 		if (!repo) {
 			return;
 		}
+
 		const pr = await folderRepositoryManager.resolvePullRequest(
 			repo.remote.owner,
 			repo.remote.repositoryName,
@@ -149,6 +158,7 @@ export class InMemPRFileSystemProvider extends RepositoryFileSystemProvider {
 		if (!pr) {
 			return;
 		}
+
 		const rawChanges = await pr.getFileChangesInfo();
 
 		const mergeBase = pr.mergeBase;
@@ -156,12 +166,14 @@ export class InMemPRFileSystemProvider extends RepositoryFileSystemProvider {
 		if (!mergeBase) {
 			return;
 		}
+
 		const changes = this.resolveChanges(
 			rawChanges,
 			pr,
 			folderRepositoryManager,
 			mergeBase,
 		);
+
 		this.registerTextDocumentContentProvider(
 			pr.number,
 			async (uri: vscode.Uri) => {
@@ -170,6 +182,7 @@ export class InMemPRFileSystemProvider extends RepositoryFileSystemProvider {
 				if (!params) {
 					return "";
 				}
+
 				const fileChange = changes.find(
 					(contentChange) =>
 						contentChange.fileName === params.fileName,
@@ -217,6 +230,7 @@ export class InMemPRFileSystemProvider extends RepositoryFileSystemProvider {
 		if (!prUriParams || prUriParams.prNumber === undefined) {
 			return new TextEncoder().encode("");
 		}
+
 		const providerResult = await this.readFileWithProvider(
 			uri,
 			prUriParams.prNumber,
@@ -239,7 +253,9 @@ let inMemPRFileSystemProvider: InMemPRFileSystemProvider | undefined;
 
 export function getInMemPRFileSystemProvider(initialize?: {
 	reposManager: RepositoriesManager;
+
 	gitAPI: GitApiImpl;
+
 	credentialStore: CredentialStore;
 }): InMemPRFileSystemProvider | undefined {
 	if (!inMemPRFileSystemProvider && initialize) {
@@ -249,6 +265,7 @@ export function getInMemPRFileSystemProvider(initialize?: {
 			initialize.credentialStore,
 		);
 	}
+
 	return inMemPRFileSystemProvider;
 }
 
@@ -292,6 +309,7 @@ export async function provideDocumentContentForChangeModel(
 			}
 		} catch (e) {
 			Logger.error(`Fetching file content failed: ${e}`, "PR");
+
 			vscode.window
 				.showWarningMessage(
 					"Opening this file locally failed. Would you like to view it on GitHub?",

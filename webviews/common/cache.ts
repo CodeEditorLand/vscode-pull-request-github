@@ -28,5 +28,6 @@ export function setState(pullRequest: PullRequest): void {
 
 export function updateState(data: Partial<PullRequest>): void {
 	const pullRequest = vscode.getState();
+
 	vscode.setState(Object.assign(pullRequest, data));
 }

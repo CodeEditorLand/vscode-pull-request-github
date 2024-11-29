@@ -33,6 +33,7 @@ export class ChatParticipantState {
 				}
 			}
 		}
+
 		return [];
 	}
 
@@ -94,6 +95,7 @@ export class ChatParticipant extends Disposable {
 					),
 			),
 		);
+
 		ghprChatParticipant.iconPath = vscode.Uri.joinPath(
 			context.extensionUri,
 			"resources/icons/github_logo.png",
@@ -147,11 +149,13 @@ export class ChatParticipant extends Disposable {
 
 			if (requestedTool) {
 				options.toolMode = vscode.LanguageModelChatToolMode.Required;
+
 				options.tools = allTools.filter(
 					(tool) => tool.name === requestedTool.name,
 				);
 			} else {
 				options.toolMode = undefined;
+
 				options.tools = allTools;
 			}
 
@@ -192,6 +196,7 @@ export class ChatParticipant extends Disposable {
 							input,
 							toolInvocationToken: request.toolInvocationToken,
 						};
+
 					toolCalls.push({
 						call: part,
 						result: vscode.lm.invokeTool(
@@ -207,6 +212,7 @@ export class ChatParticipant extends Disposable {
 			if (toolCalls.length) {
 				const assistantMsg =
 					vscode.LanguageModelChatMessage.Assistant("");
+
 				assistantMsg.content = toolCalls.map(
 					(toolCall) =>
 						new vscode.LanguageModelToolCallPart(
@@ -215,6 +221,7 @@ export class ChatParticipant extends Disposable {
 							toolCall.call.input,
 						),
 				);
+
 				this.state.addMessage(assistantMsg);
 
 				let shownToUser = false;
@@ -248,8 +255,11 @@ export class ChatParticipant extends Disposable {
 									] as vscode.LanguageModelTextPart
 								).value,
 							);
+
 							markdown.supportHtml = true;
+
 							stream.markdown(markdown);
+
 							shownToUser = true;
 						} else if (part.value === TOOL_COMMAND_RESULT) {
 							commands.push(
@@ -272,14 +282,19 @@ export class ChatParticipant extends Disposable {
 							}
 						}
 					}
+
 					const message = vscode.LanguageModelChatMessage.User("");
+
 					message.content = [result!];
+
 					this.state.addMessage(message);
 
 					if (additionalContent.length) {
 						const additionalMessage =
 							vscode.LanguageModelChatMessage.User("");
+
 						additionalMessage.content = additionalContent;
+
 						this.state.addMessage(additionalMessage);
 					}
 				}
@@ -293,7 +308,9 @@ export class ChatParticipant extends Disposable {
 				return runWithFunctions();
 			}
 		};
+
 		await runWithFunctions();
+
 		this.addButtons(stream, commands);
 	}
 

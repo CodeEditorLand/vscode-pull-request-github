@@ -49,7 +49,9 @@ const defaultCreateParams: CreateParamsNew = {
 
 export class CreatePRContextNew {
 	public createParams: CreateParamsNew;
+
 	private _titleStack: string[] = [];
+
 	private _descriptionStack: string[] = [];
 
 	constructor(
@@ -67,6 +69,7 @@ export class CreatePRContextNew {
 		if (!this.createParams.canModifyBranches) {
 			return true;
 		}
+
 		if (
 			this.createParams.baseRemote &&
 			this.createParams.compareRemote &&
@@ -87,6 +90,7 @@ export class CreatePRContextNew {
 		) {
 			return false;
 		}
+
 		return true;
 	}
 
@@ -110,15 +114,18 @@ export class CreatePRContextNew {
 	}
 
 	private _requestedInitialize = false;
+
 	public initialize = async (): Promise<void> => {
 		if (!this._requestedInitialize) {
 			this._requestedInitialize = true;
+
 			this.postMessage({ command: "pr.requestInitialize" });
 		}
 	};
 
 	public cancelCreate = (): Promise<void> => {
 		const args = this.copyParams();
+
 		vscode.setState(defaultCreateParams);
 
 		return this.postMessage({ command: "pr.cancelCreate", args });
@@ -131,6 +138,7 @@ export class CreatePRContextNew {
 		this.createParams = reset
 			? { ...defaultCreateParams, ...params }
 			: { ...this.createParams, ...params };
+
 		vscode.setState(this.createParams);
 
 		if (this.onchange) {
@@ -165,10 +173,14 @@ export class CreatePRContextNew {
 				response.baseRemote.repositoryName
 		) {
 			updateValues.defaultMergeMethod = response.defaultMergeMethod;
+
 			updateValues.allowAutoMerge = response.allowAutoMerge;
+
 			updateValues.mergeMethodsAvailability =
 				response.mergeMethodsAvailability;
+
 			updateValues.autoMergeDefault = response.autoMergeDefault;
+
 			updateValues.baseHasMergeQueue = response.baseHasMergeQueue;
 
 			if (
@@ -179,6 +191,7 @@ export class CreatePRContextNew {
 					? false
 					: updateValues.autoMergeDefault;
 			}
+
 			updateValues.defaultTitle = response.defaultTitle;
 
 			if (
@@ -188,6 +201,7 @@ export class CreatePRContextNew {
 			) {
 				updateValues.pendingTitle = response.defaultTitle;
 			}
+
 			updateValues.defaultDescription = response.defaultDescription;
 
 			if (
@@ -242,15 +256,18 @@ export class CreatePRContextNew {
 
 		const updateValues: {
 			pendingTitle?: string;
+
 			pendingDescription?: string;
 		} = {};
 
 		if (response.title) {
 			updateValues.pendingTitle = response.title;
 		}
+
 		if (response.description) {
 			updateValues.pendingDescription = response.description;
 		}
+
 		if (
 			updateValues.pendingTitle &&
 			this.createParams.pendingTitle &&
@@ -258,6 +275,7 @@ export class CreatePRContextNew {
 		) {
 			this._titleStack.push(this.createParams.pendingTitle);
 		}
+
 		if (
 			updateValues.pendingDescription &&
 			this.createParams.pendingDescription &&
@@ -266,6 +284,7 @@ export class CreatePRContextNew {
 		) {
 			this._descriptionStack.push(this.createParams.pendingDescription);
 		}
+
 		this.updateState(updateValues);
 	};
 
@@ -295,6 +314,7 @@ export class CreatePRContextNew {
 		const result: PreReviewState = await this.postMessage({
 			command: "pr.preReview",
 		});
+
 		this.updateState({ preReviewState: result, reviewing: false });
 	};
 
@@ -307,6 +327,7 @@ export class CreatePRContextNew {
 
 		if (!this.createParams.pendingTitle) {
 			this.updateState({ showTitleValidationError: true });
+
 			isValid = false;
 		}
 
@@ -345,7 +366,9 @@ export class CreatePRContextNew {
 			this.updateState({ creating: false });
 
 			const args: CreatePullRequestNew = this.copyParams();
+
 			vscode.setState(defaultCreateParams);
+
 			await this.postMessage({
 				command: "pr.create",
 				args,
@@ -368,7 +391,9 @@ export class CreatePRContextNew {
 
 	handleMessage = async (message: {
 		command: string;
+
 		params?: Partial<CreateParamsNew>;
+
 		scrollPosition?: ScrollPosition;
 	}): Promise<void> => {
 		switch (message.command) {
@@ -376,6 +401,7 @@ export class CreatePRContextNew {
 				if (!message.params) {
 					return;
 				}
+
 				if (this.createParams.pendingTitle === undefined) {
 					message.params.pendingTitle = message.params.defaultTitle;
 				}
@@ -413,6 +439,7 @@ export class CreatePRContextNew {
 
 				if (this.createParams.autoMerge === undefined) {
 					message.params.autoMerge = message.params.autoMergeDefault;
+
 					message.params.autoMergeMethod =
 						message.params.defaultMergeMethod;
 
@@ -421,6 +448,7 @@ export class CreatePRContextNew {
 					}
 				} else {
 					message.params.autoMerge = this.createParams.autoMerge;
+
 					message.params.autoMergeMethod =
 						this.createParams.autoMergeMethod;
 				}
@@ -435,33 +463,43 @@ export class CreatePRContextNew {
 
 					return;
 				}
+
 				message.params.creating = message.params.creating ?? false;
+
 				message.params.pendingTitle =
 					message.params.defaultTitle ??
 					this.createParams.pendingTitle;
+
 				message.params.pendingDescription =
 					message.params.defaultDescription ??
 					this.createParams.pendingDescription;
+
 				message.params.baseRemote =
 					message.params.defaultBaseRemote ??
 					this.createParams.baseRemote;
+
 				message.params.baseBranch =
 					message.params.defaultBaseBranch ??
 					this.createParams.baseBranch;
+
 				message.params.compareBranch =
 					message.params.defaultCompareBranch ??
 					this.createParams.compareBranch;
+
 				message.params.compareRemote =
 					message.params.defaultCompareRemote ??
 					this.createParams.compareRemote;
+
 				message.params.autoMerge =
 					message.params.autoMergeDefault !== undefined
 						? message.params.autoMergeDefault
 						: this.createParams.autoMerge;
+
 				message.params.autoMergeMethod =
 					message.params.defaultMergeMethod !== undefined
 						? message.params.defaultMergeMethod
 						: this.createParams.autoMergeMethod;
+
 				message.params.isDraft =
 					message.params.isDraftDefault !== undefined
 						? message.params.isDraftDefault
@@ -470,6 +508,7 @@ export class CreatePRContextNew {
 				if (message.params.autoMergeDefault) {
 					message.params.isDraft = false;
 				}
+
 				this.updateState(message.params);
 
 				return;
@@ -478,6 +517,7 @@ export class CreatePRContextNew {
 				if (!message.scrollPosition) {
 					return;
 				}
+
 				window.scrollTo(
 					message.scrollPosition.x,
 					message.scrollPosition.y,
@@ -492,6 +532,7 @@ export class CreatePRContextNew {
 				if (!message.params) {
 					return;
 				}
+
 				this.updateState(message.params);
 
 				return;
@@ -500,6 +541,7 @@ export class CreatePRContextNew {
 				if (!message.params) {
 					return;
 				}
+
 				this.updateState(
 					Object.keys(message.params).length === 0
 						? { milestone: undefined }
@@ -512,6 +554,7 @@ export class CreatePRContextNew {
 				if (!message.params) {
 					return;
 				}
+
 				this.updateState(message.params);
 
 				return;
@@ -520,6 +563,7 @@ export class CreatePRContextNew {
 				if (!message.params) {
 					return;
 				}
+
 				this.preReview();
 
 				return;

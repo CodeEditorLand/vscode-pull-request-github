@@ -18,7 +18,9 @@ import { LabelOnlyNode, TreeNode, TreeNodeParent } from "./treeNode";
 
 export class FilesCategoryNode extends TreeNode implements vscode.TreeItem {
 	public override readonly label: string = vscode.l10n.t("Files");
+
 	public collapsibleState: vscode.TreeItemCollapsibleState;
+
 	private directories: TreeNode[] = [];
 
 	constructor(
@@ -27,32 +29,40 @@ export class FilesCategoryNode extends TreeNode implements vscode.TreeItem {
 		_pullRequestModel: PullRequestModel,
 	) {
 		super(parent);
+
 		this.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
+
 		this.childrenDisposables = [];
+
 		this.childrenDisposables.push(
 			this._reviewModel.onDidChangeLocalFileChanges(() => {
 				Logger.appendLine(
 					`Local files have changed, refreshing Files node`,
 					PR_TREE,
 				);
+
 				this.refresh(this);
 			}),
 		);
+
 		this.childrenDisposables.push(
 			_pullRequestModel.onDidChangeReviewThreads(() => {
 				Logger.appendLine(
 					`Review threads have changed, refreshing Files node`,
 					PR_TREE,
 				);
+
 				this.refresh(this);
 			}),
 		);
+
 		this.childrenDisposables.push(
 			_pullRequestModel.onDidChangeComments(() => {
 				Logger.appendLine(
 					`Comments have changed, refreshing Files node`,
 					PR_TREE,
 				);
+
 				this.refresh(this);
 			}),
 		);
@@ -73,6 +83,7 @@ export class FilesCategoryNode extends TreeNode implements vscode.TreeItem {
 				const promiseResolver =
 					this._reviewModel.onDidChangeLocalFileChanges(() => {
 						resolve([]);
+
 						promiseResolver.dispose();
 					});
 			});
@@ -89,7 +100,9 @@ export class FilesCategoryNode extends TreeNode implements vscode.TreeItem {
 			.get<string>(FILE_LIST_LAYOUT);
 
 		const dirNode = new DirectoryTreeNode(this, "");
+
 		this._reviewModel.localFileChanges.forEach((f) => dirNode.addFile(f));
+
 		dirNode.finalize();
 
 		if (dirNode.label === "") {
@@ -103,15 +116,19 @@ export class FilesCategoryNode extends TreeNode implements vscode.TreeItem {
 			nodes = this.directories;
 		} else {
 			const fileNodes = [...this._reviewModel.localFileChanges];
+
 			fileNodes.sort((a, b) =>
 				compareIgnoreCase(
 					a.fileChangeResourceUri.toString(),
 					b.fileChangeResourceUri.toString(),
 				),
 			);
+
 			nodes = fileNodes;
 		}
+
 		Logger.appendLine(`Got all children for Files node`, PR_TREE);
+
 		this.children = nodes;
 
 		return nodes;

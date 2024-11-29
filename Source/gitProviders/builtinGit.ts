@@ -20,15 +20,22 @@ export class BuiltinGitProvider extends Disposable implements IGit {
 	}
 
 	private _onDidOpenRepository = new vscode.EventEmitter<Repository>();
+
 	readonly onDidOpenRepository: vscode.Event<Repository> =
 		this._onDidOpenRepository.event;
+
 	private _onDidCloseRepository = new vscode.EventEmitter<Repository>();
+
 	readonly onDidCloseRepository: vscode.Event<Repository> =
 		this._onDidCloseRepository.event;
+
 	private _onDidChangeState = new vscode.EventEmitter<APIState>();
+
 	readonly onDidChangeState: vscode.Event<APIState> =
 		this._onDidChangeState.event;
+
 	private _onDidPublish = new vscode.EventEmitter<PublishEvent>();
+
 	readonly onDidPublish: vscode.Event<PublishEvent> =
 		this._onDidPublish.event;
 
@@ -53,16 +60,19 @@ export class BuiltinGitProvider extends Disposable implements IGit {
 				this._onDidCloseRepository.fire(e as any),
 			),
 		);
+
 		this._register(
 			this._gitAPI.onDidOpenRepository((e) =>
 				this._onDidOpenRepository.fire(e as any),
 			),
 		);
+
 		this._register(
 			this._gitAPI.onDidChangeState((e) =>
 				this._onDidChangeState.fire(e),
 			),
 		);
+
 		this._register(
 			this._gitAPI.onDidPublish((e) => this._onDidPublish.fire(e)),
 		);
@@ -77,6 +87,7 @@ export class BuiltinGitProvider extends Disposable implements IGit {
 
 			return new BuiltinGitProvider(extension);
 		}
+
 		return undefined;
 	}
 
@@ -84,6 +95,7 @@ export class BuiltinGitProvider extends Disposable implements IGit {
 		if (this._gitAPI.registerPostCommitCommandsProvider) {
 			return this._gitAPI.registerPostCommitCommandsProvider(provider);
 		}
+
 		return {
 			dispose: () => {},
 		};

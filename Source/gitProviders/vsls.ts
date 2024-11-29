@@ -23,6 +23,7 @@ async function getVSLSApi() {
 		// The extension is not installed.
 		return null;
 	}
+
 	const extensionApi = liveshareExtension.isActive
 		? liveshareExtension.exports
 		: await liveshareExtension.activate();
@@ -31,22 +32,28 @@ async function getVSLSApi() {
 		// The extensibility API is not enabled.
 		return null;
 	}
+
 	const liveShareApiVersion = "0.3.967";
 	// Support deprecated function name to preserve compatibility with older versions of VSLS.
 	if (!extensionApi.getApi) {
 		return extensionApi.getApiAsync(liveShareApiVersion);
 	}
+
 	return extensionApi.getApi(liveShareApiVersion);
 }
 
 export class LiveShareManager extends Disposable {
 	private _liveShareAPI?: LiveShare;
+
 	private _host?: VSLSHost;
+
 	private _guest?: VSLSGuest;
+
 	private readonly _localDisposables: vscode.Disposable[] = [];
 
 	constructor(private readonly _api: API) {
 		super();
+
 		this._register({ dispose: () => disposeAll(this._localDisposables) });
 	}
 
@@ -81,7 +88,9 @@ export class LiveShareManager extends Disposable {
 
 		if (session.role === 1 /* Role.Host */) {
 			this._host = new VSLSHost(this._liveShareAPI!, this._api);
+
 			this._localDisposables.push(this._host);
+
 			await this._host.initialize();
 
 			return;
@@ -89,8 +98,11 @@ export class LiveShareManager extends Disposable {
 
 		if (session.role === 2 /* Role.Guest */) {
 			this._guest = new VSLSGuest(this._liveShareAPI!);
+
 			this._localDisposables.push(this._guest);
+
 			await this._guest.initialize();
+
 			this._localDisposables.push(
 				this._api.registerGitProvider(this._guest),
 			);

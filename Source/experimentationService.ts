@@ -70,6 +70,7 @@ export class ExperimentationTelemetry
 		for (const [key, value] of props) {
 			event[key] = value;
 		}
+
 		this.sendTelemetryEvent(eventName, event);
 	}
 }
@@ -95,6 +96,7 @@ function getTargetPopulation(): TargetPopulation {
 
 class NullExperimentationService implements IExperimentationService {
 	readonly initializePromise: Promise<void> = Promise.resolve();
+
 	readonly initialFetch: Promise<void> = Promise.resolve();
 
 	isFlightEnabled(_flight: string): boolean {

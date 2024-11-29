@@ -11,8 +11,11 @@ import { isEnterprise } from "./github/utils";
 
 interface Repository {
 	readonly full_name: string;
+
 	readonly description: string | null;
+
 	readonly clone_url: string;
+
 	readonly ssh_url: string;
 }
 
@@ -36,7 +39,9 @@ function asRemoteSource(raw: Repository): RemoteSource {
 
 export class GithubRemoteSourceProvider implements RemoteSourceProvider {
 	readonly name: string = "GitHub";
+
 	readonly icon = "github";
+
 	readonly supportsQuery = true;
 
 	private userReposCache: RemoteSource[] = [];
@@ -81,6 +86,7 @@ export class GithubRemoteSourceProvider implements RemoteSourceProvider {
 				hub.octokit.api.repos.listForAuthenticatedUser,
 				{ sort: "pushed", per_page: 100 },
 			);
+
 			this.userReposCache = res.data.map(asRemoteSource);
 		}
 

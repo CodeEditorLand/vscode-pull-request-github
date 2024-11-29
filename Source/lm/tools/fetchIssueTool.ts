@@ -12,26 +12,35 @@ import { RepoToolBase } from "./toolsUtils";
 
 interface FetchIssueToolParameters {
 	issueNumber?: number;
+
 	repo?: {
 		owner?: string;
+
 		name?: string;
 	};
 }
 
 interface FileChange {
 	fileName?: string;
+
 	patch?: string;
 }
 
 export interface FetchIssueResult {
 	title?: string;
+
 	body?: string;
+
 	comments?: {
 		author?: string;
+
 		body?: string;
 	}[];
+
 	owner?: string;
+
 	repo?: string;
+
 	fileChanges?: FileChange[];
 }
 
@@ -47,6 +56,7 @@ export class FetchIssueTool extends RepoToolBase<FetchIssueToolParameters> {
 		if (!issueNumber) {
 			throw new Error("No issue/PR number provided.");
 		}
+
 		const { owner, name, folderManager } = await this.getRepoInfo({
 			owner: options.input.repo?.owner,
 			name: options.input.repo?.name,
@@ -64,6 +74,7 @@ export class FetchIssueTool extends RepoToolBase<FetchIssueToolParameters> {
 				`No issue or PR found for ${owner}/${name}/${issueNumber}. Make sure the issue or PR exists.`,
 			);
 		}
+
 		const result: FetchIssueResult = {
 			owner,
 			repo: name,
@@ -92,8 +103,10 @@ export class FetchIssueTool extends RepoToolBase<FetchIssueToolParameters> {
 					});
 				}
 			}
+
 			result.fileChanges = fetchedFileChanges;
 		}
+
 		return new vscode.LanguageModelToolResult([
 			new vscode.LanguageModelTextPart(JSON.stringify(result)),
 			new vscode.LanguageModelTextPart(
@@ -110,6 +123,7 @@ export class FetchIssueTool extends RepoToolBase<FetchIssueToolParameters> {
 				invocationMessage: vscode.l10n.t("Fetching item from GitHub"),
 			};
 		}
+
 		const { owner, name } = await this.getRepoInfo({
 			owner: options.input.repo?.owner,
 			name: options.input.repo?.name,

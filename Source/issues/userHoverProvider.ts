@@ -64,6 +64,7 @@ export class UserHoverProvider implements vscode.HoverProvider {
 				) {
 					return;
 				}
+
 				const isDoxygenLanguage =
 					document.languageId === "cpp" ||
 					document.languageId === "c" ||
@@ -78,6 +79,7 @@ export class UserHoverProvider implements vscode.HoverProvider {
 				) {
 					return;
 				}
+
 				return this.createHover(document.uri, username, wordPosition);
 			}
 		} else {
@@ -96,6 +98,7 @@ export class UserHoverProvider implements vscode.HoverProvider {
 			if (!folderManager) {
 				return;
 			}
+
 			const origin = await folderManager.getPullRequestDefaults();
 
 			const user = await folderManager.resolveUser(

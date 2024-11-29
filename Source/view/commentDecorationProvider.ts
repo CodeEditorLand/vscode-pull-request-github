@@ -70,6 +70,7 @@ export class CommentDecorationProvider extends TreeDecorationProvider {
 				};
 			}
 		}
+
 		return undefined;
 	}
 }

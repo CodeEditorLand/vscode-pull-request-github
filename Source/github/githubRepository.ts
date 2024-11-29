@@ -92,12 +92,15 @@ const GRAPHQL_COMPONENT_ID = "GraphQL";
 
 export interface ItemsData {
 	items: any[];
+
 	hasMorePages: boolean;
+
 	totalCount?: number;
 }
 
 export interface IssueData extends ItemsData {
 	items: Issue[];
+
 	hasMorePages: boolean;
 }
 
@@ -107,6 +110,7 @@ export interface PullRequestData extends ItemsData {
 
 export interface MilestoneData extends ItemsData {
 	items: { milestone: IMilestone; issues: IssueModel[] }[];
+
 	hasMorePages: boolean;
 }
 
@@ -127,10 +131,12 @@ export enum TeamReviewerRefreshKind {
 
 export interface ForkDetails {
 	isFork: boolean;
+
 	parent: {
 		owner: {
 			login: string;
 		};
+
 		name: string;
 	};
 }
@@ -147,23 +153,34 @@ export interface GraphQLError {
 	extensions?: {
 		code: string;
 	};
+
 	type?: GraphQLErrorType;
+
 	message?: string;
 }
 
 export class GitHubRepository extends Disposable {
 	static ID = "GitHubRepository";
+
 	protected _initialized: boolean = false;
+
 	protected _hub: GitHub | undefined;
+
 	protected _metadata: Promise<IMetadata> | undefined;
+
 	public commentsController?: vscode.CommentController;
+
 	public commentsHandler?: PRCommentControllerRegistry;
+
 	private _pullRequestModels = new Map<number, PullRequestModel>();
+
 	private _queriesSchema: any;
+
 	private _areQueriesLimited: boolean = false;
 
 	private _onDidAddPullRequest: vscode.EventEmitter<PullRequestModel> =
 		this._register(new vscode.EventEmitter());
+
 	public readonly onDidAddPullRequest: vscode.Event<PullRequestModel> =
 		this._onDidAddPullRequest.event;
 
@@ -177,6 +194,7 @@ export class GitHubRepository extends Disposable {
 				throw new AuthenticationError("Not authenticated.");
 			}
 		}
+
 		return this._hub;
 	}
 
@@ -195,15 +213,19 @@ export class GitHubRepository extends Disposable {
 			}
 
 			await this.ensure();
+
 			this.commentsController = vscode.comments.createCommentController(
 				`github-browse-${this.remote.normalizedHost}-${this.remote.owner}-${this.remote.repositoryName}`,
 				`Pull Request (${this.remote.owner}/${this.remote.repositoryName})`,
 			);
+
 			this.commentsHandler = new PRCommentControllerRegistry(
 				this.commentsController,
 				this._telemetry,
 			);
+
 			this._register(this.commentsHandler);
+
 			this._register(this.commentsController);
 		} catch (e) {
 			console.log(e);
@@ -212,7 +234,9 @@ export class GitHubRepository extends Disposable {
 
 	override dispose() {
 		super.dispose();
+
 		this.commentsController = undefined;
+
 		this.commentsHandler = undefined;
 	}
 
@@ -233,6 +257,7 @@ export class GitHubRepository extends Disposable {
 		silent: boolean = false,
 	) {
 		super();
+
 		this._queriesSchema = mergeQuerySchemaWithShared(
 			sharedSchema.default as unknown as Schema,
 			defaultSchema as unknown as Schema,
@@ -295,6 +320,7 @@ export class GitHubRepository extends Disposable {
 					name: { value: string } | undefined;
 				}
 			).name?.value;
+
 			Logger.debug(
 				`Not available for query: ${logValue ?? "unknown"}`,
 				GRAPHQL_COMPONENT_ID,
@@ -335,10 +361,12 @@ export class GitHubRepository extends Disposable {
 				// We're running against a GitHub server that doesn't support the query we're trying to run.
 				// Switch to the limited schema and try again.
 				this._areQueriesLimited = true;
+
 				this._queriesSchema = mergeQuerySchemaWithShared(
 					sharedSchema.default as any,
 					limitedSchema.default as any,
 				);
+
 				query.query =
 					this.schema[
 						(
@@ -347,6 +375,7 @@ export class GitHubRepository extends Disposable {
 							}
 						).name.value
 					];
+
 				rsp = await gql.query<T>(query);
 			} else if (ignoreSamlErrors && isSamlError(e)) {
 				// Some queries just result in SAML errors.
@@ -358,6 +387,7 @@ export class GitHubRepository extends Disposable {
 						"Your authentication session has lost authorization. You need to sign in again to regain authorization.",
 					),
 				);
+
 				rsp = await gql.query<T>(query);
 			} else {
 				if (
@@ -368,9 +398,11 @@ export class GitHubRepository extends Disposable {
 				) {
 					await this.codespacesTokenError(query);
 				}
+
 				throw e;
 			}
 		}
+
 		return rsp;
 	};
 
@@ -407,6 +439,7 @@ export class GitHubRepository extends Disposable {
 						delete mutation.variables.input[prop];
 					}
 				}
+
 				return this.mutate(mutation);
 			} else if (
 				e.graphQLErrors &&
@@ -416,8 +449,10 @@ export class GitHubRepository extends Disposable {
 			) {
 				await this.codespacesTokenError(mutation);
 			}
+
 			throw e;
 		}
+
 		return rsp;
 	};
 
@@ -450,6 +485,7 @@ export class GitHubRepository extends Disposable {
 			owner,
 			repo,
 		});
+
 		Logger.debug(
 			`Fetch metadata for repo ${owner}/${repo} - done`,
 			this.id,
@@ -464,6 +500,7 @@ export class GitHubRepository extends Disposable {
 	async getMetadata(): Promise<IMetadata> {
 		if (this._metadata) {
 			const metadata = await this._metadata;
+
 			Logger.debug(
 				`Using cached metadata ${metadata.owner?.login}/${metadata.name}`,
 				this.id,
@@ -475,10 +512,12 @@ export class GitHubRepository extends Disposable {
 		Logger.debug(`Fetch metadata - enter`, this.id);
 
 		const { remote } = await this.ensure();
+
 		this._metadata = this.getMetadataForRepo(
 			remote.owner,
 			remote.repositoryName,
 		);
+
 		Logger.debug(
 			`Fetch metadata ${remote.owner}/${remote.repositoryName} - done`,
 			this.id,
@@ -494,6 +533,7 @@ export class GitHubRepository extends Disposable {
 	async resolveRemote(): Promise<boolean> {
 		try {
 			const { clone_url } = await this.getMetadata();
+
 			this.remote = GitHubRemote.remoteAsGitHub(
 				parseRemote(
 					this.remote.remoteName,
@@ -509,6 +549,7 @@ export class GitHubRepository extends Disposable {
 				return false;
 			}
 		}
+
 		return true;
 	}
 
@@ -552,6 +593,7 @@ export class GitHubRepository extends Disposable {
 				this._credentialStore.areScopesOld(this.remote.authProviderId)
 			) {
 				this._areQueriesLimited = true;
+
 				this._queriesSchema = mergeQuerySchemaWithShared(
 					sharedSchema.default as any,
 					limitedSchema.default as any,
@@ -574,6 +616,7 @@ export class GitHubRepository extends Disposable {
 				}
 			}
 		}
+
 		return this;
 	}
 
@@ -587,6 +630,7 @@ export class GitHubRepository extends Disposable {
 		if (overrideSetting) {
 			return overrideSetting;
 		}
+
 		try {
 			const data = await this.getMetadata();
 
@@ -645,6 +689,7 @@ export class GitHubRepository extends Disposable {
 				);
 
 				const hasWritePermission = data.permissions?.push ?? false;
+
 				this._repoAccessAndMergeMethods = {
 					// Users with push access to repo have rights to merge/close PRs,
 					// edit title/description, assign reviewers/labels etc.
@@ -660,6 +705,7 @@ export class GitHubRepository extends Disposable {
 						false,
 				};
 			}
+
 			return this._repoAccessAndMergeMethods;
 		} catch (e) {
 			Logger.warn(
@@ -686,6 +732,7 @@ export class GitHubRepository extends Disposable {
 		if (this._branchHasMergeQueue.has(branch)) {
 			return this._branchHasMergeQueue.get(branch)!;
 		}
+
 		try {
 			Logger.debug("Fetch branch has merge queue - enter", this.id);
 
@@ -694,6 +741,7 @@ export class GitHubRepository extends Disposable {
 			if (!schema.MergeQueueForBranch) {
 				return undefined;
 			}
+
 			const result = await query<MergeQueueForBranchResponse>({
 				query: schema.MergeQueueForBranch,
 				variables: {
@@ -712,6 +760,7 @@ export class GitHubRepository extends Disposable {
 			if (mergeMethod) {
 				this._branchHasMergeQueue.set(branch, mergeMethod);
 			}
+
 			return mergeMethod;
 		} catch (e) {
 			Logger.error(
@@ -751,7 +800,9 @@ export class GitHubRepository extends Disposable {
 
 			const treeItems: {
 				path: string;
+
 				mode: "100644";
+
 				content: string;
 			}[] = [];
 
@@ -762,6 +813,7 @@ export class GitHubRepository extends Disposable {
 					content: content.toString(),
 				});
 			}
+
 			const newTreeSha = (
 				await octokit.call(octokit.api.git.createTree, {
 					owner: remote.owner,
@@ -780,12 +832,14 @@ export class GitHubRepository extends Disposable {
 					parents: [lastCommitSha],
 				})
 			).data.sha;
+
 			await octokit.call(octokit.api.git.updateRef, {
 				owner: remote.owner,
 				repo: remote.repositoryName,
 				ref: `heads/${branch}`,
 				sha: newCommitSha,
 			});
+
 			success = true;
 		} catch (e) {
 			// not sure what kinds of errors to expect here
@@ -794,6 +848,7 @@ export class GitHubRepository extends Disposable {
 				this.id,
 			);
 		}
+
 		Logger.debug(`Committing files to branch ${branch} - done`, this.id);
 
 		return success;
@@ -808,6 +863,7 @@ export class GitHubRepository extends Disposable {
 			Logger.debug(`Fetch all pull requests - enter`, this.id);
 
 			const ensured = await this.ensure();
+
 			remote = ensured.remote;
 
 			const octokit = ensured.octokit;
@@ -875,6 +931,7 @@ export class GitHubRepository extends Disposable {
 				throw e;
 			}
 		}
+
 		return undefined;
 	}
 
@@ -888,6 +945,7 @@ export class GitHubRepository extends Disposable {
 			Logger.debug(`Fetch pull requests for branch - enter`, this.id);
 
 			const ensured = await this.ensure();
+
 			remote = ensured.remote;
 
 			const { query, schema } = ensured;
@@ -900,6 +958,7 @@ export class GitHubRepository extends Disposable {
 					headRefName: branch,
 				},
 			});
+
 			Logger.debug(`Fetch pull requests for branch - done`, this.id);
 
 			if (
@@ -913,6 +972,7 @@ export class GitHubRepository extends Disposable {
 				if (prs.length === 0) {
 					return undefined;
 				}
+
 				const mostRecentOrOpenPr =
 					prs.find((pr) => pr.state.toLowerCase() === "open") ??
 					prs[0];
@@ -932,6 +992,7 @@ export class GitHubRepository extends Disposable {
 				);
 			}
 		}
+
 		return undefined;
 	}
 
@@ -941,6 +1002,7 @@ export class GitHubRepository extends Disposable {
 		if (schema.GetRepoProjects && schema.GetOrgProjects) {
 			return true;
 		}
+
 		return false;
 	}
 
@@ -974,6 +1036,7 @@ export class GitHubRepository extends Disposable {
 
 			return projects;
 		}
+
 		Logger.debug(`Fetch org projects - done`, this.id);
 
 		return projects;
@@ -987,10 +1050,14 @@ export class GitHubRepository extends Disposable {
 
 			if (!schema.GetRepoProjects) {
 				const additional = await this.ensureAdditionalScopes();
+
 				query = additional.query;
+
 				remote = additional.remote;
+
 				schema = additional.schema;
 			}
+
 			const { data } = await query<RepoProjectsResponse>({
 				query: schema.GetRepoProjects,
 				variables: {
@@ -998,6 +1065,7 @@ export class GitHubRepository extends Disposable {
 					name: remote.repositoryName,
 				},
 			});
+
 			Logger.debug(`Fetch projects - done`, this.id);
 
 			const projects: IProject[] = [];
@@ -1011,6 +1079,7 @@ export class GitHubRepository extends Disposable {
 					projects.push(raw);
 				});
 			}
+
 			return projects;
 		} catch (e) {
 			Logger.error(`Unable to fetch projects: ${e}`, this.id);
@@ -1032,6 +1101,7 @@ export class GitHubRepository extends Disposable {
 			if (includeClosed) {
 				states.push("CLOSED");
 			}
+
 			const { data } = await query<MilestoneIssuesResponse>({
 				query: schema.GetMilestones,
 				variables: {
@@ -1040,6 +1110,7 @@ export class GitHubRepository extends Disposable {
 					states: states,
 				},
 			});
+
 			Logger.debug(`Fetch milestones - done`, this.id);
 
 			const milestones: IMilestone[] = [];
@@ -1057,6 +1128,7 @@ export class GitHubRepository extends Disposable {
 					}
 				});
 			}
+
 			return milestones;
 		} catch (e) {
 			Logger.error(`Unable to fetch milestones: ${e}`, this.id);
@@ -1109,6 +1181,7 @@ export class GitHubRepository extends Disposable {
 					query: `${queryString} type:issue`,
 				},
 			});
+
 			Logger.debug(`Fetch issues with query - done`, this.id);
 
 			const issues: Issue[] = [];
@@ -1120,6 +1193,7 @@ export class GitHubRepository extends Disposable {
 					}
 				});
 			}
+
 			return {
 				items: issues,
 				hasMorePages: data.search.pageInfo.hasNextPage,
@@ -1145,11 +1219,13 @@ export class GitHubRepository extends Disposable {
 					name: remote.repositoryName,
 				},
 			});
+
 			Logger.debug(`Fetch max issue - done`, this.id);
 
 			if (data?.repository && data.repository.issues.edges.length === 1) {
 				return data.repository.issues.edges[0].node.number;
 			}
+
 			return;
 		} catch (e) {
 			Logger.error(`Unable to fetch issues with query: ${e}`, this.id);
@@ -1171,6 +1247,7 @@ export class GitHubRepository extends Disposable {
 					name: remote.repositoryName,
 				},
 			});
+
 			Logger.debug(`Fetch viewer permission - done`, this.id);
 
 			return parseGraphQLViewerPermission(data);
@@ -1216,6 +1293,7 @@ export class GitHubRepository extends Disposable {
 					name: remote.repositoryName,
 				},
 			});
+
 			Logger.debug(`Fetch repository fork details - done`, this.id);
 
 			return data.repository;
@@ -1247,6 +1325,7 @@ export class GitHubRepository extends Disposable {
 				octokit.api.users.listEmailsForAuthenticated,
 				{},
 			);
+
 			Logger.debug(`Fetch authenticated user emails - done`, this.id);
 
 			return data.map((email) => email.email);
@@ -1354,6 +1433,7 @@ export class GitHubRepository extends Disposable {
 				throw e;
 			}
 		}
+
 		return undefined;
 	}
 
@@ -1370,10 +1450,13 @@ export class GitHubRepository extends Disposable {
 				this.remote,
 				pullRequest,
 			);
+
 			model.onDidInvalidate(() =>
 				this.getPullRequest(pullRequest.number),
 			);
+
 			this._pullRequestModels.set(pullRequest.number, model);
+
 			this._onDidAddPullRequest.fire(model);
 		}
 
@@ -1403,11 +1486,13 @@ export class GitHubRepository extends Disposable {
 					},
 				},
 			});
+
 			Logger.debug(`Create pull request - done`, this.id);
 
 			if (!data) {
 				throw new Error("Failed to create pull request.");
 			}
+
 			return this.createOrUpdatePullRequestModel(
 				parseGraphQLPullRequest(
 					data.createPullRequest.pullRequest,
@@ -1443,11 +1528,13 @@ export class GitHubRepository extends Disposable {
 					},
 				},
 			});
+
 			Logger.debug(`Revert pull request - done`, this.id);
 
 			if (!data) {
 				throw new Error("Failed to create revert pull request.");
 			}
+
 			return this.createOrUpdatePullRequestModel(
 				parseGraphQLPullRequest(
 					data.revertPullRequest.revertPullRequest,
@@ -1531,6 +1618,7 @@ export class GitHubRepository extends Disposable {
 
 				return undefined;
 			}
+
 			Logger.debug(`Fetch issue ${id} - done`, this.id);
 
 			return new IssueModel(
@@ -1558,6 +1646,7 @@ export class GitHubRepository extends Disposable {
 		let fileContent: {
 			data: { content: string; encoding: string; sha: string };
 		};
+
 		Logger.debug(`Fetch file ${filePath} - enter`, this.id);
 
 		try {
@@ -1581,6 +1670,7 @@ export class GitHubRepository extends Disposable {
 			if (e.status === 404) {
 				return new Uint8Array(0);
 			}
+
 			throw e;
 		}
 
@@ -1589,12 +1679,15 @@ export class GitHubRepository extends Disposable {
 			Logger.debug(`Fetch blob file ${filePath} - enter`, this.id);
 
 			const fileSha = fileContent.data.sha;
+
 			fileContent = await octokit.call(octokit.api.git.getBlob, {
 				owner: remote.owner,
 				repo: remote.repositoryName,
 				file_sha: fileSha,
 			});
+
 			contents = fileContent.data.content;
+
 			Logger.debug(`Fetch blob file ${filePath} - done`, this.id);
 		}
 
@@ -1602,6 +1695,7 @@ export class GitHubRepository extends Disposable {
 			contents,
 			(fileContent.data as any).encoding,
 		);
+
 		Logger.debug(
 			`Fetch file ${filePath}, file length ${contents.length} - done`,
 			this.id,
@@ -1623,6 +1717,7 @@ export class GitHubRepository extends Disposable {
 				qualifiedName: `refs/heads/${branchName}`,
 			},
 		});
+
 		Logger.appendLine(
 			`Fetch branch ${branchName} - done: ${data.repository?.ref !== null}`,
 			this.id,
@@ -1636,6 +1731,7 @@ export class GitHubRepository extends Disposable {
 		repositoryName: string,
 	): Promise<string[]> {
 		const { query, remote, schema } = await this.ensure();
+
 		Logger.debug(
 			`List branches for ${owner}/${repositoryName} - enter`,
 			this.id,
@@ -1674,7 +1770,9 @@ export class GitHubRepository extends Disposable {
 
 					break;
 				}
+
 				hasNextPage = data.repository.refs.pageInfo.hasNextPage;
+
 				after = data.repository.refs.pageInfo.endCursor;
 			} catch (e) {
 				Logger.debug(
@@ -1694,6 +1792,7 @@ export class GitHubRepository extends Disposable {
 		if (!branches.includes(defaultBranch)) {
 			branches.unshift(defaultBranch);
 		}
+
 		return branches;
 	}
 
@@ -1776,6 +1875,7 @@ export class GitHubRepository extends Disposable {
 				hasNextPage =
 					result.data.repository.mentionableUsers.pageInfo
 						.hasNextPage;
+
 				after =
 					result.data.repository.mentionableUsers.pageInfo.endCursor;
 			} catch (e) {
@@ -1848,6 +1948,7 @@ export class GitHubRepository extends Disposable {
 
 				hasNextPage =
 					result.data.repository.assignableUsers.pageInfo.hasNextPage;
+
 				after =
 					result.data.repository.assignableUsers.pageInfo.endCursor;
 			} catch (e) {
@@ -1862,6 +1963,7 @@ export class GitHubRepository extends Disposable {
 						`GitHub user features will not work. ${e.graphQLErrors[0].message}`,
 					);
 				}
+
 				return ret;
 			}
 		} while (hasNextPage);
@@ -1892,6 +1994,7 @@ export class GitHubRepository extends Disposable {
 				});
 
 			const totalCount = result.data.organization.teams.totalCount;
+
 			Logger.debug(`Fetch Teams Count - done`, this.id);
 
 			return totalCount;
@@ -1907,6 +2010,7 @@ export class GitHubRepository extends Disposable {
 					`GitHub teams features will not work. ${e.graphQLErrors[0].message}`,
 				);
 			}
+
 			return 0;
 		}
 	}
@@ -1961,6 +2065,7 @@ export class GitHubRepository extends Disposable {
 						id: node.id,
 						org: remote.owner,
 					};
+
 					orgTeams.push({
 						...team,
 						repositoryNames: node.repositories.nodes.map(
@@ -1971,6 +2076,7 @@ export class GitHubRepository extends Disposable {
 
 				hasNextPage =
 					result.data.organization.teams.pageInfo.hasNextPage;
+
 				after = result.data.organization.teams.pageInfo.endCursor;
 			} catch (e) {
 				Logger.debug(`Unable to fetch teams: ${e}`, this.id);
@@ -1984,6 +2090,7 @@ export class GitHubRepository extends Disposable {
 						`GitHub teams features will not work. ${e.graphQLErrors[0].message}`,
 					);
 				}
+
 				return orgTeams;
 			}
 		} while (hasNextPage);
@@ -2084,6 +2191,7 @@ export class GitHubRepository extends Disposable {
 					head,
 				},
 			);
+
 			Logger.debug("Compare commits - done", this.id);
 
 			return data;
@@ -2147,6 +2255,7 @@ export class GitHubRepository extends Disposable {
 					return this.getStatusChecks(number);
 				}
 			}
+
 			Logger.error(`Unable to fetch PR checks: ${e}`, this.id);
 
 			throw e;
@@ -2236,6 +2345,7 @@ export class GitHubRepository extends Disposable {
 					)
 				) {
 					checks.state = CheckState.Pending;
+
 					checks.statuses.push({
 						id: "",
 						url: undefined,
@@ -2275,6 +2385,7 @@ export class GitHubRepository extends Disposable {
 					state = CheckState.Pending;
 				}
 			}
+
 			if (requiredApprovingReviews > 0) {
 				reviewRequirement = {
 					count: requiredApprovingReviews,

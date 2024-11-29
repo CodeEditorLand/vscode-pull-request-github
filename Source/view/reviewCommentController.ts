@@ -68,7 +68,9 @@ import {
 
 export interface SuggestionInformation {
 	originalStartLine: number;
+
 	originalLineLength: number;
+
 	suggestionContent: string;
 }
 
@@ -80,15 +82,18 @@ export class ReviewCommentController
 		CommentReactionHandler
 {
 	private static readonly ID = "ReviewCommentController";
+
 	private _commentHandlerId: string;
 
 	// Note: marked as protected so that tests can verify caches have been updated correctly without breaking type safety
 	protected _workspaceFileChangeCommentThreads: {
 		[key: string]: GHPRCommentThread[];
 	} = {};
+
 	protected _reviewSchemeFileChangeCommentThreads: {
 		[key: string]: GHPRCommentThread[];
 	} = {};
+
 	protected _obsoleteFileChangeCommentThreads: {
 		[key: string]: GHPRCommentThread[];
 	} = {};
@@ -96,7 +101,9 @@ export class ReviewCommentController
 	protected _visibleNormalTextEditors: vscode.TextEditor[] = [];
 
 	private _pendingCommentThreadAdds: GHPRCommentThread[] = [];
+
 	private readonly _context: vscode.ExtensionContext;
+
 	public readonly resourceHints = { schemes: [Schemes.Review] };
 
 	constructor(
@@ -108,7 +115,9 @@ export class ReviewCommentController
 		telemetry: ITelemetry,
 	) {
 		super(folderRepoManager, telemetry);
+
 		this._context = this._folderRepoManager.context;
+
 		this._commentController = this._register(
 			vscode.comments.createCommentController(
 				`github-review-${folderRepoManager.activePullRequest?.remote.owner}-${folderRepoManager.activePullRequest?.remote.owner}-${folderRepoManager.activePullRequest!.number}`,
@@ -118,17 +127,23 @@ export class ReviewCommentController
 				),
 			),
 		);
+
 		this._commentController.commentingRangeProvider =
 			this as vscode.CommentingRangeProvider;
+
 		this._commentController.reactionHandler =
 			this.toggleReaction.bind(this);
+
 		this.updateResourcesWithCommentingRanges();
+
 		this._register(
 			this._folderRepoManager.onDidChangeActivePullRequest(() =>
 				this.updateResourcesWithCommentingRanges(),
 			),
 		);
+
 		this._commentHandlerId = uuid();
+
 		registerCommentHandler(this._commentHandlerId, this, _repository);
 	}
 
@@ -138,8 +153,11 @@ export class ReviewCommentController
 			vscode.window.visibleTextEditors.filter(
 				(ed) => ed.document.uri.scheme !== "comment",
 			);
+
 		await this._folderRepoManager.activePullRequest!.validateDraftMode();
+
 		await this.initializeCommentThreads();
+
 		await this.registerListeners();
 	}
 
@@ -211,6 +229,7 @@ export class ReviewCommentController
 
 		if (localDiff) {
 			startLine = mapOldPositionToNew(localDiff, startLine);
+
 			endLine = mapOldPositionToNew(localDiff, endLine);
 		}
 
@@ -226,8 +245,10 @@ export class ReviewCommentController
 					`Mapped new position for workspace comment thread is invalid. Original: (${thread.startLine}, ${thread.endLine}) New: (${adjustedStartLine}, ${adjustedEndLine})`,
 				);
 			}
+
 			range = threadRange(adjustedStartLine, adjustedEndLine);
 		}
+
 		return createVSCodeCommentThreadForReviewThread(
 			this._context,
 			uri,
@@ -259,6 +280,7 @@ export class ReviewCommentController
 				"Cannot create review comment thread without an active pull request base.",
 			);
 		}
+
 		const reviewUri = toReviewUri(
 			uri,
 			path,
@@ -294,16 +316,19 @@ export class ReviewCommentController
 		for (const key in this._workspaceFileChangeCommentThreads) {
 			disposeAll(this._workspaceFileChangeCommentThreads[key]);
 		}
+
 		this._workspaceFileChangeCommentThreads = {};
 
 		for (const key in this._reviewSchemeFileChangeCommentThreads) {
 			disposeAll(this._reviewSchemeFileChangeCommentThreads[key]);
 		}
+
 		this._reviewSchemeFileChangeCommentThreads = {};
 
 		for (const key in this._obsoleteFileChangeCommentThreads) {
 			disposeAll(this._obsoleteFileChangeCommentThreads[key]);
 		}
+
 		this._obsoleteFileChangeCommentThreads = {};
 
 		const threadsByPath = groupBy(reviewThreads, (thread) => thread.path);
@@ -359,12 +384,15 @@ export class ReviewCommentController
 
 				this._workspaceFileChangeCommentThreads[path] =
 					rightSideCommentThreads;
+
 				this._reviewSchemeFileChangeCommentThreads[path] =
 					leftSideThreads;
+
 				this._obsoleteFileChangeCommentThreads[path] =
 					outdatedCommentThreads;
 			}
 		});
+
 		this.updateResourcesWithCommentingRanges();
 	}
 
@@ -387,10 +415,12 @@ export class ReviewCommentController
 						this._folderRepoManager.repository.rootUri,
 						file,
 					);
+
 					Logger.trace(
 						`Prefetching commenting ranges for ${uri.toString()}`,
 						ReviewCommentController.ID,
 					);
+
 					vscode.workspace.openTextDocument(uri);
 				}
 			}
@@ -403,6 +433,7 @@ export class ReviewCommentController
 		if (!activePullRequest || !activePullRequest.isResolved()) {
 			return;
 		}
+
 		return this.doInitializeCommentThreads(
 			activePullRequest.reviewThreadsCache,
 		);
@@ -425,6 +456,7 @@ export class ReviewCommentController
 					for (const fileName in commentThreadMap) {
 						commentThreadMap[fileName].forEach((thread) => {
 							updateCommentReviewState(thread, newDraftMode);
+
 							updateCommentThreadLabel(thread);
 						});
 					}
@@ -437,6 +469,7 @@ export class ReviewCommentController
 				const githubRepositories = this.githubReposForPullRequest(
 					this._folderRepoManager.activePullRequest,
 				);
+
 				e.added.forEach(async (thread) => {
 					const { path } = thread;
 
@@ -470,7 +503,9 @@ export class ReviewCommentController
 
 					if (index > -1) {
 						newThread = this._pendingCommentThreadAdds[index];
+
 						newThread.gitHubThreadId = thread.id;
+
 						newThread.comments = thread.comments.map(
 							(c) =>
 								new GHPRComment(
@@ -480,12 +515,14 @@ export class ReviewCommentController
 									githubRepositories,
 								),
 						);
+
 						updateThreadWithRange(
 							this._context,
 							newThread,
 							thread,
 							githubRepositories,
 						);
+
 						this._pendingCommentThreadAdds.splice(index, 1);
 					} else {
 						const fullPath = nodePath
@@ -548,6 +585,7 @@ export class ReviewCommentController
 
 					if (index > -1) {
 						const matchingThread = threadMap[thread.path][index];
+
 						updateThread(
 							this._context,
 							matchingThread,
@@ -572,7 +610,9 @@ export class ReviewCommentController
 
 					if (index > -1) {
 						const matchingThread = threadMap[thread.path][index];
+
 						threadMap[thread.path].splice(index, 1);
+
 						matchingThread.dispose();
 					}
 				});
@@ -580,6 +620,7 @@ export class ReviewCommentController
 				this.updateResourcesWithCommentingRanges();
 			}),
 		);
+
 		this._register(
 			vscode.window.onDidChangeActiveTextEditor((e) =>
 				this.onDidChangeActiveTextEditor(e),
@@ -588,13 +629,16 @@ export class ReviewCommentController
 	}
 
 	private _commentContentChangedListener: vscode.Disposable | undefined;
+
 	private onDidChangeActiveTextEditor(editor: vscode.TextEditor | undefined) {
 		this._commentContentChangedListener?.dispose();
+
 		this._commentContentChangedListener = undefined;
 
 		if (editor?.document.uri.scheme !== Schemes.Comment) {
 			return;
 		}
+
 		const updateHasSuggestion = () => {
 			if (editor.document.getText().includes("```suggestion")) {
 				commands.setContext(
@@ -608,6 +652,7 @@ export class ReviewCommentController
 				);
 			}
 		};
+
 		this._commentContentChangedListener =
 			vscode.workspace.onDidChangeTextDocument((e) => {
 				if (
@@ -615,8 +660,10 @@ export class ReviewCommentController
 				) {
 					return;
 				}
+
 				updateHasSuggestion();
 			});
+
 		updateHasSuggestion();
 	}
 
@@ -626,6 +673,7 @@ export class ReviewCommentController
 		if (!activePullRequest) {
 			return undefined;
 		}
+
 		const githubRepositories =
 			this.githubReposForPullRequest(activePullRequest);
 
@@ -636,6 +684,7 @@ export class ReviewCommentController
 			if (reviewThreads.size === 0) {
 				return;
 			}
+
 			for (const path of reviewThreads.keys()) {
 				const reviewThreadsForPath = reviewThreads.get(path)!;
 
@@ -645,6 +694,7 @@ export class ReviewCommentController
 					const reviewThread = reviewThreadsForPath.get(
 						commentThread.gitHubThreadId,
 					)!;
+
 					updateThread(
 						this._context,
 						commentThread,
@@ -683,19 +733,24 @@ export class ReviewCommentController
 					mapToUse = reviewSchemeReviewThreads;
 				}
 			}
+
 			if (!mapToUse.has(reviewThread.path)) {
 				mapToUse.set(reviewThread.path, new Map());
 			}
+
 			mapToUse.get(reviewThread.path)!.set(reviewThread.id, reviewThread);
 		}
+
 		updateThreads(
 			this._obsoleteFileChangeCommentThreads,
 			obsoleteReviewThreads,
 		);
+
 		updateThreads(
 			this._reviewSchemeFileChangeCommentThreads,
 			reviewSchemeReviewThreads,
 		);
+
 		updateThreads(
 			this._workspaceFileChangeCommentThreads,
 			workspaceFileReviewThreads,
@@ -707,9 +762,11 @@ export class ReviewCommentController
 		b: vscode.TextEditor[],
 	): boolean {
 		a = a.filter((ed) => ed.document.uri.scheme !== "comment");
+
 		b = b.filter((ed) => ed.document.uri.scheme !== "comment");
 
 		a = uniqBy(a, (editor) => editor.document.uri.toString());
+
 		b = uniqBy(b, (editor) => editor.document.uri.toString());
 
 		if (a.length !== b.length) {
@@ -800,6 +857,7 @@ export class ReviewCommentController
 					ReviewCommentController.ID,
 				);
 			}
+
 			return;
 		}
 
@@ -982,6 +1040,7 @@ export class ReviewCommentController
 						);
 					}
 				}
+
 				if (this._folderRepoManager.activePullRequest.isOpen) {
 					vscode.window.showErrorMessage(
 						vscode.l10n.t(
@@ -990,11 +1049,13 @@ export class ReviewCommentController
 						),
 					);
 				}
+
 				Logger.warn(
 					`Unable to get comment locations for commit ${this._folderRepoManager.activePullRequest.head.sha}. This commit is not available locally and there is no remote branch.`,
 					ReviewCommentController.ID,
 				);
 			}
+
 			throw e;
 		}
 	}
@@ -1046,6 +1107,7 @@ export class ReviewCommentController
 		if (matchedFiles && matchedFiles.length) {
 			return matchedFiles[0] as GitFileChangeNode;
 		}
+
 		return undefined;
 	}
 
@@ -1083,6 +1145,7 @@ export class ReviewCommentController
 				);
 
 				const side = this.getCommentSide(thread);
+
 				this._pendingCommentThreadAdds.push(thread);
 
 				// If the thread is on the workspace file, make sure the position
@@ -1097,19 +1160,24 @@ export class ReviewCommentController
 							thread.uri,
 							fileName,
 						);
+
 						startLine = mapNewPositionToOld(
 							diff,
 							thread.range.start.line,
 						);
+
 						endLine = mapNewPositionToOld(
 							diff,
 							thread.range.end.line,
 						);
 					} else {
 						startLine = thread.range.start.line;
+
 						endLine = thread.range.end.line;
 					}
+
 					startLine++;
+
 					endLine++;
 				}
 
@@ -1154,6 +1222,7 @@ export class ReviewCommentController
 
 	public async openReview(): Promise<void> {
 		await this._reviewManager.openDescription();
+
 		PullRequestOverviewPanel.scrollToReview();
 	}
 
@@ -1171,6 +1240,7 @@ export class ReviewCommentController
 			inDraft,
 			currentUser,
 		);
+
 		this.updateCommentThreadComments(thread, [...thread.comments, comment]);
 
 		return comment.id;
@@ -1181,6 +1251,7 @@ export class ReviewCommentController
 		newComments: (GHPRComment | TemporaryComment)[],
 	) {
 		thread.comments = newComments;
+
 		updateCommentThreadLabel(thread);
 	}
 
@@ -1199,6 +1270,7 @@ export class ReviewCommentController
 			currentUser,
 			comment,
 		);
+
 		thread.comments = thread.comments.map((c) => {
 			if (c instanceof GHPRComment && c.commentId === comment.commentId) {
 				return temporaryComment;
@@ -1242,6 +1314,7 @@ export class ReviewCommentController
 				const fileName = this._folderRepoManager.gitRelativeRootPath(
 					thread.uri.path,
 				);
+
 				this._pendingCommentThreadAdds.push(thread);
 
 				const side = this.getCommentSide(thread);
@@ -1258,21 +1331,27 @@ export class ReviewCommentController
 							thread.uri,
 							fileName,
 						);
+
 						startLine = mapNewPositionToOld(
 							diff,
 							thread.range.start.line,
 						);
+
 						endLine = mapNewPositionToOld(
 							diff,
 							thread.range.end.line,
 						);
 					} else {
 						startLine = thread.range.start.line;
+
 						endLine = thread.range.end.line;
 					}
+
 					startLine++;
+
 					endLine++;
 				}
+
 				await this._folderRepoManager.activePullRequest.createReviewThread(
 					input,
 					fileName,
@@ -1345,6 +1424,7 @@ export class ReviewCommentController
 		const body = `\`\`\`suggestion
 ${suggestionInformation.suggestionContent}
 \`\`\``;
+
 		await activePr.createReviewThread(
 			body,
 			path,
@@ -1366,8 +1446,10 @@ ${suggestionInformation.suggestionContent}
 				"Cannot create comment on resolve without an active pull request.",
 			);
 		}
+
 		const pendingReviewId =
 			await this._folderRepoManager.activePullRequest.getPendingReviewId();
+
 		await this.createOrReplyComment(thread, input, !pendingReviewId);
 	}
 
@@ -1556,6 +1638,7 @@ ${suggestionInformation.suggestionContent}
 				"Cannot find the editor to apply the suggestion to.",
 			);
 		}
+
 		await editor.edit((builder) => {
 			builder.replace(
 				range.with(
@@ -1569,6 +1652,7 @@ ${suggestionInformation.suggestionContent}
 
 	public override dispose() {
 		super.dispose();
+
 		unregisterCommentHandler(this._commentHandlerId);
 	}
 }

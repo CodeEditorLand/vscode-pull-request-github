@@ -13,7 +13,9 @@ import { TreeNode, TreeNodeParent } from "./treeNode";
 
 export class CommitsNode extends TreeNode implements vscode.TreeItem {
 	public collapsibleState: vscode.TreeItemCollapsibleState;
+
 	private _folderRepoManager: FolderRepositoryManager;
+
 	private _pr: PullRequestModel;
 
 	constructor(
@@ -22,27 +24,35 @@ export class CommitsNode extends TreeNode implements vscode.TreeItem {
 		pr: PullRequestModel,
 	) {
 		super(parent);
+
 		this.label = vscode.l10n.t("Commits");
+
 		this._pr = pr;
+
 		this._folderRepoManager = reposManager;
+
 		this.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
 
 		this.childrenDisposables = [];
+
 		this.childrenDisposables.push(
 			this._pr.onDidChangeReviewThreads(() => {
 				Logger.appendLine(
 					`Review threads have changed, refreshing Commits node`,
 					PR_TREE,
 				);
+
 				this.refresh(this);
 			}),
 		);
+
 		this.childrenDisposables.push(
 			this._pr.onDidChangeComments(() => {
 				Logger.appendLine(
 					`Comments have changed, refreshing Commits node`,
 					PR_TREE,
 				);
+
 				this.refresh(this);
 			}),
 		);
@@ -59,6 +69,7 @@ export class CommitsNode extends TreeNode implements vscode.TreeItem {
 			Logger.appendLine(`Getting children for Commits node`, PR_TREE);
 
 			const commits = await this._pr.getCommits();
+
 			this.children = commits.map(
 				(commit, index) =>
 					new CommitNode(
@@ -71,6 +82,7 @@ export class CommitsNode extends TreeNode implements vscode.TreeItem {
 								?.commit === commit.sha,
 					),
 			);
+
 			Logger.appendLine(`Got all children for Commits node`, PR_TREE);
 
 			return this.children;

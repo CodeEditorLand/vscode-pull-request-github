@@ -37,6 +37,7 @@ Here are the possible columns:
 
 export class DisplayIssuesTool extends ToolBase<DisplayIssuesParameters> {
 	public static readonly toolId = "github-pull-request_renderIssues";
+
 	private static ID = "DisplayIssuesTool";
 
 	constructor(chatParticipantState: ChatParticipantState) {
@@ -65,6 +66,7 @@ export class DisplayIssuesTool extends ToolBase<DisplayIssuesParameters> {
 			if (line === "") {
 				continue;
 			}
+
 			if (!possibleColumns.includes(line)) {
 				// Check if the llm decided to use formatting, even though we asked it not to
 				const splitOnSpace = line.split(" ");
@@ -80,6 +82,7 @@ export class DisplayIssuesTool extends ToolBase<DisplayIssuesParameters> {
 				finalColumns.push(line as IssueColumn);
 			}
 		}
+
 		return finalColumns;
 	}
 
@@ -109,6 +112,7 @@ export class DisplayIssuesTool extends ToolBase<DisplayIssuesParameters> {
 				this.assistantPrompt(issues),
 			),
 		];
+
 		messages.push(
 			new vscode.LanguageModelChatMessage(
 				vscode.LanguageModelChatMessageRole.User,
@@ -229,6 +233,7 @@ export class DisplayIssuesTool extends ToolBase<DisplayIssuesParameters> {
 				),
 			]);
 		}
+
 		Logger.debug(
 			`Displaying ${this.foundIssuesCount(options.input)} issues, first issue ${issueItems[0].number}`,
 			DisplayIssuesTool.ID,
@@ -241,14 +246,19 @@ export class DisplayIssuesTool extends ToolBase<DisplayIssuesParameters> {
 		);
 
 		const titleRow = `| ${importantColumns.join(" | ")} |`;
+
 		Logger.debug(`Columns ${titleRow} issues`, DisplayIssuesTool.ID);
 
 		const separatorRow = `| ${importantColumns.map(() => "---").join(" | ")} |\n`;
 
 		const issues = new vscode.MarkdownString(titleRow);
+
 		issues.supportHtml = true;
+
 		issues.appendMarkdown("\n");
+
 		issues.appendMarkdown(separatorRow);
+
 		issues.appendMarkdown(
 			issueItems
 				.slice(0, 10)

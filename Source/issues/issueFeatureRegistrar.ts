@@ -73,13 +73,17 @@ const CREATING_ISSUE_FROM_FILE_CONTEXT = "issues.creatingFromFile";
 
 export class IssueFeatureRegistrar extends Disposable {
 	private _stateManager: StateManager;
+
 	private _newIssueCache: NewIssueCache;
 
 	private createIssueInfo:
 		| {
 				document: vscode.TextDocument;
+
 				newIssue: NewIssue | undefined;
+
 				lineNumber: number | undefined;
+
 				insertIndex: number | undefined;
 		  }
 		| undefined;
@@ -92,11 +96,13 @@ export class IssueFeatureRegistrar extends Disposable {
 		private telemetry: ITelemetry,
 	) {
 		super();
+
 		this._stateManager = new StateManager(
 			gitAPI,
 			this.manager,
 			this.context,
 		);
+
 		this._newIssueCache = new NewIssueCache(context);
 	}
 
@@ -107,6 +113,7 @@ export class IssueFeatureRegistrar extends Disposable {
 				new IssueFileSystemProvider(this._newIssueCache),
 			),
 		);
+
 		this._register(
 			vscode.languages.registerCompletionItemProvider(
 				{ scheme: NEW_ISSUE_SCHEME },
@@ -124,17 +131,21 @@ export class IssueFeatureRegistrar extends Disposable {
 				this.context,
 			),
 		});
+
 		this._register(view);
+
 		this._register(
 			view.onDidCollapseElement((e) =>
 				updateExpandedQueries(this.context, e.element, false),
 			),
 		);
+
 		this._register(
 			view.onDidExpandElement((e) =>
 				updateExpandedQueries(this.context, e.element, true),
 			),
 		);
+
 		this._register(
 			vscode.commands.registerCommand(
 				"issue.createIssueFromSelection",
@@ -151,6 +162,7 @@ export class IssueFeatureRegistrar extends Disposable {
 				this,
 			),
 		);
+
 		this._register(
 			vscode.commands.registerCommand(
 				"issue.createIssueFromClipboard",
@@ -167,6 +179,7 @@ export class IssueFeatureRegistrar extends Disposable {
 				this,
 			),
 		);
+
 		this._register(
 			vscode.commands.registerCommand(
 				"issue.copyGithubPermalink",
@@ -183,6 +196,7 @@ export class IssueFeatureRegistrar extends Disposable {
 				this,
 			),
 		);
+
 		this._register(
 			vscode.commands.registerCommand(
 				"issue.copyGithubHeadLink",
@@ -199,6 +213,7 @@ export class IssueFeatureRegistrar extends Disposable {
 				this,
 			),
 		);
+
 		this._register(
 			vscode.commands.registerCommand(
 				"issue.copyGithubPermalinkWithoutRange",
@@ -215,6 +230,7 @@ export class IssueFeatureRegistrar extends Disposable {
 				this,
 			),
 		);
+
 		this._register(
 			vscode.commands.registerCommand(
 				"issue.copyGithubHeadLinkWithoutRange",
@@ -231,6 +247,7 @@ export class IssueFeatureRegistrar extends Disposable {
 				this,
 			),
 		);
+
 		this._register(
 			vscode.commands.registerCommand(
 				"issue.copyGithubDevLinkWithoutRange",
@@ -253,6 +270,7 @@ export class IssueFeatureRegistrar extends Disposable {
 				this,
 			),
 		);
+
 		this._register(
 			vscode.commands.registerCommand(
 				"issue.copyGithubDevLink",
@@ -275,6 +293,7 @@ export class IssueFeatureRegistrar extends Disposable {
 				this,
 			),
 		);
+
 		this._register(
 			vscode.commands.registerCommand(
 				"issue.copyGithubDevLinkFile",
@@ -297,6 +316,7 @@ export class IssueFeatureRegistrar extends Disposable {
 				this,
 			),
 		);
+
 		this._register(
 			vscode.commands.registerCommand(
 				"issue.copyMarkdownGithubPermalink",
@@ -313,6 +333,7 @@ export class IssueFeatureRegistrar extends Disposable {
 				this,
 			),
 		);
+
 		this._register(
 			vscode.commands.registerCommand(
 				"issue.copyMarkdownGithubPermalinkWithoutRange",
@@ -333,6 +354,7 @@ export class IssueFeatureRegistrar extends Disposable {
 				this,
 			),
 		);
+
 		this._register(
 			vscode.commands.registerCommand(
 				"issue.openGithubPermalink",
@@ -349,7 +371,9 @@ export class IssueFeatureRegistrar extends Disposable {
 				this,
 			),
 		);
+
 		this._register(new ShareProviderManager(this.manager, this.gitAPI));
+
 		this._register(
 			vscode.commands.registerCommand(
 				"issue.openIssue",
@@ -363,6 +387,7 @@ export class IssueFeatureRegistrar extends Disposable {
 				},
 			),
 		);
+
 		this._register(
 			vscode.commands.registerCommand(
 				"issue.startWorking",
@@ -377,6 +402,7 @@ export class IssueFeatureRegistrar extends Disposable {
 				this,
 			),
 		);
+
 		this._register(
 			vscode.commands.registerCommand(
 				"issue.startWorkingBranchDescriptiveTitle",
@@ -391,6 +417,7 @@ export class IssueFeatureRegistrar extends Disposable {
 				this,
 			),
 		);
+
 		this._register(
 			vscode.commands.registerCommand(
 				"issue.continueWorking",
@@ -405,6 +432,7 @@ export class IssueFeatureRegistrar extends Disposable {
 				this,
 			),
 		);
+
 		this._register(
 			vscode.commands.registerCommand(
 				"issue.startWorkingBranchPrompt",
@@ -421,6 +449,7 @@ export class IssueFeatureRegistrar extends Disposable {
 				this,
 			),
 		);
+
 		this._register(
 			vscode.commands.registerCommand(
 				"issue.stopWorking",
@@ -435,6 +464,7 @@ export class IssueFeatureRegistrar extends Disposable {
 				this,
 			),
 		);
+
 		this._register(
 			vscode.commands.registerCommand(
 				"issue.stopWorkingBranchDescriptiveTitle",
@@ -449,6 +479,7 @@ export class IssueFeatureRegistrar extends Disposable {
 				this,
 			),
 		);
+
 		this._register(
 			vscode.commands.registerCommand(
 				"issue.statusBar",
@@ -463,6 +494,7 @@ export class IssueFeatureRegistrar extends Disposable {
 				this,
 			),
 		);
+
 		this._register(
 			vscode.commands.registerCommand(
 				"issue.copyIssueNumber",
@@ -476,6 +508,7 @@ export class IssueFeatureRegistrar extends Disposable {
 				},
 			),
 		);
+
 		this._register(
 			vscode.commands.registerCommand(
 				"issue.copyIssueUrl",
@@ -489,6 +522,7 @@ export class IssueFeatureRegistrar extends Disposable {
 				},
 			),
 		);
+
 		this._register(
 			vscode.commands.registerCommand(
 				"issue.refresh",
@@ -503,6 +537,7 @@ export class IssueFeatureRegistrar extends Disposable {
 				this,
 			),
 		);
+
 		this._register(
 			vscode.commands.registerCommand(
 				"issue.suggestRefresh",
@@ -517,6 +552,7 @@ export class IssueFeatureRegistrar extends Disposable {
 				this,
 			),
 		);
+
 		this._register(
 			vscode.commands.registerCommand(
 				"issue.getCurrent",
@@ -531,6 +567,7 @@ export class IssueFeatureRegistrar extends Disposable {
 				this,
 			),
 		);
+
 		this._register(
 			vscode.commands.registerCommand(
 				"issue.editQuery",
@@ -545,6 +582,7 @@ export class IssueFeatureRegistrar extends Disposable {
 				this,
 			),
 		);
+
 		this._register(
 			vscode.commands.registerCommand(
 				"issue.createIssue",
@@ -559,6 +597,7 @@ export class IssueFeatureRegistrar extends Disposable {
 				this,
 			),
 		);
+
 		this._register(
 			vscode.commands.registerCommand(
 				"issue.createIssueFromFile",
@@ -569,12 +608,15 @@ export class IssueFeatureRegistrar extends Disposable {
 					this.telemetry.sendTelemetryEvent(
 						"issue.createIssueFromFile",
 					);
+
 					await vscode.commands.executeCommand(
 						"setContext",
 						CREATING_ISSUE_FROM_FILE_CONTEXT,
 						true,
 					);
+
 					await this.createIssueFromFile();
+
 					await vscode.commands.executeCommand(
 						"setContext",
 						CREATING_ISSUE_FROM_FILE_CONTEXT,
@@ -584,6 +626,7 @@ export class IssueFeatureRegistrar extends Disposable {
 				this,
 			),
 		);
+
 		this._register(
 			vscode.commands.registerCommand("issue.issueCompletion", () => {
 				/* __GDPR__
@@ -592,6 +635,7 @@ export class IssueFeatureRegistrar extends Disposable {
 				this.telemetry.sendTelemetryEvent("issue.issueCompletion");
 			}),
 		);
+
 		this._register(
 			vscode.commands.registerCommand("issue.userCompletion", () => {
 				/* __GDPR__
@@ -600,6 +644,7 @@ export class IssueFeatureRegistrar extends Disposable {
 				this.telemetry.sendTelemetryEvent("issue.userCompletion");
 			}),
 		);
+
 		this._register(
 			vscode.commands.registerCommand(
 				"issue.signinAndRefreshList",
@@ -608,6 +653,7 @@ export class IssueFeatureRegistrar extends Disposable {
 				},
 			),
 		);
+
 		this._register(
 			vscode.commands.registerCommand(
 				"issue.goToLinkedCode",
@@ -618,6 +664,7 @@ export class IssueFeatureRegistrar extends Disposable {
 		);
 
 		const chatCommandID = chatCommand();
+
 		this._register(
 			vscode.commands.registerCommand(
 				"issue.chatSummarizeIssue",
@@ -651,6 +698,7 @@ export class IssueFeatureRegistrar extends Disposable {
 						const pullRequestModel = issue.pullRequestModel;
 
 						const remote = pullRequestModel.githubRepository.remote;
+
 						commands.executeCommand(
 							chatCommandID,
 							vscode.l10n.t(
@@ -664,6 +712,7 @@ export class IssueFeatureRegistrar extends Disposable {
 				},
 			),
 		);
+
 		this._register(
 			vscode.commands.registerCommand(
 				"issue.chatSuggestFix",
@@ -675,6 +724,7 @@ export class IssueFeatureRegistrar extends Disposable {
 				"issue.chatSuggestFix" : {}
 			*/
 					this.telemetry.sendTelemetryEvent("issue.chatSuggestFix");
+
 					commands.executeCommand(
 						chatCommandID,
 						vscode.l10n.t(
@@ -687,6 +737,7 @@ export class IssueFeatureRegistrar extends Disposable {
 				},
 			),
 		);
+
 		this._stateManager.tryInitializeAndWait().then(() => {
 			this.registerCompletionProviders();
 
@@ -701,12 +752,14 @@ export class IssueFeatureRegistrar extends Disposable {
 					),
 				),
 			);
+
 			this._register(
 				vscode.languages.registerHoverProvider(
 					"*",
 					new UserHoverProvider(this.manager, this.telemetry),
 				),
 			);
+
 			this._register(
 				vscode.languages.registerCodeActionsProvider(
 					"*",
@@ -776,13 +829,17 @@ export class IssueFeatureRegistrar extends Disposable {
 		{ language: "yml" },
 		"*",
 	];
+
 	private registerCompletionProviders() {
 		const providers: {
 			provider:
 				| typeof IssueCompletionProvider
 				| typeof UserCompletionProvider;
+
 			trigger: string;
+
 			disposable: vscode.Disposable | undefined;
+
 			configuration: string;
 		}[] = [
 			{
@@ -819,6 +876,7 @@ export class IssueFeatureRegistrar extends Disposable {
 				);
 			}
 		}
+
 		this._register(
 			vscode.workspace.onDidChangeConfiguration((change) => {
 				for (const element of providers) {
@@ -833,6 +891,7 @@ export class IssueFeatureRegistrar extends Disposable {
 
 						if (!newValue && element.disposable) {
 							element.disposable.dispose();
+
 							element.disposable = undefined;
 						} else if (newValue && !element.disposable) {
 							this._register(
@@ -848,6 +907,7 @@ export class IssueFeatureRegistrar extends Disposable {
 									)),
 							);
 						}
+
 						break;
 					}
 				}
@@ -866,13 +926,16 @@ export class IssueFeatureRegistrar extends Disposable {
 			folderManager = await this.chooseRepo(
 				vscode.l10n.t("Select the repo to create the issue in."),
 			);
+
 			uri = folderManager?.repository.rootUri;
 		}
+
 		if (!folderManager || !uri) {
 			return;
 		}
 
 		const template = await this.chooseTemplate(folderManager);
+
 		this._newIssueCache.clear();
 
 		if (template) {
@@ -886,6 +949,7 @@ export class IssueFeatureRegistrar extends Disposable {
 		if (!metadata || !vscode.window.activeTextEditor) {
 			return;
 		}
+
 		const createSucceeded = await this.doCreateIssue(
 			this.createIssueInfo?.document,
 			this.createIssueInfo?.newIssue,
@@ -899,12 +963,14 @@ export class IssueFeatureRegistrar extends Disposable {
 			this.createIssueInfo?.insertIndex,
 			metadata.originUri,
 		);
+
 		this.createIssueInfo = undefined;
 
 		if (createSucceeded) {
 			await vscode.commands.executeCommand(
 				"workbench.action.closeActiveEditor",
 			);
+
 			this._newIssueCache.clear();
 		}
 	}
@@ -936,8 +1002,10 @@ export class IssueFeatureRegistrar extends Disposable {
 					vscode.ConfigurationTarget.Global,
 				);
 			}
+
 			command = "workbench.action.openSettingsJson";
 		}
+
 		await vscode.commands.executeCommand(command);
 
 		const editor = vscode.window.activeTextEditor;
@@ -949,7 +1017,9 @@ export class IssueFeatureRegistrar extends Disposable {
 
 			if (search >= 0) {
 				const position = editor.document.positionAt(search);
+
 				editor.revealRange(new vscode.Range(position, position));
+
 				editor.selection = new vscode.Selection(position, position);
 			}
 		}
@@ -966,6 +1036,7 @@ export class IssueFeatureRegistrar extends Disposable {
 				number: currentIssues[0].issue.number,
 			};
 		}
+
 		return undefined;
 	}
 
@@ -975,6 +1046,7 @@ export class IssueFeatureRegistrar extends Disposable {
 
 	async suggestRefresh() {
 		await vscode.commands.executeCommand("hideSuggestWidget");
+
 		await this._stateManager.refresh();
 
 		return vscode.commands.executeCommand("editor.action.triggerSuggest");
@@ -986,6 +1058,7 @@ export class IssueFeatureRegistrar extends Disposable {
 				vscode.Uri.parse(issueModel.html_url),
 			);
 		}
+
 		return undefined;
 	}
 
@@ -1010,7 +1083,9 @@ export class IssueFeatureRegistrar extends Disposable {
 			if (!repoManager) {
 				return;
 			}
+
 			githubRepository = await repoManager.getOrigin();
+
 			remote = githubRepository.remote;
 		}
 
@@ -1080,6 +1155,7 @@ export class IssueFeatureRegistrar extends Disposable {
 		if (!(issueModel instanceof IssueModel)) {
 			return;
 		}
+
 		this.doStartWorking(
 			this.manager.getManagerForIssueModel(issueModel),
 			issueModel,
@@ -1101,6 +1177,7 @@ export class IssueFeatureRegistrar extends Disposable {
 				return;
 			}
 		}
+
 		if (
 			issueModel instanceof IssueModel &&
 			this._stateManager.currentIssue(folderManager.repository.rootUri)
@@ -1138,6 +1215,7 @@ export class IssueFeatureRegistrar extends Disposable {
 		} catch (e) {
 			// leave defaults undefined
 		}
+
 		const stopWorkingText: string = vscode.l10n.t(
 			"{0} Stop working on #{1}",
 			"$(primitive-square)",
@@ -1174,8 +1252,10 @@ export class IssueFeatureRegistrar extends Disposable {
 						this._stateManager,
 					);
 				}
+
 				break;
 			}
+
 			case stopWorkingText:
 				return this._stateManager.setCurrentIssue(
 					currentIssue.manager,
@@ -1194,6 +1274,7 @@ export class IssueFeatureRegistrar extends Disposable {
 			interface IssueChoice extends vscode.QuickPickItem {
 				currentIssue: CurrentIssue;
 			}
+
 			const choices: IssueChoice[] = currentIssues.map((currentIssue) => {
 				return {
 					label: vscode.l10n.t(
@@ -1224,6 +1305,7 @@ export class IssueFeatureRegistrar extends Disposable {
 		if (issueModel instanceof IssueModel) {
 			return vscode.env.clipboard.writeText(issueModel.number.toString());
 		}
+
 		return undefined;
 	}
 
@@ -1231,6 +1313,7 @@ export class IssueFeatureRegistrar extends Disposable {
 		if (issueModel instanceof IssueModel) {
 			return vscode.env.clipboard.writeText(issueModel.html_url);
 		}
+
 		return undefined;
 	}
 
@@ -1273,6 +1356,7 @@ export class IssueFeatureRegistrar extends Disposable {
 				const relativePath = folderRepoManager.gitRelativeRootPath(
 					newIssue.document.uri.path,
 				);
+
 				contents += vscode.l10n.t("In file {0}\n", relativePath);
 			}
 		}
@@ -1305,16 +1389,21 @@ export class IssueFeatureRegistrar extends Disposable {
 
 		if (!newIssue && vscode.window.activeTextEditor) {
 			document = vscode.window.activeTextEditor.document;
+
 			issueGenerationText = document.getText(
 				vscode.window.activeTextEditor.selection,
 			);
 		} else if (newIssue) {
 			document = newIssue.document;
+
 			insertIndex = newIssue.insertIndex;
+
 			lineNumber = newIssue.lineNumber;
+
 			titlePlaceholder = newIssue.line
 				.substring(insertIndex, newIssue.line.length)
 				.trim();
+
 			issueGenerationText = document.getText(
 				newIssue.range.isEmpty
 					? document.lineAt(newIssue.range.start.line).range
@@ -1323,6 +1412,7 @@ export class IssueFeatureRegistrar extends Disposable {
 		} else {
 			return undefined;
 		}
+
 		const matches = issueGenerationText.match(USER_EXPRESSION);
 
 		if (
@@ -1332,6 +1422,7 @@ export class IssueFeatureRegistrar extends Disposable {
 		) {
 			assignee = [matches[1]];
 		}
+
 		let title: string | undefined;
 
 		const body: string | undefined = await this.createTodoIssueBody(
@@ -1340,22 +1431,28 @@ export class IssueFeatureRegistrar extends Disposable {
 		);
 
 		const quickInput = vscode.window.createInputBox();
+
 		quickInput.value = titlePlaceholder ?? "";
+
 		quickInput.prompt = vscode.l10n.t(
 			"Set the issue title. Confirm to create the issue now or use the edit button to edit the issue title and description.",
 		);
+
 		quickInput.title = vscode.l10n.t("Create Issue");
+
 		quickInput.buttons = [
 			{
 				iconPath: new vscode.ThemeIcon("edit"),
 				tooltip: vscode.l10n.t("Edit Description"),
 			},
 		];
+
 		quickInput.onDidAccept(async () => {
 			title = quickInput.value;
 
 			if (title) {
 				quickInput.busy = true;
+
 				await this.doCreateIssue(
 					document,
 					newIssue,
@@ -1368,13 +1465,18 @@ export class IssueFeatureRegistrar extends Disposable {
 					lineNumber,
 					insertIndex,
 				);
+
 				quickInput.busy = false;
 			}
+
 			quickInput.hide();
 		});
+
 		quickInput.onDidTriggerButton(async () => {
 			title = quickInput.value;
+
 			quickInput.busy = true;
+
 			this.createIssueInfo = {
 				document,
 				newIssue,
@@ -1383,9 +1485,12 @@ export class IssueFeatureRegistrar extends Disposable {
 			};
 
 			this.makeNewIssueFile(document.uri, title, body, assignee);
+
 			quickInput.busy = false;
+
 			quickInput.hide();
 		});
+
 		quickInput.show();
 
 		return undefined;
@@ -1411,6 +1516,7 @@ export class IssueFeatureRegistrar extends Disposable {
 		) {
 			return;
 		}
+
 		await vscode.workspace.fs.delete(bodyPath);
 
 		const assigneeLine = `${ASSIGNEES} ${
@@ -1437,6 +1543,7 @@ ${milestoneLine}
 ${projectsLine}\n
 ${body ?? ""}\n
 <!-- ${vscode.l10n.t('Edit the body of your new issue then click the ✓ "Create Issue" button in the top right of the editor. The first line will be the issue title. Assignees and Labels follow after a blank line. Leave an empty line before beginning the body of the issue.')} -->`;
+
 		await vscode.workspace.fs.writeFile(
 			bodyPath,
 			this.stringToUint8Array(text),
@@ -1487,6 +1594,7 @@ ${body ?? ""}\n
 							),
 						]);
 					}
+
 					const labelFullLine = textEditor.document.lineAt(3);
 
 					if (labelFullLine.text.startsWith(LABELS)) {
@@ -1500,6 +1608,7 @@ ${body ?? ""}\n
 							),
 						]);
 					}
+
 					const projectsFullLine = textEditor.document.lineAt(5);
 
 					if (projectsFullLine.text.startsWith(PROJECTS)) {
@@ -1522,6 +1631,7 @@ ${body ?? ""}\n
 			(textDocument) => {
 				if (textDocument === editor.document) {
 					editorChangeDisposable.dispose();
+
 					closeDisposable.dispose();
 				}
 			},
@@ -1535,6 +1645,7 @@ ${body ?? ""}\n
 		if (!createParams.labels) {
 			return true;
 		}
+
 		const allLabels = (
 			await folderManager.getLabels(undefined, createParams)
 		).map((label) => label.name);
@@ -1542,6 +1653,7 @@ ${body ?? ""}\n
 		const newLabels: string[] = [];
 
 		const filteredLabels: string[] = [];
+
 		createParams.labels?.forEach((paramLabel) => {
 			let label =
 				typeof paramLabel === "string" ? paramLabel : paramLabel.name;
@@ -1581,10 +1693,12 @@ ${body ?? ""}\n
 
 					return true;
 				}
+
 				default:
 					return false;
 			}
 		}
+
 		return true;
 	}
 
@@ -1594,11 +1708,13 @@ ${body ?? ""}\n
 		interface RepoChoice extends vscode.QuickPickItem {
 			repo: FolderRepositoryManager;
 		}
+
 		const choices: RepoChoice[] = [];
 
 		for (const folderManager of this.manager.folderManagers) {
 			try {
 				const defaults = await folderManager.getPullRequestDefaults();
+
 				choices.push({
 					label: `${defaults.owner}/${defaults.repo}`,
 					repo: folderManager,
@@ -1607,6 +1723,7 @@ ${body ?? ""}\n
 				// ignore
 			}
 		}
+
 		if (choices.length === 0) {
 			return;
 		} else if (choices.length === 1) {
@@ -1636,6 +1753,7 @@ ${body ?? ""}\n
 				| { title: string | undefined; body: string | undefined }
 				| undefined;
 		}
+
 		const templates = await Promise.all(
 			templateUris.map(async (uri) => {
 				try {
@@ -1663,6 +1781,7 @@ ${body ?? ""}\n
 					template: template,
 				};
 			});
+
 		choices.push({
 			label: vscode.l10n.t("Blank issue"),
 			template: { title: undefined, body: undefined },
@@ -1715,6 +1834,7 @@ ${body ?? ""}\n
 		} else if (originUri) {
 			folderManager = this.manager.getManagerForFile(originUri);
 		}
+
 		if (!folderManager) {
 			folderManager = await this.chooseRepo(
 				vscode.l10n.t("Choose where to create the issue."),
@@ -1730,6 +1850,7 @@ ${body ?? ""}\n
 				if (!folderManager) {
 					return false;
 				}
+
 				progress.report({
 					message: vscode.l10n.t(
 						"Verifying that issue data is valid...",
@@ -1748,6 +1869,7 @@ ${body ?? ""}\n
 
 					return false;
 				}
+
 				const body: string | undefined =
 					issueBody || newIssue?.document.isUntitled
 						? issueBody
@@ -1774,6 +1896,7 @@ ${body ?? ""}\n
 				if (!(await this.verifyLabels(folderManager, createParams))) {
 					return false;
 				}
+
 				progress.report({
 					message: vscode.l10n.t(
 						"Creating issue in {0}...",
@@ -1787,6 +1910,7 @@ ${body ?? ""}\n
 					if (projects) {
 						await issue.updateProjects(projects);
 					}
+
 					if (
 						document !== undefined &&
 						insertIndex !== undefined &&
@@ -1802,11 +1926,13 @@ ${body ?? ""}\n
 							"number"
 								? `#${issue.number}`
 								: issue.html_url;
+
 						edit.insert(
 							document.uri,
 							new vscode.Position(lineNumber, insertIndex),
 							` ${insertText}`,
 						);
+
 						await vscode.workspace.applyEdit(edit);
 					} else {
 						const copyIssueUrl = vscode.l10n.t("Copy Issue Link");
@@ -1816,6 +1942,7 @@ ${body ?? ""}\n
 							comment:
 								"Open the issue description in the browser to see it's full contents.",
 						});
+
 						vscode.window
 							.showInformationMessage(
 								vscode.l10n.t("Issue created"),
@@ -1840,10 +1967,12 @@ ${body ?? ""}\n
 								}
 							});
 					}
+
 					this._stateManager.refreshCacheNeeded();
 
 					return true;
 				}
+
 				return false;
 			},
 		);
@@ -1872,6 +2001,7 @@ ${body ?? ""}\n
 				),
 			);
 		}
+
 		return link;
 	}
 
@@ -1893,6 +2023,7 @@ ${body ?? ""}\n
 				),
 			);
 		}
+
 		return link;
 	}
 
@@ -1908,6 +2039,7 @@ ${body ?? ""}\n
 			// asExternalUri can throw when in the browser and the embedder doesn't set a uri resolver.
 			return link;
 		}
+
 		const authority =
 			uri.scheme === "https" &&
 			/^(insiders\.vscode|vscode|github)\./.test(uri.authority)
@@ -1917,6 +2049,7 @@ ${body ?? ""}\n
 		if (!authority) {
 			return link;
 		}
+
 		const linkUri = vscode.Uri.parse(link);
 
 		const linkPath = /^(github)\./.test(uri.authority)
@@ -1948,6 +2081,7 @@ ${body ?? ""}\n
 							link.permalink,
 						)
 					: link.permalink;
+
 			Logger.debug(
 				`writing ${contextualizedLink} to the clipboard`,
 				PERMALINK_COMPONENT,
@@ -1969,6 +2103,7 @@ ${body ?? ""}\n
 		if (!vscode.window.activeTextEditor) {
 			return undefined;
 		}
+
 		let editorSelection: vscode.Range | undefined =
 			vscode.window.activeTextEditor.selection;
 
@@ -1978,12 +2113,14 @@ ${body ?? ""}\n
 				new vscode.Position(editorSelection.start.line + 1, 0),
 			);
 		}
+
 		const selection =
 			vscode.window.activeTextEditor.document.getText(editorSelection);
 
 		if (selection) {
 			return selection;
 		}
+
 		editorSelection =
 			vscode.window.activeTextEditor.document.getWordRangeAtPosition(
 				editorSelection.start,
@@ -1994,6 +2131,7 @@ ${body ?? ""}\n
 				editorSelection,
 			);
 		}
+
 		return undefined;
 	}
 
@@ -2028,6 +2166,7 @@ ${body ?? ""}\n
 		if (link.permalink) {
 			return vscode.env.openExternal(vscode.Uri.parse(link.permalink));
 		}
+
 		return undefined;
 	}
 }

@@ -29,13 +29,16 @@ export function registerTools(
 		repositoriesManager,
 		chatParticipantState,
 	);
+
 	registerSummarizationTools(context);
+
 	registerSuggestFixTool(
 		context,
 		credentialStore,
 		repositoriesManager,
 		chatParticipantState,
 	);
+
 	registerSearchTools(
 		context,
 		credentialStore,
@@ -60,6 +63,7 @@ function registerFetchingTools(
 			),
 		),
 	);
+
 	context.subscriptions.push(
 		vscode.lm.registerTool(
 			FetchNotificationTool.toolId,
@@ -79,6 +83,7 @@ function registerSummarizationTools(context: vscode.ExtensionContext) {
 			new IssueSummarizationTool(),
 		),
 	);
+
 	context.subscriptions.push(
 		vscode.lm.registerTool(
 			NotificationSummarizationTool.toolId,
@@ -121,6 +126,7 @@ function registerSearchTools(
 			),
 		),
 	);
+
 	context.subscriptions.push(
 		vscode.lm.registerTool(
 			SearchTool.toolId,
@@ -131,6 +137,7 @@ function registerSearchTools(
 			),
 		),
 	);
+
 	context.subscriptions.push(
 		vscode.lm.registerTool(
 			DisplayIssuesTool.toolId,

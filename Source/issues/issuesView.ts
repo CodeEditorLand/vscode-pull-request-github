@@ -47,6 +47,7 @@ export class IssuesTreeData
 	private _onDidChangeTreeData: vscode.EventEmitter<
 		FolderRepositoryManager | IssueItem | null | undefined | void
 	> = new vscode.EventEmitter();
+
 	public onDidChangeTreeData: vscode.Event<
 		FolderRepositoryManager | IssueItem | null | undefined | void
 	> = this._onDidChangeTreeData.event;
@@ -61,6 +62,7 @@ export class IssuesTreeData
 				this._onDidChangeTreeData.fire();
 			}),
 		);
+
 		context.subscriptions.push(
 			this.stateManager.onDidChangeIssueData(() => {
 				this._onDidChangeTreeData.fire();
@@ -98,6 +100,7 @@ export class IssuesTreeData
 					: vscode.TreeItemCollapsibleState.Collapsed,
 			),
 		);
+
 		item.contextValue = "query";
 
 		return item;
@@ -121,6 +124,7 @@ export class IssuesTreeData
 			`${element.number}: ${element.title}`,
 			vscode.TreeItemCollapsibleState.None,
 		);
+
 		treeItem.iconPath = element.isOpen
 			? new vscode.ThemeIcon(
 					"issues",
@@ -136,6 +140,7 @@ export class IssuesTreeData
 			element.number
 		) {
 			treeItem.label = `✓ ${treeItem.label as string}`;
+
 			treeItem.contextValue = "currentissue";
 		} else {
 			const savedState = this.stateManager.getSavedIssueState(
@@ -148,9 +153,11 @@ export class IssuesTreeData
 				treeItem.contextValue = "issue";
 			}
 		}
+
 		if (issueBodyHasLink(element)) {
 			treeItem.contextValue = "link" + treeItem.contextValue;
 		}
+
 		return treeItem;
 	}
 
@@ -208,6 +215,7 @@ export class IssuesTreeData
 				this.manager,
 			);
 		}
+
 		return item;
 	}
 
@@ -256,6 +264,7 @@ export class IssuesTreeData
 				),
 			);
 		}
+
 		return queryLabels.map((label, index) => {
 			const item = new QueryNode(
 				folderManager.repository.rootUri,
@@ -281,6 +290,7 @@ export class IssuesTreeData
 		if (!issueQueryResult) {
 			return [];
 		}
+
 		return this.getIssueGroupsForGroupIndex(
 			queryNode.repoRootUri,
 			queryNode.queryLabel,
@@ -302,6 +312,7 @@ export class IssuesTreeData
 		if (groupByOrder.length <= indexInGroupByOrder) {
 			return issues;
 		}
+
 		const groupByValue = groupByOrder[indexInGroupByOrder];
 
 		if (
@@ -342,6 +353,7 @@ export class IssuesTreeData
 				),
 			);
 		}
+
 		return nodes;
 	}
 
@@ -397,6 +409,7 @@ function expandStateId(
 	} else if (element instanceof IssueGroupNode) {
 		id = `${element.repoRootUri.toString()}/${element.queryLabel}/${element.groupLevel}/${element.group}`;
 	}
+
 	return id;
 }
 
@@ -417,6 +430,7 @@ export function updateExpandedQueries(
 		} else {
 			expandedQueries.delete(id);
 		}
+
 		context.workspaceState.update(
 			EXPANDED_ISSUES_STATE,
 			Array.from(expandedQueries.keys()),
@@ -438,11 +452,13 @@ function getQueryExpandState(
 		if (!savedValue) {
 			return defaultState;
 		}
+
 		const expandedQueries = new Set<string>(savedValue as string[]);
 
 		return expandedQueries.has(id)
 			? vscode.TreeItemCollapsibleState.Expanded
 			: vscode.TreeItemCollapsibleState.Collapsed;
 	}
+
 	return vscode.TreeItemCollapsibleState.None;
 }

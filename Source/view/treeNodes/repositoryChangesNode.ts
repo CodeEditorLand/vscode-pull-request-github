@@ -22,8 +22,11 @@ export class RepositoryChangesNode
 	implements vscode.TreeItem
 {
 	private _filesCategoryNode?: FilesCategoryNode;
+
 	private _commitsCategoryNode?: CommitsNode;
+
 	public description?: string;
+
 	readonly collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
 
 	constructor(
@@ -60,7 +63,9 @@ export class RepositoryChangesNode
 							return;
 						}
 					}
+
 					const activeEditorUri = e?.document.uri.toString();
+
 					this.revealActiveEditorInTree(activeEditorUri);
 				}
 			}),
@@ -70,6 +75,7 @@ export class RepositoryChangesNode
 			this.parent.view.onDidChangeVisibility((_) => {
 				const activeEditorUri =
 					vscode.window.activeTextEditor?.document.uri.toString();
+
 				this.revealActiveEditorInTree(activeEditorUri);
 			}),
 		);
@@ -104,17 +110,20 @@ export class RepositoryChangesNode
 				`Creating file and commit nodes for PR #${this.pullRequestModel.number}`,
 				PR_TREE,
 			);
+
 			this._filesCategoryNode = new FilesCategoryNode(
 				this.parent,
 				this._reviewModel,
 				this.pullRequestModel,
 			);
+
 			this._commitsCategoryNode = new CommitsNode(
 				this.parent,
 				this._pullRequestManager,
 				this.pullRequestModel,
 			);
 		}
+
 		this.children = [this._filesCategoryNode, this._commitsCategoryNode];
 
 		return this.children;
@@ -125,12 +134,14 @@ export class RepositoryChangesNode
 
 		if (this.label.length > 50) {
 			this.tooltip = this.label;
+
 			this.label = `${this.label.substring(0, 50)}...`;
 		}
 	}
 
 	override async getTreeItem(): Promise<vscode.TreeItem> {
 		this.setLabel();
+
 		this.iconPath = (
 			await DataUri.avatarCirclesAsImageDataUris(
 				this._pullRequestManager.context,
@@ -139,6 +150,7 @@ export class RepositoryChangesNode
 				16,
 			)
 		)[0];
+
 		this.description = undefined;
 
 		if (this.parent.children?.length && this.parent.children.length > 1) {
@@ -156,6 +168,7 @@ export class RepositoryChangesNode
 				this.description = `${this.pullRequestModel.remote.owner}/${this.pullRequestModel.remote.repositoryName}`;
 			}
 		}
+
 		this.updateContextValue();
 
 		return this;

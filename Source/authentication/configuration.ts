@@ -7,6 +7,7 @@ import * as vscode from "vscode";
 
 export interface IHostConfiguration {
 	host: string;
+
 	token: string | undefined;
 }
 

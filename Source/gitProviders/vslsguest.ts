@@ -27,13 +27,17 @@ export class VSLSGuest extends Disposable implements IGit {
 	private _onDidOpenRepository = this._register(
 		new vscode.EventEmitter<Repository>(),
 	);
+
 	readonly onDidOpenRepository: vscode.Event<Repository> =
 		this._onDidOpenRepository.event;
+
 	private _onDidCloseRepository = this._register(
 		new vscode.EventEmitter<Repository>(),
 	);
+
 	readonly onDidCloseRepository: vscode.Event<Repository> =
 		this._onDidCloseRepository.event;
+
 	private _openRepositories: Repository[] = [];
 
 	get repositories(): Repository[] {
@@ -59,6 +63,7 @@ export class VSLSGuest extends Disposable implements IGit {
 		if (this._sharedServiceProxy.isServiceAvailable) {
 			await this._refreshWorkspaces(true);
 		}
+
 		this._register(
 			this._sharedServiceProxy.onDidChangeIsServiceAvailable(
 				async (e) => {
@@ -66,6 +71,7 @@ export class VSLSGuest extends Disposable implements IGit {
 				},
 			),
 		);
+
 		this._register(
 			vscode.workspace.onDidChangeWorkspaceFolders(
 				this._onDidChangeWorkspaceFolders.bind(this),
@@ -119,6 +125,7 @@ export class VSLSGuest extends Disposable implements IGit {
 		if (existingRepository) {
 			return;
 		}
+
 		const liveShareRepository = new LiveShareRepository(
 			folder,
 			this._sharedServiceProxy!,
@@ -130,7 +137,9 @@ export class VSLSGuest extends Disposable implements IGit {
 			liveShareRepository,
 			repositoryProxyHandler,
 		);
+
 		await repository.initialize();
+
 		this.openRepository(repository);
 	}
 
@@ -148,6 +157,7 @@ export class VSLSGuest extends Disposable implements IGit {
 
 	public openRepository(repository: Repository) {
 		this._openRepositories.push(repository);
+
 		this._onDidOpenRepository.fire(repository);
 	}
 
@@ -155,6 +165,7 @@ export class VSLSGuest extends Disposable implements IGit {
 		this._openRepositories = this._openRepositories.filter(
 			(e) => e !== repository,
 		);
+
 		this._onDidCloseRepository.fire(repository);
 	}
 
@@ -185,22 +196,32 @@ class LiveShareRepositoryProxyHandler {
 
 class LiveShareRepositoryState implements RepositoryState {
 	HEAD: Branch | undefined;
+
 	remotes: Remote[];
+
 	submodules: Submodule[] = [];
+
 	rebaseCommit: Commit | undefined;
+
 	mergeChanges: Change[] = [];
+
 	indexChanges: Change[] = [];
+
 	workingTreeChanges: Change[] = [];
+
 	_onDidChange = new vscode.EventEmitter<void>();
+
 	onDidChange = this._onDidChange.event;
 
 	constructor(state: RepositoryState) {
 		this.HEAD = state.HEAD;
+
 		this.remotes = state.remotes;
 	}
 
 	public update(state: RepositoryState) {
 		this.HEAD = state.HEAD;
+
 		this.remotes = state.remotes;
 
 		this._onDidChange.fire();
@@ -209,6 +230,7 @@ class LiveShareRepositoryState implements RepositoryState {
 
 class LiveShareRepository {
 	rootUri: vscode.Uri | undefined;
+
 	state: LiveShareRepositoryState | undefined;
 
 	constructor(
@@ -221,8 +243,11 @@ class LiveShareRepository {
 			VSLS_REPOSITORY_INITIALIZATION_NAME,
 			this.workspaceFolder.uri.toString(),
 		]);
+
 		this.state = new LiveShareRepositoryState(result);
+
 		this.rootUri = vscode.Uri.parse(result.rootUri);
+
 		this.proxy.onNotify(
 			VSLS_STATE_CHANGE_NOTIFY_NAME,
 			this._notifyHandler.bind(this),

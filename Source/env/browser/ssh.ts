@@ -22,11 +22,13 @@ export const sshParse = (url: string): Config | undefined => {
 			return;
 		}
 	}
+
 	const match = SSH_URL_RE.exec(url);
 
 	if (!match) {
 		return;
 	}
+
 	const [, User, Host, path] = match;
 
 	return { User, Host, path };

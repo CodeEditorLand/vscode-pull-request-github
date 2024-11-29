@@ -23,23 +23,28 @@ export class NotificationsTreeData
 		vscode.Disposable
 {
 	private readonly _disposables: vscode.Disposable[] = [];
+
 	private _onDidChangeTreeData: vscode.EventEmitter<
 		NotificationTreeDataItem | undefined | void
 	> = new vscode.EventEmitter<NotificationTreeDataItem | undefined | void>();
+
 	readonly onDidChangeTreeData: vscode.Event<
 		NotificationTreeDataItem | undefined | void
 	> = this._onDidChangeTreeData.event;
 
 	private _pageCount: number = 1;
+
 	private _computeNotifications: boolean = false;
 
 	constructor(private readonly _notificationsManager: NotificationsManager) {
 		this._disposables.push(this._onDidChangeTreeData);
+
 		this._disposables.push(
 			this._notificationsManager.onDidChangeNotifications(() => {
 				this._onDidChangeTreeData.fire();
 			}),
 		);
+
 		this._disposables.push(
 			this._notificationsManager.onDidChangeSortingMethod(() => {
 				this.refresh(true);
@@ -53,6 +58,7 @@ export class NotificationsTreeData
 		if (isNotificationTreeItem(element)) {
 			return this._resolveNotificationTreeItem(element);
 		}
+
 		return this._resolveLoadMoreNotificationsTreeItem();
 	}
 
@@ -84,6 +90,7 @@ export class NotificationsTreeData
 						new vscode.ThemeColor("issues.closed"),
 					);
 		}
+
 		if (
 			notification.subject.type === NotificationSubjectType.PullRequest &&
 			model instanceof PullRequestModel
@@ -98,9 +105,13 @@ export class NotificationsTreeData
 						new vscode.ThemeColor("pullRequests.merged"),
 					);
 		}
+
 		item.description = `${notification.owner}/${notification.name}`;
+
 		item.contextValue = notification.subject.type;
+
 		item.resourceUri = toNotificationUri({ key: element.notification.key });
+
 		item.command = {
 			command: "notification.chatSummarizeNotification",
 			title: "Summarize Notification",
@@ -115,10 +126,12 @@ export class NotificationsTreeData
 			vscode.l10n.t("Load More Notifications..."),
 			vscode.TreeItemCollapsibleState.None,
 		);
+
 		item.command = {
 			title: "Load More Notifications",
 			command: "notifications.loadMore",
 		};
+
 		item.contextValue = "loadMoreNotifications";
 
 		return item;
@@ -136,6 +149,7 @@ export class NotificationsTreeData
 				this._computeNotifications,
 				this._pageCount,
 			);
+
 		this._computeNotifications = false;
 
 		if (notificationsData === undefined) {
@@ -154,19 +168,23 @@ export class NotificationsTreeData
 
 	loadMore(): void {
 		this._pageCount++;
+
 		this.refresh(true);
 	}
 
 	refresh(compute: boolean): void {
 		this._computeNotifications = compute;
+
 		this._onDidChangeTreeData.fire();
 	}
 
 	async markAsRead(notificationIdentifier: {
 		threadId: string;
+
 		notificationKey: string;
 	}): Promise<void> {
 		await this._notificationsManager.markAsRead(notificationIdentifier);
+
 		this.refresh(false);
 	}
 

@@ -43,5 +43,6 @@ export function ariaAnnouncementForReview(comment: ReviewEvent | CommentEvent) {
 				break;
 		}
 	}
+
 	return ariaAnnouncement;
 }

@@ -27,11 +27,16 @@ import { IssueState, StateManager } from "./stateManager";
 
 export class CurrentIssue extends Disposable {
 	private _branchName: string | undefined;
+
 	private user: string | undefined;
+
 	private repo: Repository | undefined;
+
 	private _repoDefaults: PullRequestDefaults | undefined;
+
 	private _onDidChangeCurrentIssueState: vscode.EventEmitter<void> =
 		this._register(new vscode.EventEmitter());
+
 	public readonly onDidChangeCurrentIssueState: vscode.Event<void> =
 		this._onDidChangeCurrentIssueState.event;
 
@@ -43,6 +48,7 @@ export class CurrentIssue extends Disposable {
 		private shouldPromptForBranch?: boolean,
 	) {
 		super();
+
 		this.setRepo(remote ?? this.issueModel.githubRepository.remote);
 	}
 
@@ -87,6 +93,7 @@ export class CurrentIssue extends Disposable {
 
 			if (await this.createIssueBranch(silent)) {
 				await this.setCommitMessageAndGitEvent();
+
 				this._onDidChangeCurrentIssueState.fire();
 
 				const login = (
@@ -115,8 +122,10 @@ export class CurrentIssue extends Disposable {
 					) {
 						await this.manager.assignIssue(this.issueModel, login);
 					}
+
 					await this.stateManager.refresh(this.manager);
 				}
+
 				return true;
 			}
 		} catch (e) {
@@ -127,6 +136,7 @@ export class CurrentIssue extends Disposable {
 				),
 			);
 		}
+
 		return false;
 	}
 
@@ -134,6 +144,7 @@ export class CurrentIssue extends Disposable {
 		if (this.repo) {
 			this.repo.inputBox.value = "";
 		}
+
 		if (this._repoDefaults && checkoutDefaultBranch) {
 			try {
 				await this.manager.repository.checkout(this._repoDefaults.base);
@@ -145,10 +156,13 @@ export class CurrentIssue extends Disposable {
 						),
 					);
 				}
+
 				throw e;
 			}
 		}
+
 		this._onDidChangeCurrentIssueState.fire();
+
 		this.dispose();
 	}
 
@@ -162,6 +176,7 @@ export class CurrentIssue extends Disposable {
 		} catch (e) {
 			// branch doesn't exist
 		}
+
 		return undefined;
 	}
 
@@ -172,6 +187,7 @@ export class CurrentIssue extends Disposable {
 			} else {
 				await this.manager.repository.createBranch(branch, true);
 			}
+
 			return true;
 		} catch (e) {
 			if (e.message !== "User aborted") {
@@ -179,6 +195,7 @@ export class CurrentIssue extends Disposable {
 					`Unable to checkout branch ${branch}. There may be file conflicts that prevent this branch change. Git error: ${e.error}`,
 				);
 			}
+
 			return false;
 		}
 	}
@@ -188,6 +205,7 @@ export class CurrentIssue extends Disposable {
 			this.user =
 				await this.issueModel.githubRepository.getAuthenticatedUser();
 		}
+
 		return this.user;
 	}
 
@@ -210,11 +228,13 @@ export class CurrentIssue extends Disposable {
 				"Branch name cannot contain a space or the following characters: \\@~^?*[",
 			);
 		}
+
 		return undefined;
 	}
 
 	private showBranchNameError(error: string) {
 		const editSetting = `Edit Setting`;
+
 		vscode.window.showErrorMessage(error, editSetting).then((result) => {
 			if (result === editSetting) {
 				vscode.commands.executeCommand(
@@ -270,6 +290,7 @@ export class CurrentIssue extends Disposable {
 				return `${branchNameConfig}_${number}`;
 			}
 		}
+
 		return branchNameConfig;
 	}
 
@@ -283,9 +304,11 @@ export class CurrentIssue extends Disposable {
 		if (createBranchConfig === "off") {
 			return true;
 		}
+
 		const state: IssueState = this.stateManager.getSavedIssueState(
 			this.issueModel.number,
 		);
+
 		this._branchName = this.shouldPromptForBranch
 			? undefined
 			: state.branch;
@@ -316,12 +339,14 @@ export class CurrentIssue extends Disposable {
 				);
 			}
 		}
+
 		if (!this._branchName) {
 			this._branchName = await vscode.window.showInputBox({
 				value: branchNameConfig,
 				prompt: vscode.l10n.t("Enter the label for the new branch."),
 			});
 		}
+
 		if (!this._branchName) {
 			// user has cancelled
 			return false;
@@ -336,6 +361,7 @@ export class CurrentIssue extends Disposable {
 		}
 
 		state.branch = this._branchName;
+
 		await this.stateManager.setSavedIssueState(this.issueModel, state);
 
 		if (!(await this.createOrCheckoutBranch(this._branchName))) {
@@ -343,6 +369,7 @@ export class CurrentIssue extends Disposable {
 
 			return false;
 		}
+
 		return true;
 	}
 
@@ -358,6 +385,7 @@ export class CurrentIssue extends Disposable {
 				this._repoDefaults,
 			);
 		}
+
 		return undefined;
 	}
 
@@ -367,6 +395,7 @@ export class CurrentIssue extends Disposable {
 		if (this.repo && message) {
 			this.repo.inputBox.value = message;
 		}
+
 		return;
 	}
 }

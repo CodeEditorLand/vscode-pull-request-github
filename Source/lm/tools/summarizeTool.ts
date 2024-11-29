@@ -36,6 +36,7 @@ File : ${fileChange.fileName}
 Patch: ${fileChange.patch}
 `;
 			}
+
 			const comments = options.parameters.comments;
 
 			for (const [index, comment] of comments.entries()) {
@@ -44,6 +45,7 @@ Comment ${index} :
 Body: ${comment.body}
 `;
 			}
+
 			const models = await vscode.lm.selectChatModels({
 				vendor: "copilot",
 				family: "gpt-4o",
@@ -57,11 +59,13 @@ Body: ${comment.body}
 						summarizeInstructions(),
 					),
 				];
+
 				messages.push(
 					vscode.LanguageModelChatMessage.User(
 						`The issue or pull request information is as follows:`,
 					),
 				);
+
 				messages.push(
 					vscode.LanguageModelChatMessage.User(
 						issueOrPullRequestInfo,

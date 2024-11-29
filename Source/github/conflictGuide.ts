@@ -12,13 +12,17 @@ import { asPromise } from "../common/utils";
 
 export class ConflictModel extends Disposable {
 	public readonly startingConflictsCount: number;
+
 	private _lastReportedRemainingCount: number;
+
 	private _onConflictCountChanged: vscode.EventEmitter<number> =
 		new vscode.EventEmitter();
+
 	public readonly onConflictCountChanged: vscode.Event<number> =
 		this._onConflictCountChanged.event; // reports difference in number of conflicts
 	private _finishedCommit: vscode.EventEmitter<boolean> =
 		new vscode.EventEmitter();
+
 	public readonly message: string;
 
 	constructor(
@@ -28,10 +32,14 @@ export class ConflictModel extends Disposable {
 		public readonly push: boolean,
 	) {
 		super();
+
 		this.startingConflictsCount = this.remainingConflicts.length;
+
 		this._lastReportedRemainingCount = this.startingConflictsCount;
+
 		this._repository.inputBox.value =
 			this.message = `Merge branch '${this._upstream}' into ${this._into}`;
+
 		this._watchForRemainingConflictsChange();
 	}
 
@@ -40,10 +48,12 @@ export class ConflictModel extends Disposable {
 			vscode.window.tabGroups.onDidChangeTabs(async (e) => {
 				if (e.closed.length > 0) {
 					await this._repository.status();
+
 					this._reportProgress();
 				}
 			}),
 		);
+
 		this._register(
 			this._repository.state.onDidChange(async () => {
 				this._reportProgress();
@@ -56,14 +66,17 @@ export class ConflictModel extends Disposable {
 			// Already done.
 			return;
 		}
+
 		const remainingCount = this.remainingConflicts.length;
 
 		if (this._lastReportedRemainingCount !== remainingCount) {
 			this._onConflictCountChanged.fire(
 				this._lastReportedRemainingCount - remainingCount,
 			);
+
 			this._lastReportedRemainingCount = remainingCount;
 		}
+
 		if (this._lastReportedRemainingCount === 0) {
 			this.listenForCommit();
 		}
@@ -74,6 +87,7 @@ export class ConflictModel extends Disposable {
 
 		const result = await new Promise<boolean>((resolve) => {
 			const startingCommit = this._repository.state.HEAD?.commit;
+
 			localDisposable = this._register(
 				this._repository.state.onDidChange(() => {
 					if (
@@ -93,6 +107,7 @@ export class ConflictModel extends Disposable {
 		if (result && this.push) {
 			this._repository.push();
 		}
+
 		this._finishedCommit.fire(result);
 	}
 
@@ -121,12 +136,16 @@ export class ConflictModel extends Disposable {
 					await new Promise<void>((resolve) =>
 						setTimeout(resolve, 1000),
 					);
+
 					this.closeMergeEditors();
+
 					disposable.dispose();
 				}
 			}),
 		);
+
 		await this._repository.mergeAbort();
+
 		this._finishedCommit.fire(false);
 	}
 
@@ -134,8 +153,11 @@ export class ConflictModel extends Disposable {
 		if (this.remainingConflicts.length === 0) {
 			return;
 		}
+
 		await commands.focusView("workbench.scm");
+
 		this._reportProgress();
+
 		await Promise.all(
 			this.remainingConflicts.map((conflict) =>
 				commands.executeCommand("git.openMergeEditor", conflict.uri),
@@ -154,7 +176,9 @@ export class ConflictModel extends Disposable {
 		if (model.remainingConflicts.length === 0) {
 			return undefined;
 		}
+
 		model._register(new ConflictNotification(model, repository));
+
 		model.first();
 
 		return model;
@@ -171,6 +195,7 @@ class ConflictNotification extends Disposable {
 		private readonly _repository: Repository,
 	) {
 		super();
+
 		vscode.window
 			.withProgress(
 				{
@@ -188,6 +213,7 @@ class ConflictNotification extends Disposable {
 							increment,
 						});
 					};
+
 					report(0);
 
 					return new Promise<boolean>((resolve) => {
@@ -199,6 +225,7 @@ class ConflictNotification extends Disposable {
 										(100 /
 											this._conflictModel
 												.startingConflictsCount);
+
 									report(increment);
 
 									if (
@@ -210,9 +237,11 @@ class ConflictNotification extends Disposable {
 								},
 							),
 						);
+
 						this._register(
 							token.onCancellationRequested(() => {
 								this._conflictModel.abort();
+
 								resolve(false);
 							}),
 						);
@@ -236,6 +265,7 @@ class ConflictNotification extends Disposable {
 							"All conflicts resolved. Commit the resolution to continue.",
 						);
 					}
+
 					const result = await vscode.window.showInformationMessage(
 						message,
 						commit,

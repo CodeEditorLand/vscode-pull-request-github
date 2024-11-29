@@ -16,12 +16,15 @@ export class PRNotificationDecorationProvider
 	private _onDidChangeFileDecorations: vscode.EventEmitter<
 		vscode.Uri | vscode.Uri[]
 	> = new vscode.EventEmitter<vscode.Uri | vscode.Uri[]>();
+
 	onDidChangeFileDecorations: vscode.Event<vscode.Uri | vscode.Uri[]> =
 		this._onDidChangeFileDecorations.event;
 
 	constructor(private readonly _notificationProvider: NotificationProvider) {
 		super();
+
 		this._register(vscode.window.registerFileDecorationProvider(this));
+
 		this._register(
 			this._notificationProvider.onDidChangeNotifications((PRNodeUris) =>
 				this._onDidChangeFileDecorations.fire(PRNodeUris),

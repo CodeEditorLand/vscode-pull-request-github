@@ -38,6 +38,7 @@ export function findLocalRepoRemoteFromGitHubRef(
 		if (!url) {
 			continue;
 		}
+
 		const parsedRemote = parseRemote(remote.name, url);
 
 		const parsedOwner = parsedRemote?.owner.toLowerCase();

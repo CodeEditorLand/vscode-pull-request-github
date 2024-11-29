@@ -57,6 +57,7 @@ export namespace PullRequestView {
 				.get<boolean>(
 					`${DEFAULT_DELETION_METHOD}.${SELECT_LOCAL_BRANCH}`,
 				);
+
 			actions.push({
 				label: vscode.l10n.t(
 					"Delete local branch {0}",
@@ -125,7 +126,9 @@ export namespace PullRequestView {
 				switch (action.type) {
 					case "upstream":
 						await folderRepositoryManager.deleteBranch(item);
+
 						deletedBranchTypes.push(action.type);
+
 						await folderRepositoryManager.repository.fetch({
 							prune: true,
 						});
@@ -138,6 +141,7 @@ export namespace PullRequestView {
 								defaultBranch,
 							);
 						}
+
 						return;
 
 					case "local":
@@ -165,10 +169,12 @@ export namespace PullRequestView {
 									return;
 								}
 							}
+
 							await folderRepositoryManager.repository.checkout(
 								defaultBranch,
 							);
 						}
+
 						await folderRepositoryManager.repository.deleteBranch(
 							branchInfo!.branch,
 							true,

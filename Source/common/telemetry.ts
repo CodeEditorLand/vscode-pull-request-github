@@ -13,6 +13,7 @@ export interface ITelemetry {
 			[key: string]: number;
 		},
 	): void;
+
 	sendTelemetryErrorEvent(
 		eventName: string,
 		properties?: {
@@ -22,5 +23,6 @@ export interface ITelemetry {
 			[key: string]: number;
 		},
 	): void;
+
 	dispose(): Promise<any>;
 }

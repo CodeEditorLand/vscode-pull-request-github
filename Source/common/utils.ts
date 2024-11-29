@@ -132,6 +132,7 @@ export function isDescendant(
 	// Windows is case insensitive
 	if (isWindowsPath(parent)) {
 		parent = parent.toLowerCase();
+
 		descendant = descendant.toLowerCase();
 	}
 
@@ -144,6 +145,7 @@ export function groupBy<T>(
 ): { [key: string]: T[] } {
 	return arr.reduce((result, el) => {
 		const key = fn(el);
+
 		result[key] = [...(result[key] || []), el];
 
 		return result;
@@ -180,6 +182,7 @@ function hasFieldErrors(
 	} else {
 		areFieldErrors = false;
 	}
+
 	return areFieldErrors;
 }
 
@@ -195,6 +198,7 @@ export function formatError(e: HookError | any): string {
 		} else if (e.stderr) {
 			return `${e.stderr}. Please check git output for more details`;
 		}
+
 		return "Error";
 	}
 
@@ -221,6 +225,7 @@ export function formatError(e: HookError | any): string {
 			})
 			.join(", ");
 	}
+
 	if (furtherInfo) {
 		errorMessage = `${errorMessage}: ${furtherInfo}`;
 	}
@@ -241,6 +246,7 @@ export async function asPromise<T>(event: Event<T>): Promise<T> {
 	return new Promise<T>((resolve) => {
 		const sub = event((e) => {
 			sub.dispose();
+
 			resolve(e);
 		});
 	});
@@ -262,6 +268,7 @@ export function dateFromNow(date: Date | string): string {
 	const djs = dayjs(date);
 
 	const now = Date.now();
+
 	djs.diff(now, "month");
 
 	if (djs.diff(now, "month") < 1) {
@@ -269,6 +276,7 @@ export function dateFromNow(date: Date | string): string {
 	} else if (djs.diff(now, "year") < 1) {
 		return `on ${djs.format("MMM D")}`;
 	}
+
 	return `on ${djs.format("MMM D, YYYY")}`;
 }
 
@@ -280,6 +288,7 @@ export function gitHubLabelColor(
 	if (hexColor.startsWith("#")) {
 		hexColor = hexColor.substring(1);
 	}
+
 	const rgbColor = hexToRgb(hexColor);
 
 	if (isDark) {
@@ -337,6 +346,7 @@ const rgbToHex = (color: { r: number; g: number; b: number; a?: number }) => {
 	if (color.a) {
 		colors.push(Math.floor(color.a * 255));
 	}
+
 	return colors
 		.map((digit) => {
 			return digit.toString(16).padStart(2, "0");
@@ -354,6 +364,7 @@ function hexToRgb(color: string) {
 			b: parseInt(result[3], 16),
 		};
 	}
+
 	return {
 		r: 0,
 		g: 0,
@@ -365,7 +376,9 @@ function rgbToHsl(r: number, g: number, b: number) {
 	// Source: https://css-tricks.com/converting-color-spaces-in-javascript/
 	// Make r, g, and b fractions of 1
 	r /= 255;
+
 	g /= 255;
+
 	b /= 255;
 
 	// Find greatest and smallest channel values
@@ -399,6 +412,7 @@ function rgbToHsl(r: number, g: number, b: number) {
 
 	// Multiply l and s by 100
 	s = +(s * 100).toFixed(1);
+
 	l = +(l * 100).toFixed(1);
 
 	return { h: h, s: s, l: l };
@@ -458,6 +472,7 @@ export function compare(a: string, b: string): number {
 	} else if (a > b) {
 		return 1;
 	}
+
 	return 0;
 }
 
@@ -480,6 +495,7 @@ export function compareSubstring(
 			return 1;
 		}
 	}
+
 	const aLen = aEnd - aStart;
 
 	const bLen = bEnd - bStart;
@@ -489,6 +505,7 @@ export function compareSubstring(
 	} else if (aLen > bLen) {
 		return 1;
 	}
+
 	return 0;
 }
 
@@ -562,19 +579,24 @@ export function isUpperAsciiLetter(code: number): boolean {
 
 export interface IKeyIterator<K> {
 	reset(key: K): this;
+
 	next(): this;
 
 	hasNext(): boolean;
+
 	cmp(a: string): number;
+
 	value(): string;
 }
 
 export class StringIterator implements IKeyIterator<string> {
 	private _value: string = "";
+
 	private _pos: number = 0;
 
 	reset(key: string): this {
 		this._value = key;
+
 		this._pos = 0;
 
 		return this;
@@ -605,14 +627,18 @@ export class StringIterator implements IKeyIterator<string> {
 
 export class ConfigKeysIterator implements IKeyIterator<string> {
 	private _value!: string;
+
 	private _from!: number;
+
 	private _to!: number;
 
 	constructor(private readonly _caseSensitive: boolean = true) {}
 
 	reset(key: string): this {
 		this._value = key;
+
 		this._from = 0;
+
 		this._to = 0;
 
 		return this.next();
@@ -624,6 +650,7 @@ export class ConfigKeysIterator implements IKeyIterator<string> {
 
 	next(): this {
 		// this._data = key.split(/[\\/]/).filter(s => !!s);
+
 		this._from = this._to;
 
 		let justSeps = true;
@@ -641,6 +668,7 @@ export class ConfigKeysIterator implements IKeyIterator<string> {
 				justSeps = false;
 			}
 		}
+
 		return this;
 	}
 
@@ -671,7 +699,9 @@ export class ConfigKeysIterator implements IKeyIterator<string> {
 
 export class PathIterator implements IKeyIterator<string> {
 	private _value!: string;
+
 	private _from!: number;
+
 	private _to!: number;
 
 	constructor(
@@ -681,7 +711,9 @@ export class PathIterator implements IKeyIterator<string> {
 
 	reset(key: string): this {
 		this._value = key.replace(/\\$|\/$/, "");
+
 		this._from = 0;
+
 		this._to = 0;
 
 		return this.next();
@@ -693,6 +725,7 @@ export class PathIterator implements IKeyIterator<string> {
 
 	next(): this {
 		// this._data = key.split(/[\\/]/).filter(s => !!s);
+
 		this._from = this._to;
 
 		let justSeps = true;
@@ -713,6 +746,7 @@ export class PathIterator implements IKeyIterator<string> {
 				justSeps = false;
 			}
 		}
+
 		return this;
 	}
 
@@ -751,39 +785,49 @@ const enum UriIteratorState {
 
 export class UriIterator implements IKeyIterator<Uri> {
 	private _pathIterator!: PathIterator;
+
 	private _value!: Uri;
+
 	private _states: UriIteratorState[] = [];
+
 	private _stateIdx: number = 0;
 
 	constructor(private readonly _ignorePathCasing: (uri: Uri) => boolean) {}
 
 	reset(key: Uri): this {
 		this._value = key;
+
 		this._states = [];
 
 		if (this._value.scheme) {
 			this._states.push(UriIteratorState.Scheme);
 		}
+
 		if (this._value.authority) {
 			this._states.push(UriIteratorState.Authority);
 		}
+
 		if (this._value.path) {
 			this._pathIterator = new PathIterator(
 				false,
 				!this._ignorePathCasing(key),
 			);
+
 			this._pathIterator.reset(key.path);
 
 			if (this._pathIterator.value()) {
 				this._states.push(UriIteratorState.Path);
 			}
 		}
+
 		if (this._value.query) {
 			this._states.push(UriIteratorState.Query);
 		}
+
 		if (this._value.fragment) {
 			this._states.push(UriIteratorState.Fragment);
 		}
+
 		this._stateIdx = 0;
 
 		return this;
@@ -798,6 +842,7 @@ export class UriIterator implements IKeyIterator<Uri> {
 		} else {
 			this._stateIdx += 1;
 		}
+
 		return this;
 	}
 
@@ -823,6 +868,7 @@ export class UriIterator implements IKeyIterator<Uri> {
 		} else if (this._states[this._stateIdx] === UriIteratorState.Fragment) {
 			return compare(a, this._value.fragment);
 		}
+
 		throw new Error();
 	}
 
@@ -840,6 +886,7 @@ export class UriIterator implements IKeyIterator<Uri> {
 		} else if (this._states[this._stateIdx] === UriIteratorState.Fragment) {
 			return this._value.fragment;
 		}
+
 		throw new Error();
 	}
 }
@@ -854,6 +901,7 @@ export function isPreRelease(context: ExtensionContext): boolean {
 	if (lastIndexOfDot === -1) {
 		return false;
 	}
+
 	const patchVersion = path.substr(lastIndexOfDot + 1);
 	// The patch version of release versions should never be more than 1 digit since it is only used for recovery releases.
 	// The patch version of pre-release is the date + time.
@@ -862,10 +910,15 @@ export function isPreRelease(context: ExtensionContext): boolean {
 
 class TernarySearchTreeNode<K, V> {
 	segment!: string;
+
 	value: V | undefined;
+
 	key!: K;
+
 	left: TernarySearchTreeNode<K, V> | undefined;
+
 	mid: TernarySearchTreeNode<K, V> | undefined;
+
 	right: TernarySearchTreeNode<K, V> | undefined;
 
 	isEmpty(): boolean {
@@ -893,6 +946,7 @@ export class TernarySearchTree<K, V> {
 	}
 
 	private _iter: IKeyIterator<K>;
+
 	private _root: TernarySearchTreeNode<K, V> | undefined;
 
 	constructor(segments: IKeyIterator<K>) {
@@ -910,6 +964,7 @@ export class TernarySearchTree<K, V> {
 
 		if (!this._root) {
 			this._root = new TernarySearchTreeNode<K, V>();
+
 			this._root.segment = iter.value();
 		}
 
@@ -922,15 +977,19 @@ export class TernarySearchTree<K, V> {
 				// left
 				if (!node.left) {
 					node.left = new TernarySearchTreeNode<K, V>();
+
 					node.left.segment = iter.value();
 				}
+
 				node = node.left;
 			} else if (val < 0) {
 				// right
 				if (!node.right) {
 					node.right = new TernarySearchTreeNode<K, V>();
+
 					node.right.segment = iter.value();
 				}
+
 				node = node.right;
 			} else if (iter.hasNext()) {
 				// mid
@@ -938,15 +997,20 @@ export class TernarySearchTree<K, V> {
 
 				if (!node.mid) {
 					node.mid = new TernarySearchTreeNode<K, V>();
+
 					node.mid.segment = iter.value();
 				}
+
 				node = node.mid;
 			} else {
 				break;
 			}
 		}
+
 		const oldElement = node.value;
+
 		node.value = element;
+
 		node.key = key;
 
 		return oldElement;
@@ -973,11 +1037,13 @@ export class TernarySearchTree<K, V> {
 			} else if (iter.hasNext()) {
 				// mid
 				iter.next();
+
 				node = node.mid;
 			} else {
 				break;
 			}
 		}
+
 		return node;
 	}
 
@@ -1009,21 +1075,27 @@ export class TernarySearchTree<K, V> {
 			if (val > 0) {
 				// left
 				stack.push([1, node]);
+
 				node = node.left;
 			} else if (val < 0) {
 				// right
 				stack.push([-1, node]);
+
 				node = node.right;
 			} else if (iter.hasNext()) {
 				// mid
 				iter.next();
+
 				stack.push([0, node]);
+
 				node = node.mid;
 			} else {
 				if (superStr) {
 					// remove children
 					node.left = undefined;
+
 					node.mid = undefined;
+
 					node.right = undefined;
 				} else {
 					// remove element
@@ -1050,8 +1122,10 @@ export class TernarySearchTree<K, V> {
 
 							break;
 					}
+
 					node = parent;
 				}
+
 				break;
 			}
 		}
@@ -1076,12 +1150,15 @@ export class TernarySearchTree<K, V> {
 			} else if (iter.hasNext()) {
 				// mid
 				iter.next();
+
 				candidate = node.value || candidate;
+
 				node = node.mid;
 			} else {
 				break;
 			}
 		}
+
 		return (node && node.value) || candidate;
 	}
 
@@ -1102,6 +1179,7 @@ export class TernarySearchTree<K, V> {
 			} else if (iter.hasNext()) {
 				// mid
 				iter.next();
+
 				node = node.mid;
 			} else {
 				// collect
@@ -1112,6 +1190,7 @@ export class TernarySearchTree<K, V> {
 				}
 			}
 		}
+
 		return undefined;
 	}
 
@@ -1153,8 +1232,10 @@ export async function stringReplaceAsync(
 	asyncFn: (substring: string, ...args: any[]) => Promise<string>,
 ): Promise<string> {
 	const promises: Promise<string>[] = [];
+
 	str.replace(regex, (match, ...args) => {
 		const promise = asyncFn(match, ...args);
+
 		promises.push(promise);
 
 		return "";
@@ -1176,6 +1257,7 @@ export async function batchPromiseAll<T>(
 
 	for (let i = 0; i < batches; i++) {
 		const batch = items.slice(i * batchSize, (i + 1) * batchSize);
+
 		await Promise.all(batch.map(processFn));
 	}
 }

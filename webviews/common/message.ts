@@ -5,13 +5,17 @@
 
 interface IRequestMessage<T> {
 	req: string;
+
 	command: string;
+
 	args: T;
 }
 
 interface IReplyMessage {
 	seq: string;
+
 	err: any;
+
 	res: any;
 }
 
@@ -21,13 +25,18 @@ export const vscode = acquireVsCodeApi();
 
 export class MessageHandler {
 	private _commandHandler: ((message: any) => void) | null;
+
 	private lastSentReq: number;
+
 	private pendingReplies: any;
 
 	constructor(commandHandler: any) {
 		this._commandHandler = commandHandler;
+
 		this.lastSentReq = 0;
+
 		this.pendingReplies = Object.create(null);
+
 		window.addEventListener(
 			"message",
 			this.handleMessage.bind(this) as (
@@ -49,9 +58,11 @@ export class MessageHandler {
 				resolve: resolve,
 				reject: reject,
 			};
+
 			message = Object.assign(message, {
 				req: req,
 			});
+
 			vscode.postMessage(message as IRequestMessage<any>);
 		});
 	}
@@ -69,6 +80,7 @@ export class MessageHandler {
 				} else {
 					pendingReply.resolve(message.res);
 				}
+
 				return;
 			}
 		}

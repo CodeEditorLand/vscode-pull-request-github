@@ -62,8 +62,11 @@ const LAST_USED_SCOPES_ENTERPRISE_KEY =
 
 export interface GitHub {
 	octokit: LoggingOctokit;
+
 	graphql: LoggingApolloClient;
+
 	currentUser?: Promise<IAccount>;
+
 	isEmu?: Promise<boolean>;
 }
 
@@ -73,28 +76,40 @@ interface AuthResult {
 
 export class CredentialStore extends Disposable {
 	private _githubAPI: GitHub | undefined;
+
 	private _sessionId: string | undefined;
+
 	private _githubEnterpriseAPI: GitHub | undefined;
+
 	private _enterpriseSessionId: string | undefined;
+
 	private _isInitialized: boolean = false;
+
 	private _onDidInitialize: vscode.EventEmitter<void> =
 		new vscode.EventEmitter();
+
 	public readonly onDidInitialize: vscode.Event<void> =
 		this._onDidInitialize.event;
+
 	private _scopes: string[] = SCOPES_OLD;
+
 	private _scopesEnterprise: string[] = SCOPES_OLD;
+
 	private _isSamling: boolean = false;
 
 	private _onDidChangeSessions: vscode.EventEmitter<vscode.AuthenticationSessionsChangeEvent> =
 		new vscode.EventEmitter();
+
 	public readonly onDidChangeSessions = this._onDidChangeSessions.event;
 
 	private _onDidGetSession: vscode.EventEmitter<void> =
 		new vscode.EventEmitter();
+
 	public readonly onDidGetSession = this._onDidGetSession.event;
 
 	private _onDidUpgradeSession: vscode.EventEmitter<void> =
 		new vscode.EventEmitter();
+
 	public readonly onDidUpgradeSession = this._onDidUpgradeSession.event;
 
 	constructor(
@@ -102,6 +117,7 @@ export class CredentialStore extends Disposable {
 		private readonly context: vscode.ExtensionContext,
 	) {
 		super();
+
 		this.setScopesFromState();
 
 		this._register(
@@ -128,6 +144,7 @@ export class CredentialStore extends Disposable {
 		) {
 			return;
 		}
+
 		if (currentProvider) {
 			const newSession = await this.getSession(
 				currentProvider,
@@ -141,14 +158,18 @@ export class CredentialStore extends Disposable {
 			if (newSession.session?.id === this._sessionId) {
 				return;
 			}
+
 			if (currentProvider === AuthProvider.github) {
 				this._githubAPI = undefined;
+
 				this._sessionId = undefined;
 			} else {
 				this._githubEnterpriseAPI = undefined;
+
 				this._enterpriseSessionId = undefined;
 			}
 		}
+
 		const promises: Promise<any>[] = [];
 
 		if (!this.isAuthenticated(AuthProvider.github)) {
@@ -183,6 +204,7 @@ export class CredentialStore extends Disposable {
 			LAST_USED_SCOPES_GITHUB_KEY,
 			SCOPES_OLD,
 		);
+
 		this._scopesEnterprise = this.context.globalState.get(
 			LAST_USED_SCOPES_ENTERPRISE_KEY,
 			SCOPES_OLD,
@@ -194,11 +216,13 @@ export class CredentialStore extends Disposable {
 			LAST_USED_SCOPES_GITHUB_KEY,
 			this._scopes,
 		);
+
 		await this.context.globalState.update(
 			LAST_USED_SCOPES_ENTERPRISE_KEY,
 			this._scopesEnterprise,
 		);
 	}
+
 	private async initialize(
 		authProviderId: AuthProvider,
 		getAuthSessionOptions: vscode.AuthenticationGetSessionOptions = {},
@@ -249,17 +273,22 @@ export class CredentialStore extends Disposable {
 			} else {
 				this._scopesEnterprise = scopes;
 			}
+
 			const result = await this.getSession(
 				authProviderId,
 				getAuthSessionOptions,
 				scopes,
 				!!requireScopes,
 			);
+
 			usedScopes = result.scopes;
+
 			session = result.session;
+
 			isNew = result.isNew;
 		} catch (e) {
 			this._scopes = oldScopes;
+
 			this._scopesEnterprise = oldEnterpriseScopes;
 
 			const userCanceld = e.message === "User did not consent to login.";
@@ -267,6 +296,7 @@ export class CredentialStore extends Disposable {
 			if (userCanceld) {
 				authResult.canceled = true;
 			}
+
 			if (getAuthSessionOptions.forceNewSession && userCanceld) {
 				// There are cases where a forced login may not be 100% needed, so just continue as usual if
 				// the user didn't consent to the login prompt.
@@ -281,6 +311,7 @@ export class CredentialStore extends Disposable {
 			} else {
 				this._enterpriseSessionId = session.id;
 			}
+
 			let github: GitHub | undefined;
 
 			try {
@@ -305,25 +336,32 @@ export class CredentialStore extends Disposable {
 					);
 				}
 			}
+
 			if (!isEnterprise(authProviderId)) {
 				this._githubAPI = github;
+
 				this._scopes = usedScopes;
 			} else {
 				this._githubEnterpriseAPI = github;
+
 				this._scopesEnterprise = usedScopes;
 			}
+
 			await this.saveScopesInState();
 
 			if (!this._isInitialized || (isNew && !this._isSamling)) {
 				this._isInitialized = true;
+
 				this._onDidInitialize.fire();
 			}
+
 			if (isNew) {
 				/* __GDPR__
 					"auth.session" : {}
 				*/
 				this._telemetry.sendTelemetryEvent("auth.session");
 			}
+
 			return authResult;
 		} else {
 			Logger.debug(
@@ -356,6 +394,7 @@ export class CredentialStore extends Disposable {
 				additionalScopes,
 			);
 		}
+
 		return {
 			canceled: github.canceled || !!(enterprise && enterprise.canceled),
 		};
@@ -376,6 +415,7 @@ export class CredentialStore extends Disposable {
 
 	public async reset() {
 		this._githubAPI = undefined;
+
 		this._githubEnterpriseAPI = undefined;
 
 		return this.create();
@@ -392,6 +432,7 @@ export class CredentialStore extends Disposable {
 		if (!isEnterprise(authProviderId)) {
 			return !!this._githubAPI;
 		}
+
 		return !!this._githubEnterpriseAPI;
 	}
 
@@ -404,6 +445,7 @@ export class CredentialStore extends Disposable {
 				this.allScopesIncluded(this._scopes, SCOPES_WITH_ADDITIONAL)
 			);
 		}
+
 		return (
 			!!this._githubEnterpriseAPI &&
 			this.allScopesIncluded(
@@ -417,6 +459,7 @@ export class CredentialStore extends Disposable {
 		if (!isEnterprise(authProviderId)) {
 			return this._githubAPI;
 		}
+
 		return this._githubEnterpriseAPI;
 	}
 
@@ -424,6 +467,7 @@ export class CredentialStore extends Disposable {
 		if (!isEnterprise(authProviderId)) {
 			return !this.allScopesIncluded(this._scopes, SCOPES_OLD);
 		}
+
 		return !this.allScopesIncluded(this._scopesEnterprise, SCOPES_OLD);
 	}
 
@@ -431,6 +475,7 @@ export class CredentialStore extends Disposable {
 		if (!isEnterprise(authProviderId)) {
 			return this.allScopesIncluded(this._scopes, SCOPES_WITH_ADDITIONAL);
 		}
+
 		return this.allScopesIncluded(
 			this._scopesEnterprise,
 			SCOPES_WITH_ADDITIONAL,
@@ -442,6 +487,7 @@ export class CredentialStore extends Disposable {
 	): Promise<GitHub | undefined> {
 		const hasScopesAlready =
 			this.isAuthenticatedWithAdditionalScopes(authProviderId);
+
 		await this.initialize(
 			authProviderId,
 			{ createIfNone: !hasScopesAlready },
@@ -452,6 +498,7 @@ export class CredentialStore extends Disposable {
 		if (!hasScopesAlready) {
 			this._onDidUpgradeSession.fire();
 		}
+
 		return this.getHub(authProviderId);
 	}
 
@@ -461,6 +508,7 @@ export class CredentialStore extends Disposable {
 		if (!isEnterprise(authProviderId)) {
 			return this._githubAPI ?? (await this.login(authProviderId));
 		}
+
 		return this._githubEnterpriseAPI ?? (await this.login(authProviderId));
 	}
 
@@ -534,10 +582,12 @@ export class CredentialStore extends Disposable {
 				if (e instanceof Error && e.stack) {
 					Logger.error(e.stack);
 				}
+
 				if (e.message === "Cancelled") {
 					isCanceled = true;
 				}
 			}
+
 			octokit = this.getHub(authProviderId);
 
 			if (octokit || isCanceled) {
@@ -552,6 +602,7 @@ export class CredentialStore extends Disposable {
 
 				if (retry) {
 					sessionOptions.forceNewSession = true;
+
 					sessionOptions.createIfNone = undefined;
 				}
 			}
@@ -583,6 +634,7 @@ export class CredentialStore extends Disposable {
 				organizations.join(", "),
 			),
 		);
+
 		this._isSamling = false;
 
 		return result;
@@ -619,11 +671,13 @@ export class CredentialStore extends Disposable {
 					resolve(result);
 				});
 		});
+
 		github.currentUser = new Promise((resolve) => {
 			getUser.then((result) => {
 				resolve(convertRESTUserToAccount(result.data));
 			});
 		});
+
 		github.isEmu = new Promise((resolve) => {
 			getUser.then((result) => {
 				resolve(result.data.plan?.name === "emu_user");
@@ -638,7 +692,9 @@ export class CredentialStore extends Disposable {
 		requireScopes: boolean,
 	): Promise<{
 		session: vscode.AuthenticationSession | undefined;
+
 		isNew: boolean;
+
 		scopes: string[];
 	}> {
 		const existingSession =
@@ -732,6 +788,7 @@ export class CredentialStore extends Disposable {
 						options.headers = headers;
 					}
 				}
+
 				return fetch(url, options);
 			};
 		}
@@ -768,6 +825,7 @@ export class CredentialStore extends Disposable {
 			octokit: new LoggingOctokit(octokit, rateLogger),
 			graphql: new LoggingApolloClient(graphql, rateLogger),
 		};
+
 		this.setCurrentUser(github);
 
 		return github;

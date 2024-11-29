@@ -21,11 +21,13 @@ export function getReviewMode(): { merged: boolean; closed: boolean } {
 	if (config !== "auto") {
 		return config;
 	}
+
 	if (
 		vscode.env.appHost === "vscode.dev" ||
 		vscode.env.appHost === "github.dev"
 	) {
 		return { merged: true, closed: true };
 	}
+
 	return desktopDefaults;
 }

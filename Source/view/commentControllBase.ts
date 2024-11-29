@@ -26,12 +26,15 @@ export abstract class CommentControllerBase extends Disposable {
 	}
 
 	protected githubReposForPullRequest(pullRequest: undefined): undefined;
+
 	protected githubReposForPullRequest(
 		pullRequest: PullRequestModel,
 	): GitHubRepository[];
+
 	protected githubReposForPullRequest(
 		pullRequest: PullRequestModel | undefined,
 	): GitHubRepository[] | undefined;
+
 	protected githubReposForPullRequest(
 		pullRequest: PullRequestModel | undefined,
 	): GitHubRepository[] | undefined {
@@ -50,6 +53,7 @@ export abstract class CommentControllerBase extends Disposable {
 				githubRepositories.push(headRepo);
 			}
 		}
+
 		return githubRepositories;
 	}
 }

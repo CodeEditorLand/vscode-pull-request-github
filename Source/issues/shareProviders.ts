@@ -31,15 +31,18 @@ export class ShareProviderManager extends Disposable {
 		}
 
 		this._register(new GitHubDevShareProvider(repositoryManager, gitAPI));
+
 		this._register(
 			new GitHubPermalinkShareProvider(repositoryManager, gitAPI),
 		);
+
 		this._register(
 			new GitHubPermalinkAsMarkdownShareProvider(
 				repositoryManager,
 				gitAPI,
 			),
 		);
+
 		this._register(
 			new GitHubHeadLinkShareProvider(repositoryManager, gitAPI),
 		);
@@ -68,11 +71,13 @@ abstract class AbstractShareProvider
 		private readonly origin = "github.com",
 	) {
 		super();
+
 		this.initialize();
 	}
 
 	public override dispose() {
 		super.dispose();
+
 		this.unregister();
 	}
 
@@ -106,6 +111,7 @@ abstract class AbstractShareProvider
 			if ((await folderManager.computeAllGitHubRemotes()).length) {
 				return true;
 			}
+
 			return false;
 		}
 	}
@@ -123,15 +129,18 @@ abstract class AbstractShareProvider
 	private unregister() {
 		if (this.shareProviderRegistrations) {
 			disposeAll(this.shareProviderRegistrations);
+
 			this.shareProviderRegistrations = undefined;
 		}
 	}
 
 	protected abstract shouldRegister(): boolean;
+
 	protected abstract getBlob(
 		folderManager: FolderRepositoryManager,
 		uri: vscode.Uri,
 	): Promise<string>;
+
 	protected abstract getUpstream(
 		repository: Repository,
 		commit: string,
@@ -152,6 +161,7 @@ abstract class AbstractShareProvider
 				),
 			);
 		}
+
 		const blob = await this.getBlob(folderManager, item.resourceUri);
 
 		// Get the upstream
@@ -280,9 +290,11 @@ export class GitHubPermalinkShareProvider
 						repository.state.HEAD.commit,
 					);
 				}
+
 				if (!commit) {
 					commit = log[0];
 				}
+
 				commitHash = commit.hash;
 			} catch (e) {
 				commitHash = repository.state.HEAD?.commit;
@@ -427,6 +439,7 @@ async function getHEAD(folderManager: FolderRepositoryManager) {
 		const origin = await folderManager.getOrigin();
 
 		const metadata = await origin.getMetadata();
+
 		branchName = metadata.default_branch;
 	}
 

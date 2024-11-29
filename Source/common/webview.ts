@@ -12,13 +12,17 @@ export const PULL_REQUEST_OVERVIEW_VIEW_TYPE = "PullRequestOverview";
 
 export interface IRequestMessage<T> {
 	req: string;
+
 	command: string;
+
 	args: T;
 }
 
 export interface IReplyMessage {
 	seq?: string;
+
 	err?: any;
+
 	res?: any;
 }
 
@@ -31,6 +35,7 @@ export function getNonce() {
 	for (let i = 0; i < 32; i++) {
 		text += possible.charAt(Math.floor(Math.random() * possible.length));
 	}
+
 	return text;
 }
 
@@ -38,6 +43,7 @@ export class WebviewBase extends Disposable {
 	protected _webview?: vscode.Webview;
 
 	private _waitForReady: Promise<void>;
+
 	private _onIsReady: vscode.EventEmitter<void> = this._register(
 		new vscode.EventEmitter(),
 	);
@@ -46,9 +52,11 @@ export class WebviewBase extends Disposable {
 
 	constructor() {
 		super();
+
 		this._waitForReady = new Promise((resolve) => {
 			const disposable = this._onIsReady.event(() => {
 				disposable.dispose();
+
 				resolve();
 			});
 		});
@@ -86,6 +94,7 @@ export class WebviewBase extends Disposable {
 		// Without the following ready check, we can end up in a state where the message handler in the webview
 		// isn't ready for any of the messages we post.
 		await this._waitForReady;
+
 		this._webview?.postMessage({
 			res: message,
 		});
@@ -99,6 +108,7 @@ export class WebviewBase extends Disposable {
 			seq: originalMessage.req,
 			res: message,
 		};
+
 		this._webview?.postMessage(reply);
 	}
 
@@ -110,12 +120,14 @@ export class WebviewBase extends Disposable {
 			seq: originalMessage?.req,
 			err: error,
 		};
+
 		this._webview?.postMessage(reply);
 	}
 }
 
 export class WebviewViewBase extends WebviewBase {
 	public readonly viewType: string;
+
 	protected _view?: vscode.WebviewView;
 
 	constructor(protected readonly _extensionUri: vscode.Uri) {
@@ -128,18 +140,22 @@ export class WebviewViewBase extends WebviewBase {
 		_token: vscode.CancellationToken,
 	) {
 		this._view = webviewView;
+
 		this._webview = webviewView.webview;
 
 		super.initialize();
+
 		webviewView.webview.options = {
 			// Allow scripts in the webview
 			enableScripts: true,
 
 			localResourceRoots: [this._extensionUri],
 		};
+
 		this._register(
 			this._view.onDidDispose(() => {
 				this._webview = undefined;
+
 				this._view = undefined;
 			}),
 		);

@@ -13,9 +13,11 @@ export class GitLensIntegration extends Disposable {
 
 	constructor() {
 		super();
+
 		this._extensionsDisposable = this._register(
 			vscode.extensions.onDidChange(this.onExtensionsChanged, this),
 		);
+
 		this.onExtensionsChanged();
 	}
 
@@ -23,6 +25,7 @@ export class GitLensIntegration extends Disposable {
 		if (!api) {
 			return;
 		}
+
 		this._register(
 			api.registerActionRunner("createPullRequest", {
 				partnerId: "ghpr",

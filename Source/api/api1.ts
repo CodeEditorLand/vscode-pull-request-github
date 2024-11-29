@@ -83,6 +83,7 @@ export const enum Status {
 
 export class GitApiImpl extends Disposable implements API, IGit {
 	private static _handlePool: number = 0;
+
 	private _providers = new Map<number, IGit>();
 
 	public get repositories(): Repository[] {
@@ -112,15 +113,22 @@ export class GitApiImpl extends Disposable implements API, IGit {
 	}
 
 	private _onDidOpenRepository = new vscode.EventEmitter<Repository>();
+
 	readonly onDidOpenRepository: vscode.Event<Repository> =
 		this._onDidOpenRepository.event;
+
 	private _onDidCloseRepository = new vscode.EventEmitter<Repository>();
+
 	readonly onDidCloseRepository: vscode.Event<Repository> =
 		this._onDidCloseRepository.event;
+
 	private _onDidChangeState = new vscode.EventEmitter<APIState>();
+
 	readonly onDidChangeState: vscode.Event<APIState> =
 		this._onDidChangeState.event;
+
 	private _onDidPublish = new vscode.EventEmitter<PublishEvent>();
+
 	readonly onDidPublish: vscode.Event<PublishEvent> =
 		this._onDidPublish.event;
 
@@ -131,6 +139,7 @@ export class GitApiImpl extends Disposable implements API, IGit {
 			},
 			0,
 		);
+
 		vscode.commands.executeCommand(
 			"setContext",
 			"gitHubOpenRepositoryCount",
@@ -142,6 +151,7 @@ export class GitApiImpl extends Disposable implements API, IGit {
 		Logger.appendLine(`Registering git provider`);
 
 		const handle = this._nextHandle();
+
 		this._providers.set(handle, provider);
 
 		this._register(
@@ -149,10 +159,13 @@ export class GitApiImpl extends Disposable implements API, IGit {
 				this._onDidCloseRepository.fire(e),
 			),
 		);
+
 		this._register(
 			provider.onDidOpenRepository((e) => {
 				Logger.appendLine(`Repository ${e.rootUri} has been opened`);
+
 				this._updateReposContext();
+
 				this._onDidOpenRepository.fire(e);
 			}),
 		);
@@ -164,6 +177,7 @@ export class GitApiImpl extends Disposable implements API, IGit {
 				),
 			);
 		}
+
 		if (provider.onDidPublish) {
 			this._register(
 				provider.onDidPublish((e) => this._onDidPublish.fire(e)),
@@ -171,6 +185,7 @@ export class GitApiImpl extends Disposable implements API, IGit {
 		}
 
 		this._updateReposContext();
+
 		provider.repositories.forEach((repository) => {
 			this._onDidOpenRepository.fire(repository);
 		});
@@ -182,6 +197,7 @@ export class GitApiImpl extends Disposable implements API, IGit {
 				if (repos && repos.length > 0) {
 					repos.forEach((r) => this._onDidCloseRepository.fire(r));
 				}
+
 				this._providers.delete(handle);
 			},
 		};
@@ -213,6 +229,7 @@ export class GitApiImpl extends Disposable implements API, IGit {
 						provider,
 					);
 				}
+
 				return { dispose: () => {} };
 			},
 		);
@@ -229,13 +246,16 @@ export class GitApiImpl extends Disposable implements API, IGit {
 
 	private _titleAndDescriptionProviders: Set<{
 		title: string;
+
 		provider: TitleAndDescriptionProvider;
 	}> = new Set();
+
 	registerTitleAndDescriptionProvider(
 		title: string,
 		provider: TitleAndDescriptionProvider,
 	): vscode.Disposable {
 		const registeredValue = { title, provider };
+
 		this._titleAndDescriptionProviders.add(registeredValue);
 
 		const disposable = this._register({
@@ -268,13 +288,16 @@ export class GitApiImpl extends Disposable implements API, IGit {
 
 	private _reviewerCommentsProviders: Set<{
 		title: string;
+
 		provider: ReviewerCommentsProvider;
 	}> = new Set();
+
 	registerReviewerCommentsProvider(
 		title: string,
 		provider: ReviewerCommentsProvider,
 	): vscode.Disposable {
 		const registeredValue = { title, provider };
+
 		this._reviewerCommentsProviders.add(registeredValue);
 
 		const disposable = this._register({

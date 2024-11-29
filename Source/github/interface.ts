@@ -39,43 +39,61 @@ export enum MergeQueueState {
 
 export interface ReviewState {
 	reviewer: IAccount | ITeam;
+
 	state: string;
 }
 
 export interface ReadyForReview {
 	isDraft: boolean;
+
 	mergeable: PullRequestMergeability;
+
 	allowAutoMerge: boolean;
 }
 
 export interface IActor {
 	login: string;
+
 	avatarUrl?: string;
+
 	url: string;
 }
 
 export interface IAccount extends IActor {
 	login: string;
+
 	id: string;
+
 	name?: string;
+
 	avatarUrl?: string;
+
 	url: string;
+
 	email?: string;
+
 	specialDisplayName?: string;
 }
 
 export interface ITeam {
 	name?: string;
+
 	avatarUrl?: string;
+
 	url: string;
+
 	slug?: string;
+
 	org: string;
+
 	id: string;
 }
 
 export interface MergeQueueEntry {
 	position: number;
+
 	state: MergeQueueState;
+
 	url: string;
 }
 
@@ -99,6 +117,7 @@ export function isTeam(
 
 export interface ISuggestedReviewer extends IAccount {
 	isAuthor: boolean;
+
 	isCommenter: boolean;
 }
 
@@ -110,25 +129,33 @@ export function isSuggestedReviewer(
 
 export interface IProject {
 	title: string;
+
 	id: string;
 }
 
 export interface IProjectItem {
 	id: string;
+
 	project: IProject;
 }
 
 export interface IMilestone {
 	title: string;
+
 	dueOn?: string | null;
+
 	createdAt: string;
+
 	id: string;
+
 	number: number;
 }
 
 export interface MergePullRequest {
 	sha: string;
+
 	merged: boolean;
+
 	message: string;
 
 	documentation_url: string;
@@ -136,76 +163,125 @@ export interface MergePullRequest {
 
 export interface IRepository {
 	cloneUrl: string;
+
 	isInOrganization: boolean;
+
 	owner: string;
+
 	name: string;
 }
 
 export interface IGitHubRef {
 	label: string;
+
 	ref: string;
+
 	sha: string;
+
 	repo: IRepository;
 }
 
 export interface ILabel {
 	name: string;
+
 	color: string;
+
 	description?: string;
 }
 
 export interface IIssueComment {
 	author: IAccount;
+
 	body: string;
+
 	databaseId: number;
+
 	reactionCount: number;
+
 	createdAt: string;
 }
 
 export interface Issue {
 	id: number;
+
 	graphNodeId: string;
+
 	url: string;
+
 	number: number;
+
 	state: string;
+
 	body: string;
+
 	bodyHTML?: string;
+
 	title: string;
+
 	titleHTML: string;
+
 	assignees?: IAccount[];
+
 	createdAt: string;
+
 	updatedAt: string;
+
 	user: IAccount;
+
 	labels: ILabel[];
+
 	projectItems?: IProjectItem[];
+
 	milestone?: IMilestone;
+
 	repositoryOwner?: string;
+
 	repositoryName?: string;
+
 	repositoryUrl?: string;
+
 	comments?: IIssueComment[];
+
 	commentCount: number;
+
 	reactionCount: number;
 }
 
 export interface PullRequest extends Issue {
 	isDraft?: boolean;
+
 	isRemoteHeadDeleted?: boolean;
+
 	head?: IGitHubRef;
+
 	isRemoteBaseDeleted?: boolean;
+
 	base?: IGitHubRef;
+
 	commits: {
 		message: string;
 	}[];
+
 	merged?: boolean;
+
 	mergeable?: PullRequestMergeability;
+
 	mergeQueueEntry?: MergeQueueEntry | null;
+
 	viewerCanUpdate: boolean;
+
 	autoMerge?: boolean;
+
 	autoMergeMethod?: MergeMethod;
+
 	allowAutoMerge?: boolean;
+
 	mergeCommitMeta?: { title: string; description: string };
+
 	squashCommitMeta?: { title: string; description: string };
+
 	suggestedReviewers?: ISuggestedReviewer[];
+
 	hasComments?: boolean;
 }
 
@@ -216,28 +292,45 @@ export enum NotificationSubjectType {
 
 export interface Notification {
 	owner: string;
+
 	name: string;
+
 	key: string;
+
 	id: string;
+
 	itemID: string;
+
 	subject: {
 		title: string;
+
 		type: NotificationSubjectType;
+
 		url: string;
 	};
+
 	reason: string;
+
 	unread: boolean;
+
 	updatedAd: Date;
+
 	lastReadAt: Date | undefined;
 }
 
 export interface IRawFileChange {
 	sha: string;
+
 	filename: string;
+
 	previous_filename?: string | undefined;
+
 	additions: number;
+
 	deletions: number;
+
 	changes: number;
+
 	status:
 		| "added"
 		| "removed"
@@ -246,21 +339,33 @@ export interface IRawFileChange {
 		| "copied"
 		| "changed"
 		| "unchanged";
+
 	raw_url: string;
+
 	blob_url: string;
+
 	contents_url: string;
+
 	patch?: string | undefined;
 }
 
 export interface IRawFileContent {
 	type: string;
+
 	size: number;
+
 	name: string;
+
 	path: string;
+
 	content?: string | undefined;
+
 	sha: string;
+
 	url: string;
+
 	git_url: string | null;
+
 	html_url: string | null;
 
 	download_url: string | null;
@@ -268,19 +373,23 @@ export interface IRawFileContent {
 
 export interface IGitTreeItem {
 	path: string;
+
 	mode: "100644" | "100755" | "120000";
 	// Must contain a content or a sha.
 	content?: string;
+
 	sha?: string | null;
 }
 
 export interface IPullRequestsPagingOptions {
 	fetchNextPage: boolean;
+
 	fetchOnePagePerRepo?: boolean;
 }
 
 export interface IPullRequestEditData {
 	body?: string;
+
 	title?: string;
 }
 
@@ -292,16 +401,22 @@ export type MergeMethodsAvailability = {
 
 export type RepoAccessAndMergeMethods = {
 	hasWritePermission: boolean;
+
 	mergeMethodsAvailability: MergeMethodsAvailability;
+
 	viewerCanAutoMerge: boolean;
 };
 
 export interface User extends IAccount {
 	company?: string;
+
 	location?: string;
+
 	bio?: string;
+
 	commitContributions: {
 		createdAt: Date;
+
 		repoNameWithOwner: string;
 	}[];
 }
@@ -316,23 +431,34 @@ export enum CheckState {
 
 export interface PullRequestCheckStatus {
 	id: string;
+
 	url: string | undefined;
+
 	avatarUrl: string | undefined;
+
 	state: CheckState;
+
 	description: string | null;
+
 	targetUrl: string | null;
+
 	context: string;
+
 	isRequired: boolean;
 }
 
 export interface PullRequestChecks {
 	state: CheckState;
+
 	statuses: PullRequestCheckStatus[];
 }
 
 export interface PullRequestReviewRequirement {
 	count: number;
+
 	state: CheckState;
+
 	approvals: string[];
+
 	requestedChanges: string[];
 }

@@ -54,6 +54,7 @@ export interface GHPRCommentThread extends vscode.CommentThread2 {
 	 */
 	state?: {
 		resolved: vscode.CommentThreadState;
+
 		applicability?: vscode.CommentThreadApplicability;
 	};
 
@@ -86,6 +87,7 @@ abstract class CommentBase implements vscode.Comment {
 	 * The text of the comment as from GitHub
 	 */
 	public abstract get body(): string | vscode.MarkdownString;
+
 	public abstract set body(body: string | vscode.MarkdownString);
 
 	/**
@@ -138,6 +140,7 @@ abstract class CommentBase implements vscode.Comment {
 	}
 
 	protected abstract getCancelEditBody(): string | vscode.MarkdownString;
+
 	protected abstract doSetBody(
 		body: string | vscode.MarkdownString,
 		refresh: boolean,
@@ -150,6 +153,7 @@ abstract class CommentBase implements vscode.Comment {
 				cmt.commentEditId() === this.commentEditId()
 			) {
 				cmt.mode = vscode.CommentMode.Preview;
+
 				this.doSetBody(this.getCancelEditBody(), true);
 			}
 
@@ -185,21 +189,28 @@ export class TemporaryComment extends CommentBase {
 		originalComment?: GHPRComment,
 	) {
 		super(parent);
+
 		this.mode = vscode.CommentMode.Preview;
+
 		this.originalAuthor = {
 			name: currentUser.login,
 			iconPath: currentUser.avatarUrl
 				? vscode.Uri.parse(`${currentUser.avatarUrl}&s=64`)
 				: undefined,
 		};
+
 		this.label = isDraft ? vscode.l10n.t("Pending") : undefined;
+
 		this.contextValue = "temporary,canEdit,canDelete";
+
 		this.originalBody = originalComment
 			? originalComment.rawComment.body
 			: undefined;
+
 		this.reactions = originalComment
 			? originalComment.reactions
 			: undefined;
+
 		this.id = TemporaryComment.idPool++;
 	}
 
@@ -239,7 +250,9 @@ const IMG_EXPRESSION = /<img .*src=['"](?<src>.+?)['"].*?>/g;
 
 export class GHPRComment extends CommentBase {
 	private static ID = "GHPRComment";
+
 	public commentId: string;
+
 	public timestamp: Date;
 
 	/**
@@ -248,6 +261,7 @@ export class GHPRComment extends CommentBase {
 	public rawComment: IComment;
 
 	private _rawBody: string | vscode.MarkdownString;
+
 	private replacedBody: string;
 
 	constructor(
@@ -257,7 +271,9 @@ export class GHPRComment extends CommentBase {
 		private readonly githubRepositories?: GitHubRepository[],
 	) {
 		super(parent);
+
 		this.rawComment = comment;
+
 		this.originalAuthor = {
 			name: comment.user!.login,
 			iconPath:
@@ -274,6 +290,7 @@ export class GHPRComment extends CommentBase {
 					28,
 				)
 			: Promise.resolve([]);
+
 		this.doSetBody(comment.body, !comment.user).then(async () => {
 			// only refresh if there's no user. If there's a user, we'll refresh in the then.
 			const avatarUris = await avatarUrisPromise;
@@ -281,8 +298,10 @@ export class GHPRComment extends CommentBase {
 			if (avatarUris.length > 0) {
 				this.author.iconPath = avatarUris[0];
 			}
+
 			this.refresh();
 		});
+
 		this.commentId = comment.id.toString();
 
 		updateCommentReactions(this, comment.reactions);
@@ -304,6 +323,7 @@ export class GHPRComment extends CommentBase {
 		}
 
 		this.contextValue = contextValues.join(",");
+
 		this.timestamp = new Date(comment.createdAt);
 	}
 
@@ -311,6 +331,7 @@ export class GHPRComment extends CommentBase {
 		if (!this.rawComment.user?.specialDisplayName) {
 			return this.originalAuthor;
 		}
+
 		return {
 			name: this.rawComment.user.specialDisplayName,
 			iconPath: this.originalAuthor.iconPath,
@@ -319,6 +340,7 @@ export class GHPRComment extends CommentBase {
 
 	update(comment: IComment) {
 		const oldRawComment = this.rawComment;
+
 		this.rawComment = comment;
 
 		let refresh: boolean = false;
@@ -328,6 +350,7 @@ export class GHPRComment extends CommentBase {
 		}
 
 		const oldLabel = this.label;
+
 		this.label = comment.isDraft ? vscode.l10n.t("Pending") : undefined;
 
 		if (this.label !== oldLabel) {
@@ -349,6 +372,7 @@ export class GHPRComment extends CommentBase {
 		}
 
 		const oldContextValue = this.contextValue;
+
 		this.contextValue = contextValues.join(",");
 
 		if (oldContextValue !== this.contextValue) {
@@ -358,6 +382,7 @@ export class GHPRComment extends CommentBase {
 		// Set the comment body last as it will trigger an update if set.
 		if (oldRawComment.body !== comment.body) {
 			this.doSetBody(comment.body, true);
+
 			refresh = false;
 		}
 
@@ -456,6 +481,7 @@ ${args[3] ?? ""}
 				if (index && index > 0 && body.charAt(index - 1) === "(") {
 					return match;
 				}
+
 				const githubRepository = githubRepositories.find(
 					(repository) =>
 						repository.remote.owner.toLocaleLowerCase() ===
@@ -465,6 +491,7 @@ ${args[3] ?? ""}
 				if (!githubRepository) {
 					return match;
 				}
+
 				const startLine = parseInt(start);
 
 				const endLine = end ? parseInt(end) : startLine + 1;
@@ -479,6 +506,7 @@ ${args[3] ?? ""}
 				if (!lineContents) {
 					return match;
 				}
+
 				const localFile = await this.createLocalFilePath(
 					githubRepository.rootUri,
 					file,
@@ -511,6 +539,7 @@ ${lineContents}
 		if (!this.rawComment.specialDisplayBodyPostfix) {
 			return body;
 		}
+
 		return `${body}  \n\n_${this.rawComment.specialDisplayBodyPostfix}_`;
 	}
 
@@ -524,6 +553,7 @@ ${lineContents}
 
 			return this.replaceImg(this.replaceSuggestion(permalinkReplaced));
 		}
+
 		const newLinesReplaced = this.replaceNewlines(body);
 
 		const documentLanguage = (
@@ -565,6 +595,7 @@ ${lineContents}
 				) {
 					return substring;
 				}
+
 				return `${substring.startsWith("@") ? "" : substring.charAt(0)}[@${username}](${path.dirname(this.rawComment.user!.url)}/${username})`;
 			},
 		);
@@ -601,6 +632,7 @@ ${lineContents}
 		if (this.mode === vscode.CommentMode.Editing) {
 			return this._rawBody;
 		}
+
 		return new vscode.MarkdownString(this.replacedBody);
 	}
 

@@ -21,5 +21,6 @@ export function chatCommand():
 	if (useQuickChat) {
 		return commands.QUICK_CHAT_OPEN;
 	}
+
 	return commands.OPEN_CHAT;
 }

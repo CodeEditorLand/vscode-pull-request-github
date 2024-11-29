@@ -73,11 +73,14 @@ export async function getIssue(
 
 				if (tryParse && (!tryParse.name || !tryParse.owner)) {
 					owner = remote.owner;
+
 					name = remote.repositoryName;
 				}
 			} else {
 				owner = parsed.owner ? parsed.owner : remote.owner;
+
 				name = parsed.name ? parsed.name : remote.repositoryName;
+
 				issueNumber = parsed.issueNumber;
 			}
 
@@ -96,6 +99,7 @@ export async function getIssue(
 						issueNumber,
 					);
 				}
+
 				if (issue) {
 					let cached: LRUCache<string, IssueModel>;
 
@@ -113,6 +117,7 @@ export async function getIssue(
 							manager.repository.rootUri.path,
 						)!;
 					}
+
 					cached.set(issueValue, issue);
 
 					return issue;
@@ -120,6 +125,7 @@ export async function getIssue(
 			}
 		}
 	}
+
 	return undefined;
 }
 
@@ -128,6 +134,7 @@ function repoCommitDate(
 	repoNameWithOwner: string,
 ): string | undefined {
 	let date: string | undefined = undefined;
+
 	user.commitContributions.forEach((element) => {
 		if (
 			repoNameWithOwner.toLowerCase() ===
@@ -146,6 +153,7 @@ function repoCommitDate(
 
 export class UserCompletion extends vscode.CompletionItem {
 	login: string;
+
 	uri: vscode.Uri;
 }
 
@@ -157,6 +165,7 @@ export function userMarkdown(
 		undefined,
 		true,
 	);
+
 	markdown.appendMarkdown(
 		`![Avatar](${user.avatarUrl}|height=50,width=50) ${user.name ? `**${user.name}** ` : ""}[${user.login}](${user.url})`,
 	);
@@ -170,21 +179,25 @@ export function userMarkdown(
 	if (user.location || date) {
 		markdown.appendMarkdown("  \r\n\r\n---");
 	}
+
 	if (user.location) {
 		markdown.appendMarkdown(
 			`  \r\n${vscode.l10n.t("{0} {1}", "$(location)", user.location)}`,
 		);
 	}
+
 	if (date) {
 		markdown.appendMarkdown(
 			`  \r\n${vscode.l10n.t("{0} Committed to this repository on {1}", "$(git-commit)", date)}`,
 		);
 	}
+
 	if (user.company) {
 		markdown.appendMarkdown(
 			`  \r\n${vscode.l10n.t({ message: "{0} Member of {1}", args: ["$(jersey)", user.company], comment: ["An organization that the user is a member of.", "The first placeholder is an icon and shouldn't be localized.", "The second placeholder is the name of the organization."] })}`,
 		);
 	}
+
 	return markdown;
 }
 
@@ -209,20 +222,24 @@ async function findAndModifyString(
 				if (transformed) {
 					newBodyFirstPart =
 						text.slice(0, searchResult) + transformed;
+
 					text =
 						newBodyFirstPart +
 						text.slice(searchResult + match[0].length);
 				}
 			}
 		}
+
 		position = newBodyFirstPart
 			? newBodyFirstPart.length
 			: searchResult + 1;
 
 		const newSearchResult = text.substring(position).search(find);
+
 		searchResult =
 			newSearchResult > 0 ? position + newSearchResult : newSearchResult;
 	}
+
 	return text;
 }
 
@@ -241,8 +258,10 @@ function findLinksInIssue(body: string, issue: IssueModel): Promise<string> {
 
 					tryParse.name = issue.remote.repositoryName;
 				}
+
 				return `[${issueNumberLabel}](https://github.com/${tryParse.owner}/${tryParse.name}/issues/${tryParse.issueNumber})`;
 			}
+
 			return undefined;
 		},
 	);
@@ -296,6 +315,7 @@ async function findCodeLinksInIssue(
 
 				return `[${match[0]}](${openCommand} "Open ${codeLink.file.fsPath}")`;
 			}
+
 			return undefined;
 		},
 	);
@@ -313,11 +333,13 @@ export async function issueMarkdown(
 		undefined,
 		true,
 	);
+
 	markdown.supportHtml = true;
 
 	const date = new Date(issue.createdAt);
 
 	const ownerName = `${issue.remote.owner}/${issue.remote.repositoryName}`;
+
 	markdown.appendMarkdown(
 		`[${ownerName}](https://github.com/${ownerName}) on ${date.toLocaleString(
 			"default",
@@ -334,6 +356,7 @@ export async function issueMarkdown(
 			renderer: new PlainTextRenderer(),
 		})
 		.trim();
+
 	markdown.appendMarkdown(
 		`${getIconMarkdown(issue)} **${title}** [#${issue.number}](${issue.html_url})  \n`,
 	);
@@ -341,15 +364,20 @@ export async function issueMarkdown(
 	let body = marked.parse(issue.body, {
 		renderer: new PlainTextRenderer(),
 	});
+
 	markdown.appendMarkdown("  \n");
+
 	body =
 		body.length > ISSUE_BODY_LENGTH
 			? body.substr(0, ISSUE_BODY_LENGTH) + "..."
 			: body;
+
 	body = await findLinksInIssue(body, issue);
+
 	body = await findCodeLinksInIssue(body, repositoriesManager);
 
 	markdown.appendMarkdown(body + "  \n");
+
 	markdown.appendMarkdown("&nbsp;  \n");
 
 	if (issue.item.labels.length > 0) {
@@ -366,10 +394,13 @@ export async function issueMarkdown(
 		for (const comment of issue.item.comments) {
 			if (comment.databaseId === commentNumber) {
 				markdown.appendMarkdown("  \r\n\r\n---\r\n");
+
 				markdown.appendMarkdown("&nbsp;  \n");
+
 				markdown.appendMarkdown(
 					`![Avatar](${comment.author.avatarUrl}|height=15,width=15) &nbsp;&nbsp;**${comment.author.login}** commented`,
 				);
+
 				markdown.appendMarkdown("&nbsp;  \n");
 
 				let commentText = marked.parse(
@@ -378,11 +409,14 @@ export async function issueMarkdown(
 						: comment.body,
 					{ renderer: new PlainTextRenderer() },
 				);
+
 				commentText = await findLinksInIssue(commentText, issue);
+
 				markdown.appendMarkdown(commentText);
 			}
 		}
 	}
+
 	return markdown;
 }
 
@@ -393,11 +427,13 @@ function getIconString(issue: IssueModel) {
 				? "$(git-pull-request)"
 				: "$(issues)";
 		}
+
 		case GithubItemStateEnum.Closed: {
 			return issue instanceof PullRequestModel
 				? "$(git-pull-request)"
 				: "$(issue-closed)";
 		}
+
 		case GithubItemStateEnum.Merged:
 			return "$(git-merge)";
 	}
@@ -407,10 +443,12 @@ function getIconMarkdown(issue: IssueModel) {
 	if (issue instanceof PullRequestModel) {
 		return getIconString(issue);
 	}
+
 	switch (issue.state) {
 		case GithubItemStateEnum.Open: {
 			return `<span style="color:#22863a;">$(issues)</span>`;
 		}
+
 		case GithubItemStateEnum.Closed: {
 			return `<span style="color:#cb2431;">$(issue-closed)</span>`;
 		}
@@ -419,16 +457,23 @@ function getIconMarkdown(issue: IssueModel) {
 
 export interface NewIssue {
 	document: vscode.TextDocument;
+
 	lineNumber: number;
+
 	line: string;
+
 	insertIndex: number;
+
 	range: vscode.Range | vscode.Selection;
 }
 
 export interface IssueTemplate {
 	name: string | undefined;
+
 	about: string | undefined;
+
 	title: string | undefined;
+
 	body: string | undefined;
 }
 
@@ -476,6 +521,7 @@ async function getUpstream(
 				if (value.name === currentRemoteName) {
 					currentRemote = value.remote;
 				}
+
 				return REMOTE_CONVENTIONS.has(value.name);
 			})
 			.sort((a, b): number => {
@@ -495,6 +541,7 @@ async function getUpstream(
 	if (repository.state.HEAD?.name && repository.state.HEAD.name !== HEAD) {
 		branchNames.unshift(repository.state.HEAD?.name);
 	}
+
 	let defaultBranch: PullRequestDefaults | undefined;
 
 	try {
@@ -506,21 +553,27 @@ async function getUpstream(
 			throw e;
 		}
 	}
+
 	if (defaultBranch) {
 		branchNames.push(defaultBranch.base);
 	}
+
 	let bestRef: Ref | undefined;
 
 	let bestRemote: Remote | undefined;
 
 	for (
 		let branchIndex = 0;
+
 		branchIndex < branchNames.length && !bestRef;
+
 		branchIndex++
 	) {
 		for (
 			let remoteIndex = 0;
+
 			remoteIndex < remoteNames.length && !bestRef;
+
 			remoteIndex++
 		) {
 			try {
@@ -535,6 +588,7 @@ async function getUpstream(
 
 				if (remotes && remotes.length > 0) {
 					bestRef = remotes[0];
+
 					bestRemote = remoteNames[remoteIndex].remote;
 				}
 			} catch (e) {
@@ -548,6 +602,7 @@ async function getUpstream(
 
 function extractContext(context: LinkContext): {
 	fileUri: vscode.Uri | undefined;
+
 	lineNumber: number | undefined;
 } {
 	if (context instanceof vscode.Uri) {
@@ -568,6 +623,7 @@ function getFileAndPosition(
 	positionInfo?: NewIssue,
 ): {
 	uri: vscode.Uri | undefined;
+
 	range: vscode.Range | vscode.NotebookRange | undefined;
 } {
 	Logger.debug(`getting file and position`, PERMALINK_COMPONENT);
@@ -603,9 +659,11 @@ function getFileAndPosition(
 		}
 	} else if (!positionInfo && vscode.window.activeTextEditor) {
 		uri = vscode.window.activeTextEditor.document.uri;
+
 		range = vscode.window.activeTextEditor.selection;
 	} else if (!positionInfo && vscode.window.activeNotebookEditor) {
 		uri = vscode.window.activeNotebookEditor.notebook.uri;
+
 		range = vscode.window.activeNotebookEditor.selection;
 	} else if (
 		!positionInfo &&
@@ -615,10 +673,12 @@ function getFileAndPosition(
 		uri = vscode.window.tabGroups.activeTabGroup.activeTab.input.uri;
 	} else if (positionInfo) {
 		uri = positionInfo.document.uri;
+
 		range = positionInfo.range;
 	} else {
 		return { uri: undefined, range: undefined };
 	}
+
 	Logger.debug(
 		`got file and position: ${uri.fsPath} ${range?.start ? (range.start instanceof vscode.Position ? `${range.start.line}:${range.start.character}` : range.start) : "unknown"}`,
 		PERMALINK_COMPONENT,
@@ -629,7 +689,9 @@ function getFileAndPosition(
 
 export interface PermalinkInfo {
 	permalink: string | undefined;
+
 	error: string | undefined;
+
 	originalFile: vscode.Uri | undefined;
 }
 
@@ -672,6 +734,7 @@ export async function getBestPossibleUpstream(
 			return undefined;
 		}
 	}
+
 	return upstream;
 }
 
@@ -789,6 +852,7 @@ export async function createGithubPermalink(
 					originalFile: uri,
 				};
 			}
+
 			const upstream: Remote & { fetchUrl: string } = rawUpstream as any;
 
 			Logger.debug(`upstream: ${upstream.fetchUrl}`, PERMALINK_COMPONENT);
@@ -809,6 +873,7 @@ export async function createGithubPermalink(
 				error: undefined,
 				originalFile: uri,
 			};
+
 			Logger.debug(
 				`permalink generated: ${result.permalink}`,
 				PERMALINK_COMPONENT,
@@ -842,6 +907,7 @@ export function getUpstreamOrigin(
 				resultHost = enterpriseUri.authority;
 			}
 		}
+
 		if (fetchUrl.startsWith("ssh://")) {
 			fetchUrl = fetchUrl.substr("ssh://".length);
 		}
@@ -860,6 +926,7 @@ export function getUpstreamOrigin(
 			}
 		}
 	}
+
 	return `https://${resultHost}`;
 }
 
@@ -882,16 +949,19 @@ export function rangeString(
 	if (!range || range instanceof vscode.NotebookRange) {
 		return "";
 	}
+
 	let hash = `#L${range.start.line + 1}`;
 
 	if (range.start.line !== range.end.line) {
 		hash += `-L${range.end.line + 1}`;
 	}
+
 	return hash;
 }
 
 interface EditorLineNumberContext {
 	uri: vscode.Uri;
+
 	lineNumber: number;
 }
 export type LinkContext = vscode.Uri | EditorLineNumberContext | undefined;
@@ -912,6 +982,7 @@ export async function createGitHubLink(
 			originalFile: undefined,
 		};
 	}
+
 	const folderManager = managers.getManagerForFile(uri);
 
 	if (!folderManager) {
@@ -923,6 +994,7 @@ export async function createGitHubLink(
 			originalFile: undefined,
 		};
 	}
+
 	let branchName = folderManager.repository.state.HEAD?.name;
 
 	if (!branchName) {
@@ -930,8 +1002,10 @@ export async function createGitHubLink(
 		const origin = await folderManager.getOrigin();
 
 		const metadata = await origin.getMetadata();
+
 		branchName = metadata.default_branch;
 	}
+
 	const upstream = getSimpleUpstream(folderManager.repository);
 
 	if (!upstream?.fetchUrl) {
@@ -941,6 +1015,7 @@ export async function createGitHubLink(
 			originalFile: undefined,
 		};
 	}
+
 	const pathSegment = uri.path.substring(
 		folderManager.repository.rootUri.path.length,
 	);
@@ -992,9 +1067,11 @@ export async function pushAndCreatePR(
 		if (manager.repository.state.indexChanges) {
 			responseOptions.push(commitStaged);
 		}
+
 		if (manager.repository.state.workingTreeChanges) {
 			responseOptions.push(commitAll);
 		}
+
 		const changesResponse = await vscode.window.showInformationMessage(
 			vscode.l10n.t(
 				"There are uncommitted changes. Do you want to commit them with the default commit message?",
@@ -1009,11 +1086,13 @@ export async function pushAndCreatePR(
 
 				break;
 			}
+
 			case commitAll: {
 				await commitWithDefault(manager, stateManager, true);
 
 				break;
 			}
+
 			default:
 				return false;
 		}
@@ -1021,6 +1100,7 @@ export async function pushAndCreatePR(
 
 	if (manager.repository.state.HEAD?.upstream) {
 		await manager.repository.push();
+
 		await reviewManager.createPullRequest(undefined);
 
 		return true;
@@ -1035,12 +1115,14 @@ export async function pushAndCreatePR(
 				{ placeHolder: vscode.l10n.t("Remote to push to") },
 			);
 		}
+
 		if (remote) {
 			await manager.repository.push(
 				remote,
 				manager.repository.state.HEAD?.name,
 				true,
 			);
+
 			await reviewManager.createPullRequest(undefined);
 
 			return true;
@@ -1073,6 +1155,7 @@ export async function isComment(
 			return false;
 		}
 	}
+
 	return true;
 }
 
@@ -1103,12 +1186,15 @@ export class PlainTextRenderer extends marked.Renderer {
 	override code(code: string, _infostring: string | undefined): string {
 		return code;
 	}
+
 	override blockquote(quote: string): string {
 		return quote;
 	}
+
 	override html(_html: string): string {
 		return "";
 	}
+
 	override heading(
 		text: string,
 		_level: 1 | 2 | 3 | 4 | 5 | 6,
@@ -1117,57 +1203,74 @@ export class PlainTextRenderer extends marked.Renderer {
 	): string {
 		return text + " ";
 	}
+
 	override hr(): string {
 		return "";
 	}
+
 	override list(body: string, _ordered: boolean, _start: number): string {
 		return body;
 	}
+
 	override listitem(text: string): string {
 		return " " + text;
 	}
+
 	override checkbox(_checked: boolean): string {
 		return "";
 	}
+
 	override paragraph(text: string): string {
 		return text.replace(/\</g, "\\<").replace(/\>/g, "\\>") + " ";
 	}
+
 	override table(header: string, body: string): string {
 		return header + " " + body;
 	}
+
 	override tablerow(content: string): string {
 		return content;
 	}
+
 	override tablecell(
 		content: string,
 		_flags: {
 			header: boolean;
+
 			align: "center" | "left" | "right" | null;
 		},
 	): string {
 		return content;
 	}
+
 	override strong(text: string): string {
 		return text;
 	}
+
 	override em(text: string): string {
 		return text;
 	}
+
 	override codespan(code: string): string {
 		return `\\\`${code}\\\``;
 	}
+
 	override br(): string {
 		return " ";
 	}
+
 	override del(text: string): string {
 		return text;
 	}
+
 	override image(_href: string, _title: string, _text: string): string {
 		return "";
 	}
+
 	override text(text: string): string {
 		return text;
 	}
+
 	override link(href: string, title: string, text: string): string {
 		return text + " ";
 	}

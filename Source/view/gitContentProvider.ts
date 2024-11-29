@@ -117,6 +117,7 @@ export class GitContentFileSystemProvider extends RepositoryFileSystemProvider {
 				`Getting change model (${repository.rootUri}) content for commit ${commit} and path ${absolutePath}`,
 				"GitContentFileSystemProvider",
 			);
+
 			content = await this.getChangeModelForFile(uri)?.showBase();
 
 			if (!content) {
@@ -124,8 +125,10 @@ export class GitContentFileSystemProvider extends RepositoryFileSystemProvider {
 					`Getting repository (${repository.rootUri}) content for commit ${commit} and path ${absolutePath}`,
 					"GitContentFileSystemProvider",
 				);
+
 				content = await repository.show(commit, absolutePath);
 			}
+
 			if (!content) {
 				throw new Error();
 			}
@@ -134,6 +137,7 @@ export class GitContentFileSystemProvider extends RepositoryFileSystemProvider {
 				"Using fallback content provider.",
 				"GitContentFileSystemProvider",
 			);
+
 			content = await this._fallback(uri);
 
 			if (!content) {

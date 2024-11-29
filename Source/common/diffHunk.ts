@@ -75,6 +75,7 @@ export function countCarriageReturns(text: string): number {
 
 	while ((index = text.indexOf("\r", index)) !== -1) {
 		index++;
+
 		count++;
 	}
 
@@ -86,6 +87,7 @@ export function* LineReader(text: string): IterableIterator<string> {
 
 	while (index !== -1 && index < text.length) {
 		const startIndex = index;
+
 		index = text.indexOf("\n", index);
 
 		const endIndex = index !== -1 ? index : text.length;
@@ -125,6 +127,7 @@ export function* parseDiffHunk(
 		if (DIFF_HUNK_HEADER.test(line)) {
 			if (diffHunk) {
 				yield diffHunk;
+
 				diffHunk = undefined;
 			}
 
@@ -185,6 +188,7 @@ export function* parseDiffHunk(
 				switch (type) {
 					case DiffChangeType.Context:
 						oldLine += lineCount;
+
 						newLine += lineCount;
 
 						break;
@@ -205,6 +209,7 @@ export function* parseDiffHunk(
 		if (positionInHunk !== -1) {
 			++positionInHunk;
 		}
+
 		itr = lineReader.next();
 	}
 
@@ -222,7 +227,9 @@ export function parsePatch(patch: string): DiffHunk[] {
 
 	while (!diffHunkIter.done) {
 		const diffHunk = diffHunkIter.value;
+
 		diffHunks.push(diffHunk);
+
 		diffHunkIter = diffHunkReader.next();
 	}
 
@@ -261,6 +268,7 @@ export function splitIntoSmallerHunks(hunk: DiffHunk): DiffHunk[] {
 			hunk.newLength++;
 		} else if (line.type === DiffChangeType.Context) {
 			hunk.oldLength++;
+
 			hunk.newLength++;
 		}
 	};
@@ -284,20 +292,25 @@ export function splitIntoSmallerHunks(hunk: DiffHunk): DiffHunk[] {
 			if (!currentHunk) {
 				currentHunk = newHunk(line);
 			}
+
 			addLineToHunk(currentHunk, line);
 
 			if (hunkHasSandwichedChanges(currentHunk)) {
 				if (!nextHunk) {
 					nextHunk = newHunk(line);
 				}
+
 				addLineToHunk(nextHunk, line);
 			}
 		} else if (currentHunk) {
 			if (hunkHasSandwichedChanges(currentHunk)) {
 				splitHunks.push(currentHunk);
+
 				currentHunk = nextHunk!;
+
 				nextHunk = undefined;
 			}
+
 			if (
 				line.type === DiffChangeType.Delete ||
 				line.type === DiffChangeType.Add
@@ -334,6 +347,7 @@ export function getModifiedContentFromDiffHunk(
 
 	while (!diffHunkIter.done) {
 		const diffHunk: DiffHunk = diffHunkIter.value;
+
 		diffHunks.push(diffHunk);
 
 		const oriStartLine = diffHunk.oldLineNumber;
@@ -355,6 +369,7 @@ export function getModifiedContentFromDiffHunk(
 				right.push(diffLine.text);
 			} else {
 				const codeInFirstLine = diffLine.text;
+
 				right.push(codeInFirstLine);
 			}
 		}
@@ -439,6 +454,7 @@ export async function parseDiff(
 		}
 
 		const diffHunks = review.patch ? parsePatch(review.patch) : [];
+
 		fileChanges.push(
 			new InMemFileChange(
 				parentCommit,

@@ -21,9 +21,11 @@ export class ConflictResolutionTreeView
 	implements vscode.TreeDataProvider<ConflictNode>
 {
 	private readonly _treeView: vscode.TreeView<ConflictNode>;
+
 	private readonly _onDidChangeTreeData: vscode.EventEmitter<
 		void | ConflictNode[]
 	> = this._register(new vscode.EventEmitter<void | ConflictNode[]>());
+
 	onDidChangeTreeData: vscode.Event<void | ConflictNode[]> =
 		this._onDidChangeTreeData.event;
 
@@ -31,16 +33,19 @@ export class ConflictResolutionTreeView
 		private readonly _conflictResolutionModel: ConflictResolutionModel,
 	) {
 		super();
+
 		this._treeView = this._register(
 			vscode.window.createTreeView("github:conflictResolution", {
 				treeDataProvider: this,
 			}),
 		);
+
 		this._register(
 			this._conflictResolutionModel.onAddedResolution(() =>
 				this._onDidChangeTreeData.fire(),
 			),
 		);
+
 		commands.focusView("github:conflictResolution");
 	}
 
@@ -58,6 +63,7 @@ export class ConflictResolutionTreeView
 			)
 		) {
 			item.iconPath = new vscode.ThemeIcon("check");
+
 			item.command = {
 				command: "vscode.diff",
 				arguments: [
@@ -86,7 +92,9 @@ export class ConflictResolutionTreeView
 		if (element) {
 			return [];
 		}
+
 		const exit = new vscode.MarkdownString();
+
 		exit.isTrusted = {
 			enabledCommands: [
 				"pr.exitConflictResolutionMode",
@@ -116,6 +124,7 @@ export class ConflictResolutionTreeView
 					),
 				);
 			}
+
 			children = Array.from(
 				this._conflictResolutionModel.startingConflicts.values(),
 			).map((conflict) => ({ conflict }));

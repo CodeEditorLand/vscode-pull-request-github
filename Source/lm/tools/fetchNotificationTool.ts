@@ -17,25 +17,39 @@ interface FetchNotificationToolParameters {
 
 interface FileChange {
 	fileName?: string;
+
 	patch?: string;
 }
 
 export interface FetchNotificationResult {
 	lastReadAt?: string;
+
 	lastUpdatedAt?: string;
+
 	unread?: boolean;
+
 	title?: string;
+
 	body?: string;
+
 	comments?: {
 		author?: string;
+
 		body?: string;
 	}[];
+
 	owner?: string;
+
 	repo?: string;
+
 	itemNumber?: string;
+
 	itemType?: "issue" | "pr";
+
 	fileChanges?: FileChange[];
+
 	threadId?: number;
+
 	notificationKey?: string;
 }
 
@@ -61,11 +75,13 @@ export class FetchNotificationTool extends RepoToolBase<FetchNotificationToolPar
 		if (!github) {
 			return undefined;
 		}
+
 		const threadId = options.input.thread_id;
 
 		if (threadId === undefined) {
 			return undefined;
 		}
+
 		const thread = await github.octokit.api.activity.getThread({
 			thread_id: threadId,
 		});
@@ -77,6 +93,7 @@ export class FetchNotificationTool extends RepoToolBase<FetchNotificationToolPar
 		if (itemNumber === undefined) {
 			return undefined;
 		}
+
 		const lastUpdatedAt = threadData.updated_at;
 
 		const lastReadAt = threadData.last_read_at ?? undefined;
@@ -100,6 +117,7 @@ export class FetchNotificationTool extends RepoToolBase<FetchNotificationToolPar
 				`No notification found with thread ID #${threadId}.`,
 			);
 		}
+
 		const itemType = issueOrPR instanceof PullRequestModel ? "pr" : "issue";
 
 		const notificationKey = getNotificationKey(
@@ -125,6 +143,7 @@ export class FetchNotificationTool extends RepoToolBase<FetchNotificationToolPar
 				return { body: comment.body, author: comment.author.login };
 			});
 		}
+
 		const result: FetchNotificationResult = {
 			lastReadAt,
 			lastUpdatedAt,
@@ -153,8 +172,10 @@ export class FetchNotificationTool extends RepoToolBase<FetchNotificationToolPar
 					});
 				}
 			}
+
 			result.fileChanges = fetchedFileChanges;
 		}
+
 		return new vscode.LanguageModelToolResult([
 			new vscode.LanguageModelTextPart(JSON.stringify(result)),
 			new vscode.LanguageModelTextPart(

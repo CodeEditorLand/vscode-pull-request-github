@@ -31,24 +31,41 @@ import { parseGraphQlIssueComment, parseGraphQLTimelineEvents } from "./utils";
 
 export class IssueModel<TItem extends Issue = Issue> {
 	static ID = "IssueModel";
+
 	public id: number;
+
 	public graphNodeId: string;
+
 	public number: number;
+
 	public title: string;
+
 	public titleHTML: string;
+
 	public html_url: string;
+
 	public state: GithubItemStateEnum = GithubItemStateEnum.Open;
+
 	public author: IAccount;
+
 	public assignees?: IAccount[];
+
 	public createdAt: string;
+
 	public updatedAt: string;
+
 	public milestone?: IMilestone;
+
 	public readonly githubRepository: GitHubRepository;
+
 	public readonly remote: Remote;
+
 	public item: TItem;
+
 	public bodyHTML?: string;
 
 	private _onDidInvalidate = new vscode.EventEmitter<void>();
+
 	public onDidInvalidate = this._onDidInvalidate.event;
 
 	constructor(
@@ -58,7 +75,9 @@ export class IssueModel<TItem extends Issue = Issue> {
 		skipUpdate: boolean = false,
 	) {
 		this.githubRepository = githubRepository;
+
 		this.remote = remote;
+
 		this.item = item;
 
 		if (!skipUpdate) {
@@ -100,6 +119,7 @@ export class IssueModel<TItem extends Issue = Issue> {
 
 				// hack, to ensure queries are not wrongly encoded.
 				const originalToStringFn = uri.toString;
+
 				uri.toString = function (_skipEncoding?: boolean | undefined) {
 					return originalToStringFn.call(uri, true);
 				};
@@ -115,6 +135,7 @@ export class IssueModel<TItem extends Issue = Issue> {
 		if (this.item) {
 			return this.item.body;
 		}
+
 		return "";
 	}
 
@@ -128,20 +149,29 @@ export class IssueModel<TItem extends Issue = Issue> {
 
 	update(issue: TItem): void {
 		this.id = issue.id;
+
 		this.graphNodeId = issue.graphNodeId;
+
 		this.number = issue.number;
+
 		this.title = issue.title;
 
 		if (issue.titleHTML) {
 			this.titleHTML = issue.titleHTML;
 		}
+
 		if (!this.bodyHTML || issue.body !== this.body) {
 			this.bodyHTML = issue.bodyHTML;
 		}
+
 		this.html_url = issue.url;
+
 		this.author = issue.user;
+
 		this.milestone = issue.milestone;
+
 		this.createdAt = issue.createdAt;
+
 		this.updatedAt = issue.updatedAt;
 
 		this.updateState(issue.state);
@@ -171,8 +201,11 @@ export class IssueModel<TItem extends Issue = Issue> {
 
 	async edit(toEdit: IPullRequestEditData): Promise<{
 		body: string;
+
 		bodyHTML: string;
+
 		title: string;
+
 		titleHTML: string;
 	}> {
 		try {
@@ -191,11 +224,16 @@ export class IssueModel<TItem extends Issue = Issue> {
 
 			if (data?.updatePullRequest.pullRequest) {
 				this.item.body = data.updatePullRequest.pullRequest.body;
+
 				this.bodyHTML = data.updatePullRequest.pullRequest.bodyHTML;
+
 				this.title = data.updatePullRequest.pullRequest.title;
+
 				this.titleHTML = data.updatePullRequest.pullRequest.titleHTML;
+
 				this.invalidate();
 			}
+
 			return data!.updatePullRequest.pullRequest;
 		} catch (e) {
 			throw new Error(formatError(e));
@@ -281,6 +319,7 @@ export class IssueModel<TItem extends Issue = Issue> {
 				`Failed to add labels to PR #${this.number}`,
 				IssueModel.ID,
 			);
+
 			vscode.window.showWarningMessage(
 				vscode.l10n.t(
 					"Some, or all, labels could not be added to the pull request.",
@@ -291,6 +330,7 @@ export class IssueModel<TItem extends Issue = Issue> {
 
 	async removeLabel(label: string): Promise<void> {
 		const { octokit, remote } = await this.githubRepository.ensure();
+
 		await octokit.call(octokit.api.issues.removeLabel, {
 			owner: remote.owner,
 			repo: remote.repositoryName,
@@ -316,6 +356,7 @@ export class IssueModel<TItem extends Issue = Issue> {
 					}),
 				),
 			);
+
 			this.item.projectItems = this.item.projectItems?.filter(
 				(project) =>
 					!projectItems.find(
@@ -348,6 +389,7 @@ export class IssueModel<TItem extends Issue = Issue> {
 			if (!this.item.projectItems) {
 				this.item.projectItems = [];
 			}
+
 			this.item.projectItems.push(
 				...projects.map((project, index) => {
 					return {
@@ -375,7 +417,9 @@ export class IssueModel<TItem extends Issue = Issue> {
 			this.item.projectItems?.filter(
 				(project) => !projects.find((p) => p.id === project.project.id),
 			) ?? [];
+
 		await this.removeProjects(projectsToRemove);
+
 		await this.addProjects(projectsToAdd);
 
 		return this.item.projectItems;
@@ -409,6 +453,7 @@ export class IssueModel<TItem extends Issue = Issue> {
 
 				return [];
 			}
+
 			const ret = data.repository.pullRequest.timelineItems.nodes;
 
 			const events = parseGraphQLTimelineEvents(ret, githubRepository);

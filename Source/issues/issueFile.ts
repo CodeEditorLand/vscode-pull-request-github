@@ -38,14 +38,19 @@ export function extractIssueOriginFromQuery(
 
 export class IssueFileSystemProvider implements vscode.FileSystemProvider {
 	private content: Uint8Array | undefined;
+
 	private createTime: number = 0;
+
 	private modifiedTime: number = 0;
+
 	private _onDidChangeFile: vscode.EventEmitter<vscode.FileChangeEvent[]> =
 		new vscode.EventEmitter<vscode.FileChangeEvent[]>();
 
 	constructor(private readonly cache: NewIssueCache) {}
+
 	onDidChangeFile: vscode.Event<vscode.FileChangeEvent[]> =
 		this._onDidChangeFile.event;
+
 	watch(
 		_uri: vscode.Uri,
 		_options: { recursive: boolean; excludes: string[] },
@@ -58,6 +63,7 @@ export class IssueFileSystemProvider implements vscode.FileSystemProvider {
 
 		return disposable;
 	}
+
 	stat(_uri: vscode.Uri): vscode.FileStat {
 		return {
 			type: vscode.FileType.File,
@@ -66,15 +72,19 @@ export class IssueFileSystemProvider implements vscode.FileSystemProvider {
 			size: this.content?.length ?? 0,
 		};
 	}
+
 	readDirectory(
 		_uri: vscode.Uri,
 	): [string, vscode.FileType][] | Thenable<[string, vscode.FileType][]> {
 		return [];
 	}
+
 	createDirectory(_uri: vscode.Uri): void {}
+
 	readFile(_uri: vscode.Uri): Uint8Array | Thenable<Uint8Array> {
 		return this.content ?? new Uint8Array(0);
 	}
+
 	writeFile(
 		uri: vscode.Uri,
 		content: Uint8Array,
@@ -84,28 +94,36 @@ export class IssueFileSystemProvider implements vscode.FileSystemProvider {
 		},
 	): void | Thenable<void> {
 		const oldContent = this.content;
+
 		this.content = content;
 
 		if (oldContent === undefined) {
 			this.createTime = new Date().getTime();
+
 			this._onDidChangeFile.fire([
 				{ uri: uri, type: vscode.FileChangeType.Created },
 			]);
 		} else {
 			this.modifiedTime = new Date().getTime();
+
 			this._onDidChangeFile.fire([
 				{ uri: uri, type: vscode.FileChangeType.Changed },
 			]);
 		}
+
 		this.cache.cache(content);
 	}
+
 	delete(
 		uri: vscode.Uri,
 		_options: { recursive: boolean },
 	): void | Thenable<void> {
 		this.content = undefined;
+
 		this.createTime = 0;
+
 		this.modifiedTime = 0;
+
 		this._onDidChangeFile.fire([
 			{ uri: uri, type: vscode.FileChangeType.Deleted },
 		]);
@@ -138,16 +156,19 @@ export class NewIssueFileCompletionProvider
 		) {
 			return [];
 		}
+
 		const originFile = extractIssueOriginFromQuery(document.uri);
 
 		if (!originFile) {
 			return [];
 		}
+
 		const folderManager = this.manager.getManagerForFile(originFile);
 
 		if (!folderManager) {
 			return [];
 		}
+
 		const defaults = await folderManager.getPullRequestDefaults();
 
 		if (line.startsWith(LABELS)) {
@@ -172,7 +193,9 @@ export class NewIssueFileCompletionProvider
 				label.name,
 				vscode.CompletionItemKind.Color,
 			);
+
 			item.documentation = `#${label.color}`;
+
 			item.commitCharacters = [" ", ","];
 
 			return item;
@@ -192,6 +215,7 @@ export class NewIssueFileCompletionProvider
 				milestone.title,
 				vscode.CompletionItemKind.Event,
 			);
+
 			item.commitCharacters = [" ", ","];
 
 			return item;
@@ -210,6 +234,7 @@ export class NewIssueFileCompletionProvider
 				project.title,
 				vscode.CompletionItemKind.Event,
 			);
+
 			item.commitCharacters = [" ", ","];
 
 			return item;
@@ -246,11 +271,17 @@ export async function extractMetadataFromFile(
 ): Promise<
 	| {
 			labels: string[] | undefined;
+
 			milestone: number | undefined;
+
 			projects: IProject[] | undefined;
+
 			assignees: string[] | undefined;
+
 			title: string;
+
 			body: string | undefined;
+
 			originUri: vscode.Uri;
 	  }
 	| undefined
@@ -263,6 +294,7 @@ export async function extractMetadataFromFile(
 	) {
 		return;
 	}
+
 	const originUri = extractIssueOriginFromQuery(
 		vscode.window.activeTextEditor.document.uri,
 	);
@@ -270,12 +302,15 @@ export async function extractMetadataFromFile(
 	if (!originUri) {
 		return;
 	}
+
 	const folderManager = repositoriesManager.getManagerForFile(originUri);
 
 	if (!folderManager) {
 		return;
 	}
+
 	const repo = await folderManager.getPullRequestDefaultRepo();
+
 	text = vscode.window.activeTextEditor.document.getText();
 
 	const indexOfEmptyLineWindows = text.indexOf("\r\n\r\n");
@@ -298,12 +333,15 @@ export async function extractMetadataFromFile(
 			);
 		}
 	}
+
 	const title = text.substring(0, indexOfEmptyLine);
 
 	if (!title) {
 		return;
 	}
+
 	let assignees: string[] | undefined;
+
 	text = text.substring(indexOfEmptyLine + 2).trim();
 
 	if (text.startsWith(ASSIGNEES)) {
@@ -319,11 +357,14 @@ export async function extractMetadataFromFile(
 					if (value.startsWith("@")) {
 						value = value.substring(1);
 					}
+
 					return value;
 				});
+
 			text = text.substring(lines[0].length).trim();
 		}
 	}
+
 	let labels: string[] | undefined;
 
 	if (text.startsWith(LABELS)) {
@@ -335,9 +376,11 @@ export async function extractMetadataFromFile(
 				.split(",")
 				.map((value) => value.trim())
 				.filter((label) => label);
+
 			text = text.substring(lines[0].length).trim();
 		}
 	}
+
 	let milestone: number | undefined;
 
 	if (text.startsWith(MILESTONE)) {
@@ -348,13 +391,16 @@ export async function extractMetadataFromFile(
 
 			if (milestoneTitle) {
 				const repoMilestones = await repo.getMilestones();
+
 				milestone = repoMilestones?.find(
 					(milestone) => milestone.title === milestoneTitle,
 				)?.number;
 			}
+
 			text = text.substring(lines[0].length).trim();
 		}
 	}
+
 	let projects: IProject[] | undefined;
 
 	if (text.startsWith(PROJECTS)) {
@@ -363,6 +409,7 @@ export async function extractMetadataFromFile(
 		if (lines.length === 1) {
 			if (await repo.canGetProjectsNow()) {
 				const repoProjects = await folderManager.getAllProjects(repo);
+
 				projects = lines[0]
 					.substring(PROJECTS.length)
 					.split(",")
@@ -377,9 +424,11 @@ export async function extractMetadataFromFile(
 						(project): project is IProject => !!project,
 					);
 			}
+
 			text = text.substring(lines[0].length).trim();
 		}
 	}
+
 	const body = text ?? "";
 
 	return { labels, milestone, projects, assignees, title, body, originUri };

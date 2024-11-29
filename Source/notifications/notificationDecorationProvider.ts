@@ -23,19 +23,23 @@ export class NotificationsDecorationProvider
 	private _readonlyOnDidChangeFileDecorations: vscode.EventEmitter<
 		vscode.Uri[]
 	> = this._register(new vscode.EventEmitter<vscode.Uri[]>());
+
 	public readonly onDidChangeFileDecorations =
 		this._readonlyOnDidChangeFileDecorations.event;
 
 	constructor(private readonly _notificationsManager: NotificationsManager) {
 		super();
+
 		this._register(
 			_notificationsManager.onDidChangeNotifications((updates) => {
 				const uris = updates.map((update) =>
 					toNotificationUri({ key: update.notification.key }),
 				);
+
 				this._readonlyOnDidChangeFileDecorations.fire(uris);
 			}),
 		);
+
 		this._register(
 			vscode.workspace.onDidChangeConfiguration((e) => {
 				if (

@@ -65,10 +65,13 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 	public static override currentPanel?: PullRequestOverviewPanel;
 
 	private _repositoryDefaultBranch: string;
+
 	private _existingReviewers: ReviewState[] = [];
+
 	private _teamsCount = 0;
 
 	private _prListeners: vscode.Disposable[] = [];
+
 	private _isUpdating: boolean = false;
 
 	public static override async createOrShow(
@@ -94,6 +97,7 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 			);
 		} else {
 			const title = `Pull Request #${issue.number.toString()}`;
+
 			PullRequestOverviewPanel.currentPanel =
 				new PullRequestOverviewPanel(
 					telemetry,
@@ -147,6 +151,7 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 		);
 
 		this.registerPrListeners();
+
 		this._register(
 			onDidUpdatePR((pr) => {
 				if (pr) {
@@ -161,9 +166,11 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 		);
 
 		this.setVisibilityContext();
+
 		this._register(
 			this._panel.onDidChangeViewState(() => this.setVisibilityContext()),
 		);
+
 		this._register(
 			folderRepositoryManager.onDidMergePullRequest((_) => {
 				this._postMessage({
@@ -172,6 +179,7 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 				});
 			}),
 		);
+
 		this._register(
 			folderRepositoryManager.credentialStore.onDidUpgradeSession(() => {
 				this.updatePullRequest(this._item);
@@ -183,17 +191,20 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 				this.approvePullRequestCommand(e),
 			),
 		);
+
 		this._register(
 			vscode.commands.registerCommand("review.commentDescription", (e) =>
 				this.submitReviewCommand(e),
 			),
 		);
+
 		this._register(
 			vscode.commands.registerCommand(
 				"review.requestChangesDescription",
 				(e) => this.requestChangesCommand(e),
 			),
 		);
+
 		this._register(
 			vscode.commands.registerCommand(
 				"review.approveOnDotComDescription",
@@ -205,6 +216,7 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 				},
 			),
 		);
+
 		this._register(
 			vscode.commands.registerCommand(
 				"review.requestChangesOnDotComDescription",
@@ -220,12 +232,14 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 
 	registerPrListeners() {
 		disposeAll(this._prListeners);
+
 		this._prListeners.push(
 			this._folderRepositoryManager.onDidChangeActivePullRequest((_) => {
 				if (this._folderRepositoryManager && this._item) {
 					const isCurrentlyCheckedOut = this._item.equals(
 						this._folderRepositoryManager.activePullRequest,
 					);
+
 					this._postMessage({
 						command: "pr.update-checkout-status",
 						isCurrentlyCheckedOut,
@@ -343,9 +357,13 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 				}
 
 				this._item = pullRequest;
+
 				this.registerPrListeners();
+
 				this._repositoryDefaultBranch = defaultBranch!;
+
 				this._teamsCount = orgTeamsCount;
+
 				this.setPanelTitle(
 					`Pull Request #${pullRequestModel.number.toString()}`,
 				);
@@ -364,6 +382,7 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 				const defaultMergeMethod = getDefaultMergeMethod(
 					mergeMethodsAvailability,
 				);
+
 				this._existingReviewers = parseReviewers(
 					requestedReviewers!,
 					timelineEvents!,
@@ -386,6 +405,7 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 					this._existingReviewers,
 					currentUser,
 				);
+
 				Logger.debug("pr.initialize", PullRequestOverviewPanel.ID);
 
 				const context: Partial<PullRequest> = {
@@ -449,6 +469,7 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 					revertable:
 						pullRequest.state === GithubItemStateEnum.Merged,
 				};
+
 				this._postMessage({
 					command: "pr.initialize",
 					pullrequest: context,
@@ -472,6 +493,7 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 	): Promise<void> {
 		if (this._folderRepositoryManager !== folderRepositoryManager) {
 			this._folderRepositoryManager = folderRepositoryManager;
+
 			this.registerPrListeners();
 		}
 
@@ -502,6 +524,7 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 		if (result !== this.MESSAGE_UNHANDLED) {
 			return;
 		}
+
 		switch (message.command) {
 			case "pr.checkout":
 				return this.checkoutPullRequest(message);
@@ -626,6 +649,7 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 				this._existingReviewers,
 				this._item.suggestedReviewers,
 			);
+
 			quickPick.busy = false;
 
 			const acceptPromise = asPromise<void>(quickPick.onDidAccept).then(
@@ -643,22 +667,26 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 			const allReviewers = await Promise.race<
 				(vscode.QuickPickItem & { user: IAccount | ITeam })[] | void
 			>([acceptPromise, hidePromise]);
+
 			quickPick.busy = true;
 
 			if (allReviewers) {
 				const newUserReviewers: string[] = [];
 
 				const newTeamReviewers: string[] = [];
+
 				allReviewers.forEach((reviewer) => {
 					const newReviewers = isTeam(reviewer.user)
 						? newTeamReviewers
 						: newUserReviewers;
+
 					newReviewers.push(reviewer.user.id);
 				});
 
 				const removedUserReviewers: string[] = [];
 
 				const removedTeamReviewers: string[] = [];
+
 				this._existingReviewers.forEach((existing) => {
 					let newReviewers: string[] = isTeam(existing.reviewer)
 						? newTeamReviewers
@@ -682,6 +710,7 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 					newUserReviewers,
 					newTeamReviewers,
 				);
+
 				await this._item.deleteReviewRequest(
 					removedUserReviewers,
 					removedTeamReviewers,
@@ -697,15 +726,18 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 				);
 
 				this._existingReviewers = addedReviewers;
+
 				await this._replyMessage(message, {
 					reviewers: addedReviewers,
 				});
 			}
 		} catch (e) {
 			Logger.error(formatError(e));
+
 			vscode.window.showErrorMessage(formatError(e));
 		} finally {
 			quickPick?.hide();
+
 			quickPick?.dispose();
 		}
 	}
@@ -726,7 +758,9 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 		if (!milestone) {
 			return this.removeMilestone(message);
 		}
+
 		await this._item.updateMilestone(milestone.id);
+
 		this._replyMessage(message, {
 			added: milestone,
 		});
@@ -737,6 +771,7 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 	): Promise<void> {
 		try {
 			await this._item.updateMilestone("null");
+
 			this._replyMessage(message, {});
 		} catch (e) {
 			vscode.window.showErrorMessage(formatError(e));
@@ -786,9 +821,13 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 
 		try {
 			quickPick.busy = true;
+
 			quickPick.canSelectMany = true;
+
 			quickPick.matchOnDescription = true;
+
 			quickPick.show();
+
 			quickPick.items = await getAssigneesQuickPickItems(
 				this._folderRepositoryManager,
 				undefined,
@@ -796,6 +835,7 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 				this._item.assignees ?? [],
 				this._item,
 			);
+
 			quickPick.selectedItems = quickPick.items.filter(
 				(item) => item.picked,
 			);
@@ -817,6 +857,7 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 			const allAssignees = await Promise.race<
 				(vscode.QuickPickItem & { user: IAccount })[] | void
 			>([acceptPromise, hidePromise]);
+
 			quickPick.busy = true;
 
 			if (allAssignees) {
@@ -832,14 +873,17 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 									newAssignee.login === currentAssignee.login,
 							),
 					) ?? [];
+
 				this._item.assignees = newAssignees;
 
 				await this._item.addAssignees(
 					newAssignees.map((assignee) => assignee.login),
 				);
+
 				await this._item.deleteAssignees(
 					removeAssignees.map((assignee) => assignee.login),
 				);
+
 				await this._replyMessage(message, {
 					assignees: newAssignees,
 				});
@@ -848,6 +892,7 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 			vscode.window.showErrorMessage(formatError(e));
 		} finally {
 			quickPick.hide();
+
 			quickPick.dispose();
 		}
 	}
@@ -866,8 +911,10 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 			if (!alreadyAssigned) {
 				this._item.assignees =
 					this._item.assignees?.concat(currentUser);
+
 				await this._item.addAssignees([currentUser.login]);
 			}
+
 			this._replyMessage(message, {
 				assignees: this._item.assignees,
 			});
@@ -898,16 +945,20 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 				tempUri,
 				encoder.encode(matches![1]),
 			);
+
 			await this._folderRepositoryManager.repository.apply(
 				tempUri.fsPath,
 			);
+
 			await vscode.workspace.fs.delete(tempUri);
+
 			vscode.window.showInformationMessage("Patch applied!");
 		} catch (e) {
 			Logger.error(
 				`Applying patch failed: ${e}`,
 				PullRequestOverviewPanel.ID,
 			);
+
 			vscode.window.showErrorMessage(
 				`Applying patch failed: ${formatError(e)}`,
 			);
@@ -936,7 +987,9 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 	private async resolveCommentThread(
 		message: IRequestMessage<{
 			threadId: string;
+
 			toResolve: boolean;
+
 			thread: IComment[];
 		}>,
 	) {
@@ -946,10 +999,13 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 			} else {
 				await this._item.unresolveReviewThread(message.args.threadId);
 			}
+
 			const timelineEvents = await this._item.getTimelineEvents();
+
 			this._replyMessage(message, timelineEvents);
 		} catch (e) {
 			vscode.window.showErrorMessage(e);
+
 			this._replyMessage(message, undefined);
 		}
 	}
@@ -960,6 +1016,7 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 				const isCurrentlyCheckedOut = this._item.equals(
 					this._folderRepositoryManager.activePullRequest,
 				);
+
 				this._replyMessage(message, {
 					isCurrentlyCheckedOut: isCurrentlyCheckedOut,
 				});
@@ -968,6 +1025,7 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 				const isCurrentlyCheckedOut = this._item.equals(
 					this._folderRepositoryManager.activePullRequest,
 				);
+
 				this._replyMessage(message, {
 					isCurrentlyCheckedOut: isCurrentlyCheckedOut,
 				});
@@ -977,6 +1035,7 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 
 	private mergePullRequest(message: IRequestMessage<MergeArguments>): void {
 		const { title, description, method, email } = message.args;
+
 		this._folderRepositoryManager
 			.mergePullRequest(this._item, title, description, method, email)
 			.then((result) => {
@@ -995,12 +1054,14 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 					revertable: result.merged,
 					events: result.timeline,
 				};
+
 				this._replyMessage(message, mergeResult);
 			})
 			.catch((e) => {
 				vscode.window.showErrorMessage(
 					`Unable to merge pull request. ${formatError(e)}`,
 				);
+
 				this._throwError(message, {});
 			});
 	}
@@ -1024,6 +1085,7 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 			this._replyMessage(message, result.message);
 		} else {
 			this.refreshPanel();
+
 			this._postMessage(result.message);
 		}
 	}
@@ -1040,6 +1102,7 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 				vscode.window.showErrorMessage(
 					`Unable to set PR ready for review. ${formatError(e)}`,
 				);
+
 				this._throwError(message, {});
 			});
 	}
@@ -1050,6 +1113,7 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 		try {
 			const prBranch =
 				this._folderRepositoryManager.repository.state.HEAD?.name;
+
 			await this._folderRepositoryManager.checkoutDefaultBranch(
 				message.args,
 			);
@@ -1093,10 +1157,12 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 			command: "pr.submitting-review",
 			lastReviewType: reviewType,
 		};
+
 		this._postMessage(submittingMessage);
 
 		try {
 			const review = await action(context.body);
+
 			this.updateReviewers(review);
 
 			const reviewMessage = {
@@ -1104,11 +1170,13 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 				review,
 				reviewers: this._existingReviewers,
 			};
+
 			await this._postMessage(reviewMessage);
 		} catch (e) {
 			vscode.window.showErrorMessage(
 				vscode.l10n.t("Submitting review failed. {0}", formatError(e)),
 			);
+
 			this._throwError(undefined, `${formatError(e)}`);
 		} finally {
 			this._postMessage({ command: "pr.append-review" });
@@ -1121,7 +1189,9 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 	) {
 		try {
 			const review = await action(message.args);
+
 			this.updateReviewers(review);
+
 			this._replyMessage(message, {
 				review: review,
 				reviewers: this._existingReviewers,
@@ -1130,6 +1200,7 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 			vscode.window.showErrorMessage(
 				vscode.l10n.t("Submitting review failed. {0}", formatError(e)),
 			);
+
 			this._throwError(message, `${formatError(e)}`);
 		}
 	}
@@ -1205,11 +1276,14 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 
 			if (reviewer && isTeam(reviewer.reviewer)) {
 				id = reviewer.reviewer.id;
+
 				reviewerArray = teamReviewers;
 			} else if (reviewer && !isTeam(reviewer.reviewer)) {
 				id = reviewer.reviewer.id;
+
 				reviewerArray = userReviewers;
 			}
+
 			if (
 				reviewerArray &&
 				id &&
@@ -1227,6 +1301,7 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 			if (targetReviewer) {
 				targetReviewer.state = "REQUESTED";
 			}
+
 			this._replyMessage(message, {
 				reviewers: this._existingReviewers,
 			});
@@ -1260,6 +1335,7 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 	private async updateAutoMerge(
 		message: IRequestMessage<{
 			autoMerge?: boolean;
+
 			autoMergeMethod: MergeMethod;
 		}>,
 	): Promise<void> {
@@ -1269,6 +1345,7 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 			replyMessage = { autoMerge: false };
 		} else if (message.args.autoMerge === false && this._item.autoMerge) {
 			await this._item.disableAutoMerge();
+
 			replyMessage = { autoMerge: this._item.autoMerge };
 		} else {
 			if (
@@ -1277,22 +1354,27 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 			) {
 				await this._item.disableAutoMerge();
 			}
+
 			await this._item.enableAutoMerge(message.args.autoMergeMethod);
+
 			replyMessage = {
 				autoMerge: this._item.autoMerge,
 				autoMergeMethod: this._item.autoMergeMethod,
 			};
 		}
+
 		this._replyMessage(message, replyMessage);
 	}
 
 	private async dequeue(message: IRequestMessage<void>): Promise<void> {
 		const result = await this._item.dequeuePullRequest();
+
 		this._replyMessage(message, result);
 	}
 
 	private async enqueue(message: IRequestMessage<void>): Promise<void> {
 		const result = await this._item.enqueuePullRequest();
+
 		this._replyMessage(message, { mergeQueueEntry: result });
 	}
 
@@ -1325,6 +1407,7 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 
 			return this._replyMessage(message, {});
 		}
+
 		const mergeSucceeded =
 			await this._folderRepositoryManager.tryMergeBaseIntoHead(
 				this._item,
@@ -1341,7 +1424,9 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 
 		do {
 			mergability = (await this._item.getMergeability()).mergeability;
+
 			attemptsRemaining--;
+
 			await new Promise((c) => setTimeout(c, 1000));
 		} while (
 			attemptsRemaining > 0 &&
@@ -1352,6 +1437,7 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 			events: await this._item.getTimelineEvents(),
 			mergeable: mergability,
 		};
+
 		await this.refreshPanel();
 
 		this._replyMessage(message, result);
@@ -1370,6 +1456,7 @@ export class PullRequestOverviewPanel extends IssueOverviewPanel<PullRequestMode
 
 	override dispose() {
 		super.dispose();
+
 		disposeAll(this._prListeners);
 	}
 }
@@ -1388,6 +1475,7 @@ export function getDefaultMergeMethod(
 	) {
 		return userPreferred;
 	}
+
 	const methods: MergeMethod[] = ["merge", "squash", "rebase"];
 	// GitHub requires to have at least one merge method to be enabled; use first available as default
 	return methods.find((method) => methodsAvailability[method])!;

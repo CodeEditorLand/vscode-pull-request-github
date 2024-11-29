@@ -75,6 +75,7 @@ export abstract class FileChangeModel {
 						commit,
 						this.fileName,
 					);
+
 				diffHunks = parsePatch(patch);
 			} catch (e) {
 				Logger.error(
@@ -82,6 +83,7 @@ export abstract class FileChangeModel {
 				);
 			}
 		}
+
 		return diffHunks;
 	}
 
@@ -104,7 +106,9 @@ export class GitFileChangeModel extends FileChangeModel {
 		preload?: boolean,
 	) {
 		super(pullRequest, folderRepositoryManager, change, sha);
+
 		this._filePath = filePath;
+
 		this._parentFilePath = parentFilePath;
 
 		if (preload) {
@@ -119,6 +123,7 @@ export class GitFileChangeModel extends FileChangeModel {
 	}
 
 	private _show: Promise<string | undefined>;
+
 	async showBase(): Promise<string | undefined> {
 		if (!this._show && this.change.status !== GitChangeType.ADD) {
 			const commit =
@@ -131,11 +136,13 @@ export class GitFileChangeModel extends FileChangeModel {
 				this.folderRepoManager.repository.rootUri,
 				this.fileName,
 			).fsPath;
+
 			this._show = this.folderRepoManager.repository.show(
 				commit,
 				absolutePath,
 			);
 		}
+
 		return this._show;
 	}
 }
@@ -174,11 +181,13 @@ export class InMemFileChangeModel extends FileChangeModel {
 					this.change.baseCommit,
 					fileName,
 				);
+
 				originalFileExist = true;
 			}
 		} catch (err) {
 			/* noop */
 		}
+
 		return !originalFileExist;
 	}
 
@@ -219,6 +228,7 @@ export class InMemFileChangeModel extends FileChangeModel {
 				),
 			).path,
 		});
+
 		this._filePath = isCurrentPR
 			? change.status === GitChangeType.DELETE
 				? toReviewUri(
@@ -241,6 +251,7 @@ export class InMemFileChangeModel extends FileChangeModel {
 					change.status,
 					change.previousFileName,
 				);
+
 		this._parentFilePath = isCurrentPR
 			? toReviewUri(
 					parentPath,
@@ -268,6 +279,7 @@ export class InMemFileChangeModel extends FileChangeModel {
 
 export class RemoteFileChangeModel extends FileChangeModel {
 	public fileChangeResourceUri: vscode.Uri;
+
 	public childrenDisposables: vscode.Disposable[] = [];
 
 	get previousFileName(): string | undefined {
@@ -287,6 +299,7 @@ export class RemoteFileChangeModel extends FileChangeModel {
 			change.status === GitChangeType.RENAME
 				? change.previousFileName!
 				: change.fileName;
+
 		this._filePath = toPRUri(
 			vscode.Uri.file(
 				resolvePath(
@@ -302,6 +315,7 @@ export class RemoteFileChangeModel extends FileChangeModel {
 			change.status,
 			change.previousFileName,
 		);
+
 		this._parentFilePath = toPRUri(
 			vscode.Uri.file(
 				resolvePath(

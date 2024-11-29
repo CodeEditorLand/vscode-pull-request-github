@@ -12,9 +12,11 @@ export class Remote {
 	public get host(): string {
 		return this.gitProtocol.host;
 	}
+
 	public get owner(): string {
 		return this.gitProtocol.owner;
 	}
+
 	public get repositoryName(): string {
 		return this.gitProtocol.repositoryName;
 	}
@@ -45,17 +47,20 @@ export class Remote {
 		if (this.remoteName !== remote.remoteName) {
 			return false;
 		}
+
 		if (
 			!this.host.includes(remote.host) &&
 			!remote.host.includes(this.host)
 		) {
 			return false;
 		}
+
 		if (
 			this.owner.toLocaleLowerCase() !== remote.owner.toLocaleLowerCase()
 		) {
 			return false;
 		}
+
 		if (
 			this.repositoryName.toLocaleLowerCase() !==
 			remote.repositoryName.toLocaleLowerCase()
@@ -75,6 +80,7 @@ export function parseRemote(
 	if (!url) {
 		return null;
 	}
+
 	const gitProtocol = new Protocol(url);
 
 	if (originalProtocol) {
@@ -99,9 +105,11 @@ export function parseRepositoryRemotes(repository: Repository): Remote[] {
 		if (r.fetchUrl) {
 			urls.push(r.fetchUrl);
 		}
+
 		if (r.pushUrl && r.pushUrl !== r.fetchUrl) {
 			urls.push(r.pushUrl);
 		}
+
 		urls.forEach((url) => {
 			const remote = parseRemote(r.name, url);
 
@@ -110,6 +118,7 @@ export function parseRepositoryRemotes(repository: Repository): Remote[] {
 			}
 		});
 	}
+
 	return remotes;
 }
 

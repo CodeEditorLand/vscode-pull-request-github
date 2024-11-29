@@ -11,6 +11,7 @@ export abstract class ReadonlyFileSystemProvider
 	protected _onDidChangeFile = new vscode.EventEmitter<
 		vscode.FileChangeEvent[]
 	>();
+
 	onDidChangeFile = this._onDidChangeFile.event;
 
 	constructor() {}

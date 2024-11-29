@@ -8,6 +8,7 @@ import { IssueModel } from "../github/issueModel";
 
 export interface NotificationsPaginationRange {
 	startPage: number;
+
 	endPage: number;
 }
 
@@ -24,6 +25,7 @@ export class LoadMoreNotificationsTreeItem {}
 
 export interface INotificationItem {
 	notification: Notification;
+
 	model: IssueModel;
 
 	getPriority(): { priority: string; priorityReasoning: string } | undefined;

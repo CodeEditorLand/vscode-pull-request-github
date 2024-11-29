@@ -46,6 +46,7 @@ export class RevertPullRequestViewProvider
 
 	protected async getTitleAndDescription(): Promise<{
 		title: string;
+
 		description: string;
 	}> {
 		return {
@@ -73,8 +74,11 @@ export class RevertPullRequestViewProvider
 
 	protected override async getCreateParams(): Promise<CreateParamsNew> {
 		const params = await super.getCreateParams();
+
 		params.canModifyBranches = false;
+
 		params.actionDetail = vscode.l10n.t("Reverting");
+
 		params.associatedExistingPullRequest = this.pullRequest.number;
 
 		return params;
@@ -114,6 +118,7 @@ export class RevertPullRequestViewProvider
 		message: IRequestMessage<CreatePullRequestNew>,
 	): Promise<void> {
 		let revertPr: PullRequestModel | undefined;
+
 		RevertPullRequestViewProvider.withProgress(async () => {
 			commands.setContext(contexts.CREATING, true);
 
@@ -127,6 +132,7 @@ export class RevertPullRequestViewProvider
 
 				if (revertPr) {
 					await this.postCreate(message, revertPr);
+
 					await openDescription(
 						this.telemetry,
 						revertPr,
@@ -144,6 +150,7 @@ export class RevertPullRequestViewProvider
 							"GraphQL error: ".length,
 						);
 					}
+
 					this._throwError(message, errorMessage);
 				} else {
 					if (

@@ -80,6 +80,7 @@ async function init(
 	createPrHelper: CreatePullRequestHelper,
 ): Promise<void> {
 	context.subscriptions.push(Logger);
+
 	Logger.appendLine(
 		"Git repository found, initializing review manager and pr tree view.",
 	);
@@ -190,6 +191,7 @@ async function init(
 				) {
 					indexB = i;
 				}
+
 				if (
 					indexA !== workspaceFolders.length &&
 					indexB !== workspaceFolders.length
@@ -197,6 +199,7 @@ async function init(
 					break;
 				}
 			}
+
 			return indexA - indexB;
 		});
 	}
@@ -215,9 +218,11 @@ async function init(
 		git,
 		reposManager,
 	);
+
 	context.subscriptions.push(changesTree);
 
 	const activePrViewCoordinator = new WebviewViewCoordinator(context);
+
 	context.subscriptions.push(activePrViewCoordinator);
 
 	let reviewManagerIndex = 0;
@@ -240,7 +245,9 @@ async function init(
 	);
 
 	const treeDecorationProviders = new TreeDecorationProviders(reposManager);
+
 	context.subscriptions.push(treeDecorationProviders);
+
 	treeDecorationProviders.registerProviders([
 		new FileTypeDecorationProvider(),
 		new CommentDecorationProvider(reposManager),
@@ -256,12 +263,14 @@ async function init(
 		credentialStore,
 		git,
 	);
+
 	context.subscriptions.push(reviewsManager);
 
 	git.onDidChangeState(() => {
 		Logger.appendLine(
 			`Git initialization state changed: state=${git.state}`,
 		);
+
 		reviewsManager.reviewManagers.forEach((reviewManager) =>
 			reviewManager.updateState(true),
 		);
@@ -283,6 +292,7 @@ async function init(
 
 				return;
 			}
+
 			const newFolderManager = new FolderRepositoryManager(
 				reposManager.folderManagers.length,
 				context,
@@ -292,6 +302,7 @@ async function init(
 				credentialStore,
 				createPrHelper,
 			);
+
 			reposManager.insertFolderManager(newFolderManager);
 
 			const newReviewManager = new ReviewManager(
@@ -307,21 +318,28 @@ async function init(
 				createPrHelper,
 				git,
 			);
+
 			reviewsManager.addReviewManager(newReviewManager);
 		}
+
 		addRepo();
+
 		tree.notificationProvider.refreshOrLaunchPolling();
 
 		const disposable = repo.state.onDidChange(() => {
 			Logger.appendLine(`Repo state for ${repo.rootUri} changed.`);
+
 			addRepo();
+
 			disposable.dispose();
 		});
 	});
 
 	git.onDidCloseRepository((repo) => {
 		reposManager.removeRepo(repo);
+
 		reviewsManager.removeReviewManager(repo);
+
 		tree.notificationProvider.refreshOrLaunchPolling();
 	});
 
@@ -339,6 +357,7 @@ async function init(
 	const layout = vscode.workspace
 		.getConfiguration(PR_SETTINGS_NAMESPACE)
 		.get<string>(FILE_LIST_LAYOUT);
+
 	await vscode.commands.executeCommand(
 		"setContext",
 		"fileListLayout:flat",
@@ -352,7 +371,9 @@ async function init(
 		context,
 		telemetry,
 	);
+
 	context.subscriptions.push(issuesFeatures);
+
 	await issuesFeatures.initialize();
 
 	const notificationsViewEnabled = vscode.workspace
@@ -365,6 +386,7 @@ async function init(
 			reposManager,
 			telemetry,
 		);
+
 		context.subscriptions.push(notificationsFeatures);
 	}
 
@@ -384,9 +406,11 @@ async function init(
 
 	if (chatEnabled) {
 		const chatParticipantState = new ChatParticipantState();
+
 		context.subscriptions.push(
 			new ChatParticipant(context, chatParticipantState),
 		);
+
 		registerTools(
 			context,
 			credentialStore,
@@ -425,6 +449,7 @@ export async function activate(
 	}
 
 	const showPRController = new ShowPullRequest();
+
 	vscode.commands.registerCommand(
 		"github.api.preloadPullRequest",
 		async (shouldShow: boolean) => {
@@ -433,7 +458,9 @@ export async function activate(
 				FOCUS_REVIEW_MODE,
 				true,
 			);
+
 			await commands.focusView("github:activePullRequest:welcome");
+
 			showPRController.shouldShow = shouldShow;
 		},
 	);
@@ -441,6 +468,7 @@ export async function activate(
 	const openDiff = vscode.workspace
 		.getConfiguration(GIT, null)
 		.get(OPEN_DIFF_ON_CLICK, true);
+
 	await vscode.commands.executeCommand(
 		"setContext",
 		"openDiffOnClick",
@@ -449,6 +477,7 @@ export async function activate(
 
 	// initialize resources
 	Resource.initialize(context);
+
 	Logger.debug("Creating API implementation.", "Activation");
 
 	const apiImpl = new GitApiImpl();
@@ -456,6 +485,7 @@ export async function activate(
 	telemetry = new ExperimentationTelemetry(
 		new TelemetryReporter(ingestionKey),
 	);
+
 	context.subscriptions.push(telemetry);
 
 	await deferredActivate(context, apiImpl, showPRController);
@@ -478,6 +508,7 @@ async function doRegisterBuiltinGitProvider(
 
 		return true;
 	}
+
 	return false;
 }
 
@@ -503,6 +534,7 @@ function registerPostCommitCommandsProvider(
 					});
 				}),
 			);
+
 			Logger.debug(
 				`Found ${found ? "a repo" : "no repos"} when getting post commit commands.`,
 				componentId,
@@ -530,6 +562,7 @@ function registerPostCommitCommandsProvider(
 			(folderManager) => folderManager.gitHubRepositories.length > 0,
 		);
 	}
+
 	function tryRegister(): boolean {
 		Logger.debug(
 			"Trying to register post commit commands.",
@@ -541,10 +574,12 @@ function registerPostCommitCommandsProvider(
 				"GitHub remote(s) found, registering post commit commands.",
 				componentId,
 			);
+
 			git.registerPostCommitCommandsProvider(new Provider());
 
 			return true;
 		}
+
 		return false;
 	}
 
@@ -580,6 +615,7 @@ async function deferredActivateRegisterBuiltInGitProvider(
 				}
 			},
 		);
+
 		context.subscriptions.push(extensionsChangedDisposable);
 	}
 }
@@ -590,6 +626,7 @@ async function deferredActivate(
 	showPRController: ShowPullRequest,
 ) {
 	Logger.debug("Initializing state.", "Activation");
+
 	PersistentState.init(context);
 	// Migrate from state to setting
 	if (
@@ -601,26 +638,33 @@ async function deferredActivate(
 		await vscode.workspace
 			.getConfiguration(PR_SETTINGS_NAMESPACE)
 			.update(BRANCH_PUBLISH, "never", vscode.ConfigurationTarget.Global);
+
 		PersistentState.store(
 			PROMPTS_SCOPE,
 			PROMPT_TO_CREATE_PR_ON_PUBLISH_KEY,
 			true,
 		);
 	}
+
 	TemporaryState.init(context);
+
 	Logger.debug("Creating credential store.", "Activation");
 
 	const credentialStore = new CredentialStore(telemetry, context);
+
 	context.subscriptions.push(credentialStore);
 
 	const experimentationService = await createExperimentationService(
 		context,
 		telemetry,
 	);
+
 	await experimentationService.initializePromise;
+
 	await experimentationService.isCachedFlightEnabled("githubaa");
 
 	const showBadge = vscode.env.appHost === "desktop";
+
 	await credentialStore.create(showBadge ? undefined : { silent: true });
 
 	deferredActivateRegisterBuiltInGitProvider(
@@ -632,6 +676,7 @@ async function deferredActivate(
 	Logger.debug("Registering live share git provider.", "Activation");
 
 	const liveshareGitProvider = registerLiveShareGitProvider(apiImpl);
+
 	context.subscriptions.push(liveshareGitProvider);
 
 	const liveshareApiPromise = liveshareGitProvider.initialize();
@@ -641,6 +686,7 @@ async function deferredActivate(
 	Logger.debug("Creating tree view.", "Activation");
 
 	const reposManager = new RepositoriesManager(credentialStore, telemetry);
+
 	context.subscriptions.push(reposManager);
 
 	const prTree = new PullRequestsTreeDataProvider(
@@ -648,18 +694,23 @@ async function deferredActivate(
 		context,
 		reposManager,
 	);
+
 	context.subscriptions.push(prTree);
+
 	context.subscriptions.push(
 		credentialStore.onDidGetSession(() => prTree.refresh(undefined, true)),
 	);
+
 	Logger.appendLine("Looking for git repository");
 
 	const repositories = apiImpl.repositories;
+
 	Logger.appendLine(
 		`Found ${repositories.length} repositories during activation`,
 	);
 
 	const createPrHelper = new CreatePullRequestHelper();
+
 	context.subscriptions.push(createPrHelper);
 
 	let folderManagerIndex = 0;
@@ -676,6 +727,7 @@ async function deferredActivate(
 				createPrHelper,
 			),
 	);
+
 	context.subscriptions.push(...folderManagers);
 
 	for (const folderManager of folderManagers) {
@@ -693,9 +745,11 @@ async function deferredActivate(
 			"Cannot edit this pull request file. [Check out](command:pr.checkoutFromReadonlyFile) this pull request to edit.",
 		),
 	);
+
 	readOnlyMessage.isTrusted = {
 		enabledCommands: ["pr.checkoutFromReadonlyFile"],
 	};
+
 	context.subscriptions.push(
 		vscode.workspace.registerFileSystemProvider(
 			Schemes.Pr,

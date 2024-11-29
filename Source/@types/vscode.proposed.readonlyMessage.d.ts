@@ -12,6 +12,7 @@ declare module "vscode" {
 			provider: FileSystemProvider,
 			options?: {
 				readonly isCaseSensitive?: boolean;
+
 				readonly isReadonly?: boolean | MarkdownString;
 			},
 		): Disposable;

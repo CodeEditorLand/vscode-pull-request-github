@@ -18,8 +18,11 @@ export enum GitChangeType {
 
 export interface SimpleFileChange {
 	readonly status: GitChangeType;
+
 	readonly fileName: string;
+
 	readonly blobUrl: string | undefined;
+
 	readonly diffHunks?: DiffHunk[];
 }
 

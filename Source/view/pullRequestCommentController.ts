@@ -45,10 +45,15 @@ export class PullRequestCommentController
 	implements CommentHandler, CommentReactionHandler
 {
 	private static ID = "PullRequestCommentController";
+
 	private _pendingCommentThreadAdds: GHPRCommentThread[] = [];
+
 	private _commentHandlerId: string;
+
 	private _commentThreadCache: { [key: string]: GHPRCommentThread[] } = {};
+
 	private readonly _context: vscode.ExtensionContext;
+
 	private readonly _githubRepositories: GitHubRepository[];
 
 	constructor(
@@ -58,9 +63,13 @@ export class PullRequestCommentController
 		telemetry: ITelemetry,
 	) {
 		super(folderRepoManager, telemetry);
+
 		this._commentController = commentController;
+
 		this._context = folderRepoManager.context;
+
 		this._commentHandlerId = uuid();
+
 		registerCommentHandler(
 			this._commentHandlerId,
 			this,
@@ -75,10 +84,13 @@ export class PullRequestCommentController
 			const reviewThreadsDisposable =
 				this.pullRequestModel.onDidChangeReviewThreads(async () => {
 					reviewThreadsDisposable.dispose();
+
 					await this.initializeThreadsInOpenEditors();
+
 					this.registerListeners();
 				});
 		}
+
 		this._githubRepositories =
 			this.githubReposForPullRequest(pullRequestModel);
 	}
@@ -144,6 +156,7 @@ export class PullRequestCommentController
 
 		const isPrEditor = (potentialEditor: {
 			uri: vscode.Uri;
+
 			editor?: vscode.TextEditor;
 		}): Thenable<vscode.TextDocument> | undefined => {
 			const params = fromPRUri(potentialEditor.uri);
@@ -178,6 +191,7 @@ export class PullRequestCommentController
 			} else {
 				testUris.push({ uri: editor.document.uri, editor });
 			}
+
 			prDocuments.push(
 				...testUris
 					.map(isPrEditor)
@@ -186,6 +200,7 @@ export class PullRequestCommentController
 					>((doc): doc is Promise<vscode.TextDocument> => !!doc),
 			);
 		}
+
 		return Promise.all(prDocuments);
 	}
 
@@ -213,6 +228,7 @@ export class PullRequestCommentController
 			if (this._commentThreadCache[cacheKey]) {
 				continue;
 			}
+
 			if (threadsByPath[fileName]) {
 				this._commentThreadCache[cacheKey] = threadsByPath[fileName]
 					.filter(
@@ -295,9 +311,11 @@ export class PullRequestCommentController
 		if (added.length) {
 			await this.addThreadsForEditors(added);
 		}
+
 		if (e.closed.length > 0) {
 			// Delay cleaning closed editors to handle the case where a preview tab is replaced
 			await new Promise((resolve) => setTimeout(resolve, 100));
+
 			await this.cleanClosedPrs();
 		}
 	}
@@ -323,7 +341,9 @@ export class PullRequestCommentController
 
 			if (index > -1) {
 				newThread = this._pendingCommentThreadAdds[index];
+
 				newThread.gitHubThreadId = thread.id;
+
 				newThread.comments = thread.comments.map(
 					(c) =>
 						new GHPRComment(
@@ -333,12 +353,14 @@ export class PullRequestCommentController
 							this._githubRepositories,
 						),
 				);
+
 				updateThreadWithRange(
 					this._context,
 					newThread,
 					thread,
 					this._githubRepositories,
 				);
+
 				this._pendingCommentThreadAdds.splice(index, 1);
 			} else {
 				const openPREditors = await this.getPREditors(
@@ -384,6 +406,7 @@ export class PullRequestCommentController
 			if (!newThread) {
 				return;
 			}
+
 			const key = this.getCommentThreadCacheKey(
 				thread.path,
 				thread.diffSide === DiffSide.LEFT,
@@ -410,6 +433,7 @@ export class PullRequestCommentController
 
 			if (index > -1) {
 				const matchingThread = this._commentThreadCache[key][index];
+
 				updateThread(
 					this._context,
 					matchingThread,
@@ -431,7 +455,9 @@ export class PullRequestCommentController
 
 			if (index > -1) {
 				const matchingThread = this._commentThreadCache[key][index];
+
 				this._commentThreadCache[key].splice(index, 1);
+
 				matchingThread.dispose();
 			}
 		});
@@ -486,7 +512,9 @@ export class PullRequestCommentController
 				);
 
 				const side = this.getCommentSide(thread);
+
 				this._pendingCommentThreadAdds.push(thread);
+
 				await this.pullRequestModel.createReviewThread(
 					input,
 					fileName,
@@ -518,6 +546,7 @@ export class PullRequestCommentController
 			} else {
 				vscode.window.showErrorMessage(`Creating comment failed: ${e}`);
 			}
+
 			thread.comments = thread.comments.map((c) => {
 				if (
 					c instanceof TemporaryComment &&
@@ -567,6 +596,7 @@ export class PullRequestCommentController
 			currentUser,
 			comment,
 		);
+
 		thread.comments = thread.comments.map((c) => {
 			if (c instanceof GHPRComment && c.commentId === comment.commentId) {
 				return temporaryComment;
@@ -662,7 +692,9 @@ export class PullRequestCommentController
 				);
 
 				const side = this.getCommentSide(thread);
+
 				this._pendingCommentThreadAdds.push(thread);
+
 				await this.pullRequestModel.createReviewThread(
 					input,
 					fileName,
@@ -701,6 +733,7 @@ export class PullRequestCommentController
 			this._folderRepoManager,
 			this.pullRequestModel,
 		);
+
 		PullRequestOverviewPanel.scrollToReview();
 
 		/* __GDPR__
@@ -726,6 +759,7 @@ export class PullRequestCommentController
 			inDraft,
 			currentUser,
 		);
+
 		this.updateCommentThreadComments(thread, [...thread.comments, comment]);
 
 		return comment.id;
@@ -736,6 +770,7 @@ export class PullRequestCommentController
 		newComments: (GHPRComment | TemporaryComment)[],
 	) {
 		thread.comments = newComments;
+
 		updateCommentThreadLabel(thread);
 	}
 
@@ -745,6 +780,7 @@ export class PullRequestCommentController
 	): Promise<void> {
 		const pendingReviewId =
 			await this.pullRequestModel.getPendingReviewId();
+
 		await this.createOrReplyComment(thread, input, !pendingReviewId);
 	}
 
@@ -825,7 +861,9 @@ export class PullRequestCommentController
 
 	override dispose() {
 		super.dispose();
+
 		this.removeAllCommentsThreads();
+
 		unregisterCommentHandler(this._commentHandlerId);
 	}
 }

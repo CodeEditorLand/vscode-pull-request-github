@@ -16,10 +16,13 @@ export class GitHubManager {
 	private static readonly _githubDotComServers = new Set<string>()
 		.add("github.com")
 		.add("ssh.github.com");
+
 	private static readonly _gheServers = new Set<string>().add("ghe.com");
+
 	private static readonly _neverGitHubServers = new Set<string>()
 		.add("bitbucket.org")
 		.add("gitlab.com");
+
 	private _knownServers: Map<string, GitHubServerType> = new Map([
 		...Array.from(GitHubManager._githubDotComServers.keys()).map((key) => [
 			key,
@@ -43,6 +46,7 @@ export class GitHubManager {
 		if (host === null) {
 			return GitHubServerType.None;
 		}
+
 		const authority = host.authority.toLowerCase();
 
 		// .wiki/.git repos are not supported
@@ -92,9 +96,11 @@ export class GitHubManager {
 			const response = await fetch(uri.toString(), options);
 
 			const otherGitHubHeaders: string[] = [];
+
 			response.headers.forEach((_value, header) => {
 				otherGitHubHeaders.push(header);
 			});
+
 			Logger.debug(
 				`All headers: ${otherGitHubHeaders.join(", ")}`,
 				"GitHubServer",
@@ -124,6 +130,7 @@ export class GitHubManager {
 				} else {
 					// Check if we got an enterprise-looking needs auth response:
 					// { message: 'Must authenticate to access this API.', documentation_url: 'https://docs.github.com/enterprise/3.3/rest'}
+
 					Logger.appendLine(
 						`Received fallback response from the server: ${responseText}`,
 						"GitHubServer",
@@ -148,6 +155,7 @@ export class GitHubManager {
 							: GitHubServerType.GitHubDotCom
 						: GitHubServerType.None;
 			}
+
 			return isGitHub;
 		} catch (ex) {
 			Logger.warn(
@@ -161,6 +169,7 @@ export class GitHubManager {
 				`Host ${host} is associated with GitHub: ${isGitHub}`,
 				"GitHubServer",
 			);
+
 			this._knownServers.set(authority, isGitHub);
 		}
 	}
@@ -173,6 +182,7 @@ export class GitHubManager {
 	): Promise<[vscode.Uri, RequestInit]> {
 		const headers: {
 			"user-agent": string;
+
 			authorization?: string;
 		} = {
 			"user-agent": "GitHub VSCode Pull Requests",

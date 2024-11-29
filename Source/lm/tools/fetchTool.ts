@@ -14,23 +14,29 @@ import { MimeTypes, RepoToolBase } from "./toolsUtils";
 
 interface FetchToolParameters {
 	issueNumber: number;
+
 	repo?: {
 		owner: string;
+
 		name: string;
 	};
 }
 
 interface FileChange {
 	fileName: string;
+
 	patch: string;
 }
 
 export interface FetchResult {
 	title: string;
+
 	body: string;
+
 	comments: {
 		body: string;
 	}[];
+
 	fileChanges?: FileChange[];
 }
 
@@ -70,8 +76,10 @@ export class FetchTool extends RepoToolBase<FetchToolParameters> {
 					});
 				}
 			}
+
 			result.fileChanges = fetchedFileChanges;
 		}
+
 		return {
 			[MimeTypes.textPlain]: JSON.stringify(result),
 			[MimeTypes.textJson]: result,
@@ -112,11 +120,13 @@ export class FetchTool extends RepoToolBase<FetchToolParameters> {
 				options.parameters.issueNumber,
 			);
 		}
+
 		if (!issueOrPullRequest) {
 			throw new Error(
 				`No issue or PR found for ${owner}/${name}/${options.parameters.issueNumber}. Make sure the issue or PR exists.`,
 			);
 		}
+
 		return issueOrPullRequest;
 	}
 }

@@ -9,13 +9,17 @@ import { Schemes, toGitHubUri } from "../common/uri";
 
 export interface Conflict {
 	prHeadFilePath: string;
+
 	contentsConflict: boolean;
+
 	filePathConflict: boolean;
+
 	modeConflict: boolean;
 }
 
 export interface ResolvedConflict {
 	prHeadFilePath: string;
+
 	resolvedContents?: string;
 	// The other two fields can be added later. To begin with, we only support resolving the contents.
 	// resolvedFilePath: string;
@@ -24,12 +28,16 @@ export interface ResolvedConflict {
 
 export class ConflictResolutionModel {
 	private _startingConflicts: Map<string, Conflict> = new Map();
+
 	private readonly _resolvedConflicts: Map<string, ResolvedConflict> =
 		new Map();
+
 	private readonly _onAddedResolution: vscode.EventEmitter<void> =
 		new vscode.EventEmitter<void>();
+
 	public readonly onAddedResolution: vscode.Event<void> =
 		this._onAddedResolution.event;
+
 	public readonly mergeScheme = `${Schemes.MergeOutput}-${new Date().getTime()}`;
 
 	constructor(
@@ -60,6 +68,7 @@ export class ConflictResolutionModel {
 			prHeadFilePath: filePath,
 			resolvedContents: contents,
 		});
+
 		this._onAddedResolution.fire();
 	}
 
@@ -67,6 +76,7 @@ export class ConflictResolutionModel {
 		if (!this._startingConflicts.has(filePath)) {
 			throw new Error("Not a conflict file");
 		}
+
 		return this._resolvedConflicts.has(filePath);
 	}
 
@@ -78,6 +88,7 @@ export class ConflictResolutionModel {
 		if (this._resolvedConflicts.size !== this._startingConflicts.size) {
 			throw new Error("Not all conflicts have been resolved");
 		}
+
 		return this._resolvedConflicts;
 	}
 

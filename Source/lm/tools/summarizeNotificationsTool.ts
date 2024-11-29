@@ -25,6 +25,7 @@ export class NotificationSummarizationTool
 				invocationMessage: vscode.l10n.t("Summarizing notification"),
 			};
 		}
+
 		const type = parameters.itemType === "issue" ? "issues" : "pull";
 
 		const url = `https://github.com/${parameters.owner}/${parameters.repo}/${type}/${parameters.itemNumber}`;
@@ -52,6 +53,7 @@ export class NotificationSummarizationTool
 			// First time the thread is viewed, so no lastReadAt field
 			notificationInfo += `This thread is viewed for the first time. Here is the main item information of the thread:`;
 		}
+
 		notificationInfo += `
 Title : ${options.input.title}
 Body : ${options.input.body}
@@ -87,6 +89,7 @@ Body: ${comment.body}
 `;
 			}
 		}
+
 		const models = await vscode.lm.selectChatModels({
 			vendor: "copilot",
 			family: "gpt-4o",
@@ -106,13 +109,16 @@ Body: ${comment.body}
 				command: "notification.markAsRead",
 				arguments: [{ threadId, notificationKey }],
 			};
+
 			content.push(new vscode.LanguageModelTextPart(TOOL_COMMAND_RESULT));
+
 			content.push(
 				new vscode.LanguageModelTextPart(
 					JSON.stringify(markAsReadCommand),
 				),
 			);
 		}
+
 		const owner = options.input.owner;
 
 		const repo = options.input.repo;
@@ -123,11 +129,13 @@ Body: ${comment.body}
 					this.summarizeInstructions(owner, repo),
 				),
 			];
+
 			messages.push(
 				vscode.LanguageModelChatMessage.User(
 					`The notification information is as follows:`,
 				),
 			);
+
 			messages.push(
 				vscode.LanguageModelChatMessage.User(notificationInfo),
 			);
@@ -135,10 +143,12 @@ Body: ${comment.body}
 			const response = await model.sendRequest(messages, {});
 
 			const responseText = await concatAsyncIterable(response.text);
+
 			content.push(new vscode.LanguageModelTextPart(responseText));
 		} else {
 			content.push(new vscode.LanguageModelTextPart(notificationInfo));
 		}
+
 		content.push(
 			new vscode.LanguageModelTextPart(
 				"Above is a summary of the notification. Extract and output this notification summary directly as is to the user. Do not output the result from the call to the fetch notification tool.",

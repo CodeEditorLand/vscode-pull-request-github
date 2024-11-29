@@ -64,12 +64,14 @@ export function mapOldPositionToNew(
 				if (diffLine.oldLineNumber > line) {
 					return line + delta;
 				}
+
 				if (diffLine.type === DiffChangeType.Add) {
 					delta++;
 				} else if (diffLine.type === DiffChangeType.Delete) {
 					delta--;
 				}
 			}
+
 			return line + delta;
 		}
 
@@ -99,12 +101,14 @@ export function mapNewPositionToOld(patch: string, line: number): number {
 				if (diffLine.newLineNumber > line) {
 					return line + delta;
 				}
+
 				if (diffLine.type === DiffChangeType.Add) {
 					delta--;
 				} else if (diffLine.type === DiffChangeType.Delete) {
 					delta++;
 				}
 			}
+
 			return line + delta;
 		}
 

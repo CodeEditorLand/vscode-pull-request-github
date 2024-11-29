@@ -27,9 +27,13 @@ import { LabelOnlyNode, TreeNode, TreeNodeParent } from "./treeNode";
 
 export class CommitNode extends TreeNode implements vscode.TreeItem {
 	public sha: string;
+
 	public collapsibleState: vscode.TreeItemCollapsibleState;
+
 	public iconPath: vscode.Uri | undefined;
+
 	public contextValue?: string;
+
 	public description: string | undefined;
 
 	constructor(
@@ -40,10 +44,15 @@ export class CommitNode extends TreeNode implements vscode.TreeItem {
 		private readonly isCurrent: boolean,
 	) {
 		super(parent);
+
 		this.label = commit.commit.message;
+
 		this.sha = commit.sha;
+
 		this.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
+
 		this.contextValue = "commit";
+
 		this.description = commit.commit.author?.date
 			? dateFromNow(commit.commit.author.date)
 			: undefined;
@@ -57,6 +66,7 @@ export class CommitNode extends TreeNode implements vscode.TreeItem {
 				url: this.commit.author.url,
 				avatarUrl: this.commit.author.avatar_url,
 			};
+
 			this.iconPath = (
 				await DataUri.avatarCirclesAsImageDataUris(
 					this.pullRequestManager.context,
@@ -66,6 +76,7 @@ export class CommitNode extends TreeNode implements vscode.TreeItem {
 				)
 			)[0];
 		}
+
 		return this;
 	}
 
@@ -141,7 +152,9 @@ export class CommitNode extends TreeNode implements vscode.TreeItem {
 		if (layout === "tree") {
 			// tree view
 			const dirNode = new DirectoryTreeNode(this, "");
+
 			fileChangeNodes.forEach((f) => dirNode.addFile(f));
+
 			dirNode.finalize();
 
 			if (dirNode.label === "") {
@@ -154,6 +167,7 @@ export class CommitNode extends TreeNode implements vscode.TreeItem {
 			// flat view
 			result = fileChangeNodes;
 		}
+
 		this.children = result;
 
 		return result;

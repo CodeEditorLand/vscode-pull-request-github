@@ -34,17 +34,20 @@ export class NotificationsFeatureRegister extends Disposable {
 			credentialStore,
 			this._repositoriesManager,
 		);
+
 		this._register(notificationsProvider);
 
 		const notificationsManager = new NotificationsManager(
 			notificationsProvider,
 		);
+
 		this._register(notificationsManager);
 
 		// Decorations
 		const decorationsProvider = new NotificationsDecorationProvider(
 			notificationsManager,
 		);
+
 		this._register(
 			vscode.window.registerFileDecorationProvider(decorationsProvider),
 		);
@@ -67,6 +70,7 @@ export class NotificationsFeatureRegister extends Disposable {
 					this._telemetry.sendTelemetryEvent(
 						"notifications.sortByTimestamp",
 					);
+
 					notificationsManager.sortNotifications(
 						NotificationsSortMethod.Timestamp,
 					);
@@ -74,6 +78,7 @@ export class NotificationsFeatureRegister extends Disposable {
 				this,
 			),
 		);
+
 		this._register(
 			vscode.commands.registerCommand(
 				"notifications.sortByPriority",
@@ -84,6 +89,7 @@ export class NotificationsFeatureRegister extends Disposable {
 					this._telemetry.sendTelemetryEvent(
 						"notifications.sortByTimestamp",
 					);
+
 					notificationsManager.sortNotifications(
 						NotificationsSortMethod.Priority,
 					);
@@ -91,6 +97,7 @@ export class NotificationsFeatureRegister extends Disposable {
 				this,
 			),
 		);
+
 		this._register(
 			vscode.commands.registerCommand(
 				"notifications.refresh",
@@ -99,20 +106,24 @@ export class NotificationsFeatureRegister extends Disposable {
 						"notifications.refresh" : {}
 					*/
 					this._telemetry.sendTelemetryEvent("notifications.refresh");
+
 					notificationsManager.refresh();
 				},
 				this,
 			),
 		);
+
 		this._register(
 			vscode.commands.registerCommand("notifications.loadMore", () => {
 				/* __GDPR__
 					"notifications.loadMore" : {}
 				*/
 				this._telemetry.sendTelemetryEvent("notifications.loadMore");
+
 				notificationsManager.loadMore();
 			}),
 		);
+
 		this._register(
 			vscode.commands.registerCommand(
 				"notification.chatSummarizeNotification",
@@ -126,6 +137,7 @@ export class NotificationsFeatureRegister extends Disposable {
 					this._telemetry.sendTelemetryEvent(
 						"notification.chatSummarizeNotification",
 					);
+
 					vscode.commands.executeCommand(
 						chatCommand(),
 						vscode.l10n.t(
@@ -136,6 +148,7 @@ export class NotificationsFeatureRegister extends Disposable {
 				},
 			),
 		);
+
 		this._register(
 			vscode.commands.registerCommand(
 				"notification.markAsRead",
@@ -146,6 +159,7 @@ export class NotificationsFeatureRegister extends Disposable {
 
 					if (isNotificationTreeItem(options)) {
 						threadId = options.notification.id;
+
 						notificationKey = options.notification.key;
 					} else if (
 						"threadId" in options &&
@@ -154,6 +168,7 @@ export class NotificationsFeatureRegister extends Disposable {
 						typeof options.notificationKey === "string"
 					) {
 						threadId = options.threadId;
+
 						notificationKey = options.notificationKey;
 					} else {
 						throw new Error(
@@ -166,6 +181,7 @@ export class NotificationsFeatureRegister extends Disposable {
 					this._telemetry.sendTelemetryEvent(
 						"notification.markAsRead",
 					);
+
 					notificationsManager.markAsRead({
 						threadId,
 						notificationKey,

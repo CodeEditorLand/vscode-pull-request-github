@@ -25,13 +25,17 @@ import { CreatePullRequestDataModel } from "./createPullRequestDataModel";
 
 export class CreatePullRequestHelper extends Disposable {
 	private _currentDisposables: vscode.Disposable[] = [];
+
 	private _createPRViewProvider:
 		| BaseCreatePullRequestViewProvider
 		| undefined;
+
 	private _treeView: CompareChanges | undefined;
+
 	private _postCreateCallback:
 		| ((pullRequestModel: PullRequestModel | undefined) => Promise<void>)
 		| undefined;
+
 	private _activeContext: string | undefined;
 
 	constructor() {
@@ -53,6 +57,7 @@ export class CreatePullRequestHelper extends Disposable {
 				await CreatePullRequestViewProvider.withProgress(async () => {
 					return this._postCreateCallback?.(createdPR);
 				});
+
 				this.dispose();
 			}),
 			this._currentDisposables,
@@ -103,6 +108,7 @@ export class CreatePullRequestHelper extends Disposable {
 			}),
 			this._currentDisposables,
 		);
+
 		addDisposable(
 			vscode.commands.registerCommand("pr.createPrMenuDraft", () => {
 				this._createPRViewProvider?.createFromCommand(
@@ -113,6 +119,7 @@ export class CreatePullRequestHelper extends Disposable {
 			}),
 			this._currentDisposables,
 		);
+
 		addDisposable(
 			vscode.commands.registerCommand(
 				"pr.createPrMenuMergeWhenReady",
@@ -127,6 +134,7 @@ export class CreatePullRequestHelper extends Disposable {
 			),
 			this._currentDisposables,
 		);
+
 		addDisposable(
 			vscode.commands.registerCommand("pr.createPrMenuMerge", () => {
 				this._createPRViewProvider?.createFromCommand(
@@ -137,6 +145,7 @@ export class CreatePullRequestHelper extends Disposable {
 			}),
 			this._currentDisposables,
 		);
+
 		addDisposable(
 			vscode.commands.registerCommand("pr.createPrMenuSquash", () => {
 				this._createPRViewProvider?.createFromCommand(
@@ -147,6 +156,7 @@ export class CreatePullRequestHelper extends Disposable {
 			}),
 			this._currentDisposables,
 		);
+
 		addDisposable(
 			vscode.commands.registerCommand("pr.createPrMenuRebase", () => {
 				this._createPRViewProvider?.createFromCommand(
@@ -157,6 +167,7 @@ export class CreatePullRequestHelper extends Disposable {
 			}),
 			this._currentDisposables,
 		);
+
 		addDisposable(
 			vscode.commands.registerCommand("pr.preReview", () => {
 				if (
@@ -230,8 +241,11 @@ export class CreatePullRequestHelper extends Disposable {
 		this.reset();
 
 		this._postCreateCallback = callback;
+
 		await folderRepoManager.loginAndUpdate();
+
 		this._activeContext = "github:revertPullRequest";
+
 		this.setActiveContext(true);
 
 		if (
@@ -247,6 +261,7 @@ export class CreatePullRequestHelper extends Disposable {
 				baseOwner: pullRequestModel.remote.owner,
 				repositoryName: pullRequestModel.remote.repositoryName,
 			};
+
 			this._createPRViewProvider = addDisposable(
 				new RevertPullRequestViewProvider(
 					telemetry,
@@ -289,8 +304,11 @@ export class CreatePullRequestHelper extends Disposable {
 		this.reset();
 
 		this._postCreateCallback = callback;
+
 		await folderRepoManager.loginAndUpdate();
+
 		this._activeContext = "github:createPullRequest";
+
 		this.setActiveContext(true);
 
 		const branch =
@@ -326,6 +344,7 @@ export class CreatePullRequestHelper extends Disposable {
 				branch?.name ?? pullRequestDefaults.base,
 				compareOrigin.remote.repositoryName,
 			);
+
 			createViewProvider = this._createPRViewProvider =
 				new CreatePullRequestViewProvider(
 					telemetry,
@@ -361,10 +380,15 @@ export class CreatePullRequestHelper extends Disposable {
 
 	private reset() {
 		this.setActiveContext(false);
+
 		disposeAll(this._currentDisposables);
+
 		this._createPRViewProvider = undefined;
+
 		this._treeView = undefined;
+
 		this._postCreateCallback = undefined;
+
 		this._activeContext = undefined;
 	}
 

@@ -34,6 +34,7 @@ import {
 
 export class UserCompletionProvider implements vscode.CompletionItemProvider {
 	private static readonly ID: string = "UserCompletionProvider";
+
 	private _gitBlameCache: { [key: string]: string } = {};
 
 	constructor(
@@ -64,6 +65,7 @@ export class UserCompletionProvider implements vscode.CompletionItemProvider {
 
 			if (testWord.charAt(0) === "@") {
 				wordRange = testWordRange;
+
 				wordAtPos = testWord;
 			}
 		}
@@ -129,6 +131,7 @@ export class UserCompletionProvider implements vscode.CompletionItemProvider {
 		} else if (document.uri.scheme === Schemes.Comment) {
 			const activeTab =
 				vscode.window.tabGroups.activeTabGroup.activeTab?.input;
+
 			uri =
 				activeTab instanceof vscode.TabInputText
 					? activeTab.uri
@@ -147,21 +150,29 @@ export class UserCompletionProvider implements vscode.CompletionItemProvider {
 		let completionItems: vscode.CompletionItem[] = [];
 
 		const userMap = await this.stateManager.getUserMap(repoUri);
+
 		userMap.forEach((item) => {
 			const completionItem: UserCompletion = new UserCompletion(
 				{ label: item.login, description: item.name },
 				vscode.CompletionItemKind.User,
 			);
+
 			completionItem.insertText = `@${item.login}`;
+
 			completionItem.login = item.login;
+
 			completionItem.uri = repoUri;
+
 			completionItem.range = range;
+
 			completionItem.detail = item.name;
+
 			completionItem.filterText = `@ ${item.login} ${item.name}`;
 
 			if (document.uri.scheme === NEW_ISSUE_SCHEME) {
 				completionItem.commitCharacters = [" ", ","];
 			}
+
 			completionItems.push(completionItem);
 		});
 
@@ -177,6 +188,7 @@ export class UserCompletionProvider implements vscode.CompletionItemProvider {
 				commentSpecificSuggestions,
 			);
 		}
+
 		return completionItems;
 	}
 
@@ -192,6 +204,7 @@ export class UserCompletionProvider implements vscode.CompletionItemProvider {
 		) {
 			return false;
 		}
+
 		const subpath = uri.path
 			.substring(repositoryManager.repository.rootUri.path.length)
 			.toLowerCase();
@@ -214,6 +227,7 @@ export class UserCompletionProvider implements vscode.CompletionItemProvider {
 		if (!folderManager) {
 			return item;
 		}
+
 		const repo = await folderManager.getPullRequestDefaults();
 
 		const user: User | undefined = await folderManager.resolveUser(
@@ -224,17 +238,22 @@ export class UserCompletionProvider implements vscode.CompletionItemProvider {
 
 		if (user) {
 			item.documentation = userMarkdown(repo, user);
+
 			item.command = {
 				command: "issues.userCompletion",
 				title: vscode.l10n.t("User Completion Chosen"),
 			};
 		}
+
 		return item;
 	}
 
 	private cachedPrUsers: UserCompletion[] = [];
+
 	private cachedPrTimelineEvents: TimelineEvent[] = [];
+
 	private cachedForPrNumber: number | undefined;
+
 	private async getCommentSpecificSuggestions(
 		alreadyIncludedUsers: Map<string, IAccount>,
 		document: vscode.TextDocument,
@@ -258,6 +277,7 @@ export class UserCompletionProvider implements vscode.CompletionItemProvider {
 			if (!wordRange || wordRange.isEmpty) {
 				return;
 			}
+
 			const activeTextEditors = vscode.window.visibleTextEditors;
 
 			if (!activeTextEditors.length) {
@@ -281,6 +301,7 @@ export class UserCompletionProvider implements vscode.CompletionItemProvider {
 					if (foundRepositoryManager.activePullRequest) {
 						prNumber =
 							foundRepositoryManager.activePullRequest.number;
+
 						remoteName =
 							foundRepositoryManager.activePullRequest.remote
 								.remoteName;
@@ -288,7 +309,9 @@ export class UserCompletionProvider implements vscode.CompletionItemProvider {
 						break;
 					} else if (editor.document.uri.scheme === Schemes.Pr) {
 						const params = fromPRUri(editor.document.uri);
+
 						prNumber = params!.prNumber;
+
 						remoteName = params!.remoteName;
 
 						break;
@@ -299,6 +322,7 @@ export class UserCompletionProvider implements vscode.CompletionItemProvider {
 			if (!foundRepositoryManager) {
 				return;
 			}
+
 			const repositoryManager = foundRepositoryManager;
 
 			if (prNumber && prNumber === this.cachedForPrNumber) {
@@ -331,7 +355,9 @@ export class UserCompletionProvider implements vscode.CompletionItemProvider {
 
 					if (githubRepo) {
 						const pr = await githubRepo.getPullRequest(prNumber);
+
 						this.cachedForPrNumber = prNumber;
+
 						this.cachedPrTimelineEvents =
 							await pr!.getTimelineEvents();
 					}
@@ -339,6 +365,7 @@ export class UserCompletionProvider implements vscode.CompletionItemProvider {
 					prRelatedusers = getRelatedUsersFromTimelineEvents(
 						this.cachedPrTimelineEvents,
 					);
+
 					resolve();
 				}
 
@@ -367,6 +394,7 @@ export class UserCompletionProvider implements vscode.CompletionItemProvider {
 									await repositoryManager.repository.blame(
 										fsPath,
 									);
+
 								this._gitBlameCache[fsPath] = blames;
 							}
 
@@ -378,6 +406,7 @@ export class UserCompletionProvider implements vscode.CompletionItemProvider {
 
 								if (matches && matches.length === 2) {
 									const name = matches[1].trim();
+
 									fileRelatedUsersNames[name] = true;
 								}
 							}
@@ -396,8 +425,10 @@ export class UserCompletionProvider implements vscode.CompletionItemProvider {
 						"get mentionable users",
 						UserCompletionProvider.ID,
 					);
+
 					mentionableUsers =
 						await repositoryManager.getMentionableUsers();
+
 					resolve();
 				},
 			);
@@ -413,6 +444,7 @@ export class UserCompletionProvider implements vscode.CompletionItemProvider {
 			const prRelatedUsersMap: {
 				[key: string]: { login: string; name?: string };
 			} = {};
+
 			Logger.debug("prepare user suggestions", UserCompletionProvider.ID);
 
 			prRelatedusers.forEach((user) => {
@@ -450,12 +482,18 @@ export class UserCompletionProvider implements vscode.CompletionItemProvider {
 								{ label: user.login, description: user.name },
 								vscode.CompletionItemKind.User,
 							);
+
 						completionItem.insertText = `@${user.login}`;
+
 						completionItem.login = user.login;
+
 						completionItem.uri =
 							repositoryManager.repository.rootUri;
+
 						completionItem.detail = user.name;
+
 						completionItem.filterText = `@ ${user.login} ${user.name}`;
+
 						completionItem.sortText = `${priority}_${user.login}`;
 
 						if (
@@ -464,6 +502,7 @@ export class UserCompletionProvider implements vscode.CompletionItemProvider {
 						) {
 							completionItem.commitCharacters = [" ", ","];
 						}
+
 						this.cachedPrUsers.push(completionItem);
 					}
 				}

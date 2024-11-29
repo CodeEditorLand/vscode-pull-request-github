@@ -25,6 +25,7 @@ export class IssueTodoProvider implements vscode.CodeActionProvider {
 				this.updateTriggers();
 			}),
 		);
+
 		this.updateTriggers();
 	}
 
@@ -32,6 +33,7 @@ export class IssueTodoProvider implements vscode.CodeActionProvider {
 		const triggers = vscode.workspace
 			.getConfiguration(ISSUES_SETTINGS_NAMESPACE)
 			.get(CREATE_ISSUE_TRIGGERS, []);
+
 		this.expression =
 			triggers.length > 0
 				? new RegExp(
@@ -54,6 +56,7 @@ export class IssueTodoProvider implements vscode.CodeActionProvider {
 		) {
 			return [];
 		}
+
 		const codeActions: vscode.CodeAction[] = [];
 
 		let lineNumber = range.start.line;
@@ -75,6 +78,7 @@ export class IssueTodoProvider implements vscode.CodeActionProvider {
 						vscode.l10n.t("Create GitHub Issue"),
 						vscode.CodeActionKind.QuickFix,
 					);
+
 					codeAction.ranges = [
 						new vscode.Range(
 							lineNumber,
@@ -93,6 +97,7 @@ export class IssueTodoProvider implements vscode.CodeActionProvider {
 						(indexOfWhiteSpace > 0
 							? indexOfWhiteSpace
 							: truncatedLine.match(this.expression)![0].length);
+
 					codeAction.command = {
 						title: vscode.l10n.t("Create GitHub Issue"),
 						command: "issue.createIssueFromSelection",
@@ -100,11 +105,13 @@ export class IssueTodoProvider implements vscode.CodeActionProvider {
 							{ document, lineNumber, line, insertIndex, range },
 						],
 					};
+
 					codeActions.push(codeAction);
 
 					break;
 				}
 			}
+
 			lineNumber++;
 		} while (range.end.line >= lineNumber);
 

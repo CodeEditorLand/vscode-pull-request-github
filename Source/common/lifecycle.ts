@@ -18,6 +18,7 @@ export function combinedDisposable(
 export function disposeAll(disposables: vscode.Disposable[]) {
 	while (disposables.length) {
 		const item = disposables.pop();
+
 		item?.dispose();
 	}
 }
@@ -40,8 +41,11 @@ export abstract class Disposable {
 		if (this._isDisposed) {
 			return;
 		}
+
 		this._isDisposed = true;
+
 		disposeAll(this._disposables);
+
 		this._disposables = [];
 	}
 
@@ -51,6 +55,7 @@ export abstract class Disposable {
 		} else {
 			this._disposables.push(value);
 		}
+
 		return value;
 	}
 

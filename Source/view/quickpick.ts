@@ -9,6 +9,7 @@ import { Remote } from "../common/remote";
 
 export class RemoteQuickPickItem implements vscode.QuickPickItem {
 	detail?: string;
+
 	picked?: boolean;
 
 	static fromRemote(remote: Remote) {

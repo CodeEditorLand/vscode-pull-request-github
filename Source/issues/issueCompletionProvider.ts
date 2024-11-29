@@ -60,6 +60,7 @@ export class IssueCompletionProvider implements vscode.CompletionItemProvider {
 
 			if (testWord.charAt(0) === "#") {
 				wordRange = testWordRange;
+
 				wordAtPos = testWord;
 			}
 		}
@@ -179,6 +180,7 @@ export class IssueCompletionProvider implements vscode.CompletionItemProvider {
 						document.uri)
 					: document.uri;
 		}
+
 		if (!uri) {
 			return [];
 		}
@@ -187,10 +189,12 @@ export class IssueCompletionProvider implements vscode.CompletionItemProvider {
 
 		try {
 			folderManager = this.repositoriesManager.getManagerForFile(uri);
+
 			repo = await folderManager?.getPullRequestDefaults();
 		} catch (e) {
 			// leave repo undefined
 		}
+
 		const issueData = this.stateManager.getIssueCollection(
 			folderManager?.repository.rootUri ?? uri,
 		);
@@ -200,6 +204,7 @@ export class IssueCompletionProvider implements vscode.CompletionItemProvider {
 
 		for (const issueQuery of issueData) {
 			const issuesOrMilestones: IssueQueryResult = await issueQuery[1];
+
 			totalIssues += (issuesOrMilestones.issues ?? []).length;
 		}
 
@@ -209,6 +214,7 @@ export class IssueCompletionProvider implements vscode.CompletionItemProvider {
 			if ((issuesOrMilestones.issues ?? []).length === 0) {
 				continue;
 			}
+
 			let index = 0;
 
 			for (const issue of issuesOrMilestones.issues ?? []) {
@@ -221,6 +227,7 @@ export class IssueCompletionProvider implements vscode.CompletionItemProvider {
 				) {
 					continue;
 				}
+
 				completionItems.set(
 					getIssueNumberLabel(issue as IssueModel),
 					await this.completionItemFromIssue(
@@ -235,6 +242,7 @@ export class IssueCompletionProvider implements vscode.CompletionItemProvider {
 				);
 			}
 		}
+
 		return [...completionItems.values()];
 	}
 
@@ -270,10 +278,15 @@ export class IssueCompletionProvider implements vscode.CompletionItemProvider {
 				item.insertText = `${getIssueNumberLabel(issue, repo)}`;
 			}
 		}
+
 		item.documentation = issue.body;
+
 		item.range = range;
+
 		item.detail = milestone ? milestone.title : issue.milestone?.title;
+
 		item.sortText = `${index}`.padStart(`${totalCount}`.length, "0");
+
 		item.filterText = `${item.detail} # ${issue.number} ${issue.title} ${item.documentation}`;
 
 		return item;
@@ -289,11 +302,13 @@ export class IssueCompletionProvider implements vscode.CompletionItemProvider {
 				this.context,
 				this.repositoriesManager,
 			);
+
 			item.command = {
 				command: "issues.issueCompletion",
 				title: vscode.l10n.t("Issue Completion Choose,"),
 			};
 		}
+
 		return item;
 	}
 }

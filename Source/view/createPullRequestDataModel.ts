@@ -18,32 +18,48 @@ import {
 
 export interface CreateModelChangeEvent {
 	baseOwner?: string;
+
 	baseBranch?: string;
+
 	compareOwner?: string;
+
 	compareBranch?: string;
 }
 
 export class CreatePullRequestDataModel {
 	private static ID = "CreatePullRequestDataModel";
+
 	private _baseOwner: string;
+
 	private _baseBranch: string;
+
 	private _compareOwner: string;
+
 	private _compareBranch: string;
+
 	private _constructed: Promise<void>;
+
 	private readonly _onDidChange: vscode.EventEmitter<CreateModelChangeEvent> =
 		new vscode.EventEmitter<CreateModelChangeEvent>();
+
 	public readonly onDidChange = this._onDidChange.event;
+
 	private _compareGitHubRepository: GitHubRepository | undefined;
 
 	private _gitLog: Promise<Commit[]> | undefined;
+
 	private _gitFiles: Change[] | undefined;
+
 	private _compareHasUpstream: boolean = false;
 
 	private _gitHubMergeBase: string | undefined;
+
 	private _gitHubLog: OctokitCommon.Commit[] | undefined;
+
 	private _gitHubFiles: OctokitCommon.CommitFile[] | undefined;
 
 	private _gitHubcontentProvider: GitHubContentProvider;
+
 	private _gitcontentProvider: GitContentProvider;
 
 	constructor(
@@ -55,23 +71,30 @@ export class CreatePullRequestDataModel {
 		public readonly repositoryName: string,
 	) {
 		this._baseOwner = baseOwner;
+
 		this._baseBranch = baseBranch;
+
 		this._compareBranch = baseBranch;
+
 		this._gitcontentProvider = new GitContentProvider(
 			this.folderRepositoryManager,
 		);
+
 		this._compareGitHubRepository =
 			this.folderRepositoryManager.gitHubRepositories.find(
 				(githubRepo) =>
 					githubRepo.remote.owner === compareOwner &&
 					githubRepo.remote.repositoryName === repositoryName,
 			);
+
 		this._gitHubcontentProvider = new GitHubContentProvider(
 			this.folderRepositoryManager.gitHubRepositories,
 		);
+
 		this._constructed = new Promise<void>((resolve) =>
 			this.setCompareBranch(compareBranch).then(resolve),
 		);
+
 		this.compareOwner = compareOwner;
 	}
 
@@ -100,6 +123,7 @@ export class CreatePullRequestDataModel {
 	public set baseOwner(value: string) {
 		if (value !== this._baseOwner) {
 			this._baseOwner = value;
+
 			this.update({ baseOwner: this._baseOwner });
 		}
 	}
@@ -111,6 +135,7 @@ export class CreatePullRequestDataModel {
 	public set baseBranch(value: string) {
 		if (value !== this._baseBranch) {
 			this._baseBranch = value;
+
 			this.update({ baseBranch: this._baseBranch });
 		}
 	}
@@ -122,6 +147,7 @@ export class CreatePullRequestDataModel {
 	public set compareOwner(value: string) {
 		if (value !== this._compareOwner) {
 			this._compareOwner = value;
+
 			this._compareGitHubRepository =
 				this.folderRepositoryManager.gitHubRepositories.find(
 					(repo) => repo.remote.owner === this._compareOwner,
@@ -131,6 +157,7 @@ export class CreatePullRequestDataModel {
 				this._gitHubcontentProvider.gitHubRepository =
 					this._compareGitHubRepository;
 			}
+
 			this.update({ compareOwner: this._compareOwner });
 		}
 	}
@@ -173,6 +200,7 @@ export class CreatePullRequestDataModel {
 			changed =
 				(await this.updateHasUpstream(value)) !== oldUpstreamValue;
 		}
+
 		if (this._compareBranch !== value) {
 			changed = true;
 
@@ -180,6 +208,7 @@ export class CreatePullRequestDataModel {
 				this._compareBranch = value;
 			}
 		}
+
 		if (changed) {
 			this.update({ compareBranch: this._compareBranch });
 		}
@@ -188,6 +217,7 @@ export class CreatePullRequestDataModel {
 	private async updateHasUpstream(branch: string): Promise<boolean> {
 		const compareBranch =
 			await this.folderRepositoryManager.repository.getBranch(branch);
+
 		this._compareHasUpstream = !!compareBranch.upstream;
 
 		return this._compareHasUpstream;
@@ -205,15 +235,21 @@ export class CreatePullRequestDataModel {
 
 	private update(changeEvent: CreateModelChangeEvent) {
 		this._gitLog = undefined;
+
 		this._gitFiles = undefined;
+
 		this._gitHubLog = undefined;
+
 		this._gitHubFiles = undefined;
+
 		this.gitContentProvider.editableBranch =
 			this._compareBranch ===
 			this.folderRepositoryManager.repository.state.HEAD?.name
 				? this._compareBranch
 				: undefined;
+
 		this.gitHubContentProvider.editableBranch = this._compareBranch;
+
 		this._onDidChange.fire(changeEvent);
 	}
 
@@ -239,6 +275,7 @@ export class CreatePullRequestDataModel {
 				this._gitLog = result;
 			}
 		}
+
 		return this._gitLog;
 	}
 
@@ -271,9 +308,11 @@ export class CreatePullRequestDataModel {
 					`Got ${result.length} git file diffs for merging ${this._compareOwner}/${this._compareBranch} in ${this._baseOwner}/${this._baseBranch}`,
 					CreatePullRequestDataModel.ID,
 				);
+
 				this._gitFiles = result;
 			}
 		}
+
 		return this._gitFiles;
 	}
 
@@ -297,10 +336,14 @@ export class CreatePullRequestDataModel {
 					head: `${this._compareOwner}:${this._compareBranch}`,
 				},
 			);
+
 			this._gitHubLog = data.commits;
+
 			this._gitHubFiles = data.files ?? [];
+
 			this._gitHubMergeBase = data.merge_base_commit.sha;
 		}
+
 		return this._gitHubLog;
 	}
 
@@ -310,6 +353,7 @@ export class CreatePullRequestDataModel {
 		if (this._gitHubFiles === undefined) {
 			await this.gitHubCommits();
 		}
+
 		return this._gitHubFiles!;
 	}
 
@@ -319,6 +363,7 @@ export class CreatePullRequestDataModel {
 		if (this._gitHubMergeBase === undefined) {
 			await this.gitHubCommits();
 		}
+
 		return this._gitHubMergeBase!;
 	}
 }

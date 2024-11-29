@@ -44,20 +44,27 @@ export class PullRequestsTreeDataProvider
 	implements vscode.TreeDataProvider<TreeNode>, BaseTreeNode
 {
 	private _onDidChangeTreeData = new vscode.EventEmitter<TreeNode | void>();
+
 	readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
+
 	private _onDidChange = new vscode.EventEmitter<vscode.Uri>();
 
 	get onDidChange(): vscode.Event<vscode.Uri> {
 		return this._onDidChange.event;
 	}
+
 	private _children: WorkspaceFolderNode[] | CategoryTreeNode[];
 
 	get children() {
 		return this._children;
 	}
+
 	private _view: vscode.TreeView<TreeNode>;
+
 	private _initialized: boolean = false;
+
 	public notificationProvider: NotificationProvider;
+
 	public readonly prsTreeModel: PrsTreeModel;
 
 	get view(): vscode.TreeView<TreeNode> {
@@ -70,9 +77,11 @@ export class PullRequestsTreeDataProvider
 		private readonly _reposManager: RepositoriesManager,
 	) {
 		super();
+
 		this.prsTreeModel = this._register(
 			new PrsTreeModel(this._telemetry, this._reposManager, _context),
 		);
+
 		this._register(
 			this.prsTreeModel.onDidChangeData((folderManager) =>
 				folderManager
@@ -80,7 +89,9 @@ export class PullRequestsTreeDataProvider
 					: this.refresh(),
 			),
 		);
+
 		this._register(new PRStatusDecorationProvider(this.prsTreeModel));
+
 		this._register(
 			vscode.commands.registerCommand("pr.refreshList", (_) => {
 				this.refresh(undefined, true);
@@ -92,6 +103,7 @@ export class PullRequestsTreeDataProvider
 				"pr.loadMore",
 				(node: CategoryTreeNode) => {
 					node.fetchNextPage = true;
+
 					this._onDidChangeTreeData.fire(node);
 				},
 			),
@@ -158,6 +170,7 @@ export class PullRequestsTreeDataProvider
 				this.prsTreeModel.updateExpandedQueries(expanded.element, true);
 			}),
 		);
+
 		this._register(
 			this._view.onDidCollapseElement((collapsed) => {
 				this.prsTreeModel.updateExpandedQueries(
@@ -172,6 +185,7 @@ export class PullRequestsTreeDataProvider
 		if (this._children.length === 0) {
 			await this.getChildren();
 		}
+
 		for (const child of this._children) {
 			if (child instanceof WorkspaceFolderNode) {
 				if (await child.expandPullRequest(pullRequest)) {
@@ -198,6 +212,7 @@ export class PullRequestsTreeDataProvider
 		}
 
 		this._initialized = true;
+
 		this._register(
 			this._reposManager.onDidChangeState(() => {
 				this.refresh();
@@ -217,6 +232,7 @@ export class PullRequestsTreeDataProvider
 		);
 
 		this.initializeCategories();
+
 		this.refresh();
 	}
 
@@ -238,6 +254,7 @@ export class PullRequestsTreeDataProvider
 		if (reset) {
 			this.prsTreeModel.clearCache();
 		}
+
 		return node
 			? this._onDidChangeTreeData.fire(node)
 			: this._onDidChangeTreeData.fire();
@@ -247,6 +264,7 @@ export class PullRequestsTreeDataProvider
 		if (this._children.length === 0) {
 			return this.refresh();
 		}
+
 		if (this._children[0] instanceof WorkspaceFolderNode) {
 			const children: WorkspaceFolderNode[] = this
 				._children as WorkspaceFolderNode[];
@@ -274,6 +292,7 @@ export class PullRequestsTreeDataProvider
 		if (element instanceof InMemFileChangeNode) {
 			await element.resolve();
 		}
+
 		return element;
 	}
 
@@ -336,6 +355,7 @@ export class PullRequestsTreeDataProvider
 		if (!element) {
 			return this._children;
 		}
+
 		return element.cachedChildren();
 	}
 

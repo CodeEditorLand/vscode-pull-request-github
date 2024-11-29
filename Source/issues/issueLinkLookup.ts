@@ -22,7 +22,9 @@ export function issueBodyHasLink(issueModel: IssueModel): boolean {
 
 interface CodeLink {
 	file: vscode.Uri;
+
 	start: number;
+
 	end: number;
 }
 
@@ -56,6 +58,7 @@ export async function findCodeLinkLocally(
 				break;
 			}
 		}
+
 		if (linkFolderManager) {
 			break;
 		}
@@ -75,6 +78,7 @@ export async function findCodeLinkLocally(
 	} catch (e) {
 		return;
 	}
+
 	return {
 		file: path,
 		start: startingLine,
@@ -95,6 +99,7 @@ export async function openCodeLink(
 
 		return;
 	}
+
 	const codeLink = await findCodeLinkLocally(
 		issueLink,
 		repositoriesManager,
@@ -104,6 +109,7 @@ export async function openCodeLink(
 	if (!codeLink) {
 		return vscode.env.openExternal(vscode.Uri.parse(issueLink[0]));
 	}
+
 	const textDocument = await vscode.workspace.openTextDocument(
 		codeLink?.file,
 	);

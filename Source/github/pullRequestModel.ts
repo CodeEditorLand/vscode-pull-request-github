@@ -109,13 +109,16 @@ export interface IResolvedPullRequestModel extends IPullRequestModel {
 
 export interface ReviewThreadChangeEvent {
 	added: IReviewThread[];
+
 	changed: IReviewThread[];
+
 	removed: IReviewThread[];
 }
 
 export interface FileViewedStateChangeEvent {
 	changed: {
 		fileName: string;
+
 		viewed: ViewedState;
 	}[];
 }
@@ -131,48 +134,71 @@ export class PullRequestModel
 	static override ID = "PullRequestModel";
 
 	public isDraft?: boolean;
+
 	public localBranchName?: string;
+
 	public mergeBase?: string;
+
 	public mergeQueueEntry?: MergeQueueEntry;
+
 	public conflicts?: string[];
+
 	public suggestedReviewers?: ISuggestedReviewer[];
+
 	public hasChangesSinceLastReview?: boolean;
+
 	private _showChangesSinceReview: boolean;
+
 	private _hasPendingReview: boolean = false;
+
 	private _onDidChangePendingReviewState: vscode.EventEmitter<boolean> =
 		new vscode.EventEmitter<boolean>();
+
 	public onDidChangePendingReviewState =
 		this._onDidChangePendingReviewState.event;
 
 	private _reviewThreadsCache: IReviewThread[] = [];
+
 	private _reviewThreadsCacheInitialized = false;
+
 	private _onDidChangeReviewThreads =
 		new vscode.EventEmitter<ReviewThreadChangeEvent>();
+
 	public onDidChangeReviewThreads = this._onDidChangeReviewThreads.event;
 
 	private _fileChangeViewedState: FileViewedState = {};
+
 	private _viewedFiles: Set<string> = new Set();
+
 	private _unviewedFiles: Set<string> = new Set();
+
 	private _onDidChangeFileViewedState =
 		new vscode.EventEmitter<FileViewedStateChangeEvent>();
+
 	public onDidChangeFileViewedState = this._onDidChangeFileViewedState.event;
 
 	private _onDidChangeChangesSinceReview = new vscode.EventEmitter<void>();
+
 	public onDidChangeChangesSinceReview =
 		this._onDidChangeChangesSinceReview.event;
 
 	private _hasComments: boolean;
+
 	private _comments: readonly IComment[] | undefined;
+
 	private _onDidChangeComments: vscode.EventEmitter<void> =
 		new vscode.EventEmitter();
+
 	public readonly onDidChangeComments: vscode.Event<void> =
 		this._onDidChangeComments.event;
 
 	// Whether the pull request is currently checked out locally
 	private _isActive: boolean;
+
 	public get isActive(): boolean {
 		return this._isActive;
 	}
+
 	public set isActive(isActive: boolean) {
 		this._isActive = isActive;
 	}
@@ -190,6 +216,7 @@ export class PullRequestModel
 		super(githubRepository, remote, item, true);
 
 		this._telemetry = telemetry;
+
 		this.isActive = !!isActive;
 
 		this._showChangesSinceReview = false;
@@ -199,12 +226,15 @@ export class PullRequestModel
 
 	public clear() {
 		this.comments = [];
+
 		this._reviewThreadsCacheInitialized = false;
+
 		this._reviewThreadsCache = [];
 	}
 
 	public async initializeReviewThreadCache(): Promise<void> {
 		await this.getReviewThreads();
+
 		this._reviewThreadsCacheInitialized = true;
 	}
 
@@ -223,6 +253,7 @@ export class PullRequestModel
 	public set hasPendingReview(hasPendingReview: boolean) {
 		if (this._hasPendingReview !== hasPendingReview) {
 			this._hasPendingReview = hasPendingReview;
+
 			this._onDidChangePendingReviewState.fire(this._hasPendingReview);
 		}
 	}
@@ -234,7 +265,9 @@ export class PullRequestModel
 	public set showChangesSinceReview(isChangesSinceReview: boolean) {
 		if (this._showChangesSinceReview !== isChangesSinceReview) {
 			this._showChangesSinceReview = isChangesSinceReview;
+
 			this._fileChanges.clear();
+
 			this._onDidChangeChangesSinceReview.fire();
 		}
 	}
@@ -245,6 +278,7 @@ export class PullRequestModel
 
 	set comments(comments: readonly IComment[]) {
 		this._comments = comments;
+
 		this._onDidChangeComments.fire();
 	}
 
@@ -253,8 +287,11 @@ export class PullRequestModel
 	}
 
 	public isRemoteHeadDeleted?: boolean;
+
 	public head: GitHubRef | null;
+
 	public isRemoteBaseDeleted?: boolean;
+
 	public base: GitHubRef;
 
 	protected override updateState(state: string) {
@@ -269,12 +306,15 @@ export class PullRequestModel
 
 	override update(item: PullRequest): void {
 		super.update(item);
+
 		this.isDraft = item.isDraft;
+
 		this.suggestedReviewers = item.suggestedReviewers;
 
 		if (item.isRemoteHeadDeleted != null) {
 			this.isRemoteHeadDeleted = item.isRemoteHeadDeleted;
 		}
+
 		if (item.head) {
 			this.head = new GitHubRef(
 				item.head.ref,
@@ -290,6 +330,7 @@ export class PullRequestModel
 		if (item.isRemoteBaseDeleted != null) {
 			this.isRemoteBaseDeleted = item.isRemoteBaseDeleted;
 		}
+
 		if (item.base) {
 			this.base = new GitHubRef(
 				item.base.ref,
@@ -301,9 +342,11 @@ export class PullRequestModel
 				item.base.repo.isInOrganization,
 			);
 		}
+
 		if (item.mergeQueueEntry !== undefined) {
 			this.mergeQueueEntry = item.mergeQueueEntry ?? undefined;
 		}
+
 		if (item.hasComments !== undefined) {
 			this._hasComments = item.hasComments;
 		}
@@ -340,6 +383,7 @@ export class PullRequestModel
 		}
 
 		const openString = vscode.l10n.t("Open on GitHub");
+
 		vscode.window.showWarningMessage(message, openString).then((action) => {
 			if (action && action === openString) {
 				vscode.commands.executeCommand(
@@ -369,17 +413,21 @@ export class PullRequestModel
 
 		if (this.isActive) {
 			localHead = repository.state.HEAD?.commit;
+
 			remoteHead = (
 				await this.githubRepository.getPullRequest(this.number)
 			)?.head?.sha;
+
 			rejectMessage = vscode.l10n.t(
 				"The remote head of the PR branch has changed. Please pull the latest changes from the remote branch before approving.",
 			);
 		} else {
 			localHead = this.head?.sha;
+
 			remoteHead = (
 				await this.githubRepository.getPullRequest(this.number)
 			)?.head?.sha;
+
 			rejectMessage = vscode.l10n.t(
 				"The remote head of the PR branch has changed. Please refresh the pull request before approving.",
 			);
@@ -399,6 +447,7 @@ export class PullRequestModel
 				"pr.approve" : {}
 			*/
 			this._telemetry.sendTelemetryEvent("pr.approve");
+
 			this._onDidChangeComments.fire();
 
 			return x;
@@ -420,6 +469,7 @@ export class PullRequestModel
 					"pr.requestChanges" : {}
 				*/
 			this._telemetry.sendTelemetryEvent("pr.requestChanges");
+
 			this._onDidChangeComments.fire();
 
 			return x;
@@ -501,6 +551,7 @@ export class PullRequestModel
 			});
 
 			this.hasPendingReview = false;
+
 			await this.updateDraftModeContext();
 
 			const reviewEvent = parseGraphQLReviewEvent(
@@ -516,13 +567,16 @@ export class PullRequestModel
 
 			if (threadWithComment) {
 				threadWithComment.comments = reviewEvent.comments;
+
 				threadWithComment.viewerCanResolve = true;
+
 				this._onDidChangeReviewThreads.fire({
 					added: [],
 					changed: [threadWithComment],
 					removed: [],
 				});
 			}
+
 			return reviewEvent;
 		} else {
 			throw new Error(
@@ -553,6 +607,7 @@ export class PullRequestModel
 
 	async addAssignees(assignees: string[]): Promise<void> {
 		const { octokit, remote } = await this.githubRepository.ensure();
+
 		await octokit.call(octokit.api.issues.addAssignees, {
 			owner: remote.owner,
 			repo: remote.repositoryName,
@@ -624,6 +679,7 @@ export class PullRequestModel
 	 */
 	async deleteReview(): Promise<{
 		deletedReviewId: number;
+
 		deletedReviewComments: IComment[];
 	}> {
 		const pendingReviewId = await this.getPendingReviewId();
@@ -641,6 +697,7 @@ export class PullRequestModel
 			data!.deletePullRequestReview.pullRequestReview;
 
 		this.hasPendingReview = false;
+
 		await this.updateDraftModeContext();
 
 		this.getReviewThreads();
@@ -675,7 +732,9 @@ export class PullRequestModel
 		if (!data) {
 			throw new Error("Failed to start review");
 		}
+
 		this.hasPendingReview = true;
+
 		this._onDidChangeComments.fire();
 
 		return data.addPullRequestReview.pullRequestReview.id;
@@ -705,6 +764,7 @@ export class PullRequestModel
 		if (!this.validatePullRequestModel("Creating comment failed")) {
 			return;
 		}
+
 		const pendingReviewId = await this.getPendingReviewId();
 
 		const { mutate, schema } = await this.githubRepository.ensure();
@@ -745,6 +805,7 @@ export class PullRequestModel
 
 		if (!suppressDraftModeUpdate) {
 			this.hasPendingReview = true;
+
 			await this.updateDraftModeContext();
 		}
 
@@ -754,7 +815,9 @@ export class PullRequestModel
 			thread,
 			this.githubRepository,
 		);
+
 		this._reviewThreadsCache.push(newThread);
+
 		this._onDidChangeReviewThreads.fire({
 			added: [newThread],
 			changed: [],
@@ -827,6 +890,7 @@ export class PullRequestModel
 
 		if (threadWithComment) {
 			threadWithComment.comments.push(newComment);
+
 			this._onDidChangeReviewThreads.fire({
 				added: [],
 				changed: [threadWithComment],
@@ -905,7 +969,9 @@ export class PullRequestModel
 			const index = threadWithComment.comments.findIndex(
 				(c) => c.graphNodeId === comment.graphNodeId,
 			);
+
 			threadWithComment.comments.splice(index, 1, newComment);
+
 			this._onDidChangeReviewThreads.fire({
 				added: [],
 				changed: [threadWithComment],
@@ -946,10 +1012,12 @@ export class PullRequestModel
 					const index = threadWithComment.comments.findIndex(
 						(c) => c.id === id,
 					);
+
 					threadWithComment.comments.splice(index, 1);
 
 					if (threadWithComment.comments.length === 0) {
 						this._reviewThreadsCache.splice(threadIndex, 1);
+
 						this._onDidChangeReviewThreads.fire({
 							added: [],
 							changed: [],
@@ -1035,6 +1103,7 @@ export class PullRequestModel
 				"Pull Request has conflicts but no resolutions were provided.",
 			);
 		}
+
 		const { octokit } = await this.githubRepository.ensure();
 
 		// Get the files that would change as part of the merge
@@ -1128,6 +1197,7 @@ export class PullRequestModel
 								"Conflict resolution not supported for renamed files",
 							);
 						}
+
 						treeItem.content = resolvedConflict.resolvedContents;
 
 						return treeItem;
@@ -1164,6 +1234,7 @@ export class PullRequestModel
 						);
 
 						const asString = new TextDecoder().decode(buff);
+
 						treeItem.content = getModifiedContentFromDiffHunk(
 							asString,
 							file.patch,
@@ -1180,6 +1251,7 @@ export class PullRequestModel
 							`File ${file.filename} has status ${file.status} and can't be merged,`,
 						);
 					}
+
 					return treeItem;
 				}),
 			)
@@ -1196,6 +1268,7 @@ export class PullRequestModel
 		if (!base) {
 			throw new Error("Base branch not yet set.");
 		}
+
 		const { octokit, remote } = await this.githubRepository.ensure();
 
 		return (
@@ -1263,6 +1336,7 @@ export class PullRequestModel
 			} else {
 				message = `Merge branch \`${model.prBaseOwner}:${model.prBaseBranchName}\` into ${model.prHeadBranchName}`;
 			}
+
 			const newCommitSha = (
 				await octokit.call(octokit.api.git.createCommit, {
 					owner: model.prHeadOwner,
@@ -1272,6 +1346,7 @@ export class PullRequestModel
 					parents: [lastCommitSha, model.latestPrBaseSha],
 				})
 			).data.sha;
+
 			await octokit.call(octokit.api.git.updateRef, {
 				owner: model.prHeadOwner,
 				repo: model.repositoryName,
@@ -1286,6 +1361,7 @@ export class PullRequestModel
 
 			return false;
 		}
+
 		Logger.debug(
 			`Updating branch ${model.prHeadBranchName} to ${model.prBaseBranchName} - done`,
 			GitHubRepository.ID,
@@ -1330,6 +1406,7 @@ export class PullRequestModel
 			data,
 			remote,
 		);
+
 		Logger.debug("Get Review Requests - done", PullRequestModel.ID);
 
 		return reviewers;
@@ -1344,6 +1421,7 @@ export class PullRequestModel
 		teamReviewers: string[],
 	): Promise<void> {
 		const { mutate, schema } = await this.githubRepository.ensure();
+
 		await mutate({
 			mutation: schema.AddReviewers,
 			variables: {
@@ -1365,6 +1443,7 @@ export class PullRequestModel
 		teamReviewers: string[],
 	): Promise<void> {
 		const { octokit, remote } = await this.githubRepository.ensure();
+
 		await octokit.call(octokit.api.pulls.removeRequestedReviewers, {
 			owner: remote.owner,
 			repo: remote.repositoryName,
@@ -1376,6 +1455,7 @@ export class PullRequestModel
 
 	async deleteAssignees(assignees: string[]): Promise<void> {
 		const { octokit, remote } = await this.githubRepository.ensure();
+
 		await octokit.call(octokit.api.issues.removeAssignees, {
 			owner: remote.owner,
 			repo: remote.repositoryName,
@@ -1452,7 +1532,9 @@ export class PullRequestModel
 		);
 
 		const oldReviewThreads = this._reviewThreadsCache;
+
 		this._reviewThreadsCache = reviewThreads;
+
 		this.diffThreads(oldReviewThreads, reviewThreads);
 
 		return reviewThreads;
@@ -1490,6 +1572,7 @@ export class PullRequestModel
 				hasNextPage =
 					data.repository.pullRequest.reviewThreads.pageInfo
 						.hasNextPage;
+
 				after =
 					data.repository.pullRequest.reviewThreads.pageInfo
 						.endCursor;
@@ -1532,6 +1615,7 @@ export class PullRequestModel
 				owner: remote.owner,
 				repo: remote.repositoryName,
 			});
+
 			Logger.debug(
 				`Fetch commits of PR #${this.number} - done`,
 				PullRequestModel.ID,
@@ -1567,6 +1651,7 @@ export class PullRequestModel
 				repo: remote.repositoryName,
 				ref: commit.sha,
 			});
+
 			Logger.debug(
 				`Fetch file changes of commit ${commit.sha} in PR #${this.number} - done`,
 				PullRequestModel.ID,
@@ -1627,12 +1712,14 @@ export class PullRequestModel
 				: [];
 
 			this.addReviewTimelineEventComments(events, reviewThreads);
+
 			insertNewCommitsSinceReview(
 				events,
 				latestReviewCommitInfo?.sha,
 				currentUser,
 				this.head,
 			);
+
 			Logger.debug(
 				`Fetch timeline events of PR #${this.number} - done`,
 				PullRequestModel.ID,
@@ -1644,6 +1731,7 @@ export class PullRequestModel
 				`Failed to get pull request timeline events: ${e}`,
 				PullRequestModel.ID,
 			);
+
 			console.log(e);
 
 			return [];
@@ -1671,6 +1759,7 @@ export class PullRequestModel
 		const reviewEventsById = reviewEvents.reduce(
 			(index, evt) => {
 				index[evt.id] = evt;
+
 				evt.comments = [];
 
 				return index;
@@ -1699,8 +1788,11 @@ export class PullRequestModel
 
 				continue;
 			}
+
 			const parent = commentsById[c.inReplyToId];
+
 			parent.childComments = parent.childComments || [];
+
 			parent.childComments = [
 				c,
 				...(c.childComments || []),
@@ -1725,8 +1817,10 @@ export class PullRequestModel
 			) {
 				return;
 			}
+
 			const prReviewThreadEvent =
 				reviewEventsById[thread.prReviewDatabaseId];
+
 			prReviewThreadEvent.reviewThread = {
 				threadId: thread.id,
 				canResolve: thread.viewerCanResolve,
@@ -1791,6 +1885,7 @@ export class PullRequestModel
 					pullRequestModel.mergeBase!,
 				);
 			}
+
 			args.push([
 				changeModel.filePath,
 				changeModel.parentFilePath,
@@ -1836,6 +1931,7 @@ export class PullRequestModel
 			comment.diffHunks && comment.diffHunks.length > 0
 				? comment.diffHunks[0].newLineNumber
 				: undefined;
+
 		this.openDiff(
 			folderManager,
 			pullRequestModel,
@@ -1856,6 +1952,7 @@ export class PullRequestModel
 		}
 
 		const firstChange = contentChanges[0];
+
 		this.openDiff(
 			folderManager,
 			pullRequestModel,
@@ -1880,6 +1977,7 @@ export class PullRequestModel
 				change.status === GitChangeType.RENAME
 					? change.previousFileName!
 					: change.fileName;
+
 			headUri = toPRUri(
 				vscode.Uri.file(
 					resolvePath(
@@ -1895,6 +1993,7 @@ export class PullRequestModel
 				change.status,
 				change.previousFileName,
 			);
+
 			baseUri = toPRUri(
 				vscode.Uri.file(
 					resolvePath(
@@ -1933,6 +2032,7 @@ export class PullRequestModel
 
 			const mergeBase =
 				pullRequestModel.mergeBase || pullRequestModel.base.sha;
+
 			baseUri = toReviewUri(
 				uri,
 				change.status === GitChangeType.RENAME
@@ -1977,6 +2077,7 @@ export class PullRequestModel
 		const mergebase = this.mergeBase || this.base.sha;
 
 		const parsed = await parseDiff(data, mergebase);
+
 		parsed.forEach((fileChange) => {
 			this._fileChanges.set(fileChange.fileName, fileChange);
 		});
@@ -2003,6 +2104,7 @@ export class PullRequestModel
 				repo: remote.repositoryName,
 				pull_number: this.number,
 			});
+
 			this.update(
 				convertRESTPullRequestToRawPullRequest(
 					info.data,
@@ -2016,6 +2118,7 @@ export class PullRequestModel
 		const latestReview = await this.getViewerLatestReviewCommit();
 
 		const oldHasChangesSinceReview = this.hasChangesSinceLastReview;
+
 		this.hasChangesSinceLastReview =
 			latestReview !== undefined && this.head?.sha !== latestReview.sha;
 
@@ -2066,6 +2169,7 @@ export class PullRequestModel
 				`More than ${MAX_FILE_CHANGES_IN_COMPARE_COMMITS} files changed, fetching all file changes of PR #${this.number}`,
 				PullRequestModel.ID,
 			);
+
 			files = await restPaginate<
 				typeof octokit.api.pulls.listFiles,
 				IRawFileChange
@@ -2125,6 +2229,7 @@ export class PullRequestModel
 	 */
 	async getMergeability(): Promise<{
 		mergeability: PullRequestMergeability;
+
 		conflicts?: string[];
 	}> {
 		try {
@@ -2182,13 +2287,16 @@ export class PullRequestModel
 				data.repository?.pullRequest.mergeable,
 				data.repository?.pullRequest.mergeStateStatus,
 			);
+
 			this.item.mergeable = mergeability;
+
 			this.conflicts =
 				data.repository?.pullRequest.mergeRequirements?.conditions.find(
 					(condition) =>
 						condition.__typename ===
 						"PullRequestMergeConflictStateCondition",
 				)?.conflicts;
+
 			this.update(this.item);
 
 			return { mergeability, conflicts: this.conflicts };
@@ -2238,8 +2346,11 @@ export class PullRequestModel
 					data!.markPullRequestReadyForReview.pullRequest
 						.viewerCanDisableAutoMerge,
 			};
+
 			this.item.isDraft = result.isDraft;
+
 			this.item.mergeable = result.mergeable;
+
 			this.item.allowAutoMerge = result.allowAutoMerge;
 
 			return result;
@@ -2270,6 +2381,7 @@ export class PullRequestModel
 
 			if (updatedComment) {
 				updatedComment.reactions = parseGraphQLReaction(reactionGroups);
+
 				this._onDidChangeReviewThreads.fire({
 					added: [],
 					changed: [reviewThread],
@@ -2309,6 +2421,7 @@ export class PullRequestModel
 		}
 
 		const reactionGroups = data.addReaction.subject.reactionGroups;
+
 		this.updateCommentReactions(graphNodeId, reactionGroups);
 
 		return data;
@@ -2344,6 +2457,7 @@ export class PullRequestModel
 		}
 
 		const reactionGroups = data.removeReaction.subject.reactionGroups;
+
 		this.updateCommentReactions(graphNodeId, reactionGroups);
 
 		return data;
@@ -2352,8 +2466,11 @@ export class PullRequestModel
 	private undoOptimisticResolveState(oldThread: IReviewThread | undefined) {
 		if (oldThread) {
 			oldThread.isResolved = !oldThread.isResolved;
+
 			oldThread.viewerCanResolve = !oldThread.viewerCanResolve;
+
 			oldThread.viewerCanUnresolve = !oldThread.viewerCanUnresolve;
+
 			this._onDidChangeReviewThreads.fire({
 				added: [],
 				changed: [oldThread],
@@ -2375,8 +2492,11 @@ export class PullRequestModel
 			// optimistically update
 			if (oldThread && oldThread.viewerCanResolve) {
 				oldThread.isResolved = true;
+
 				oldThread.viewerCanResolve = false;
+
 				oldThread.viewerCanUnresolve = true;
+
 				this._onDidChangeReviewThreads.fire({
 					added: [],
 					changed: [oldThread],
@@ -2411,19 +2531,23 @@ export class PullRequestModel
 					data.resolveReviewThread.thread,
 					this.githubRepository,
 				);
+
 				this._reviewThreadsCache.splice(index, 1, thread);
+
 				this._onDidChangeReviewThreads.fire({
 					added: [],
 					changed: [thread],
 					removed: [],
 				});
 			}
+
 			Logger.debug(`Resolve review thread - done`, PullRequestModel.ID);
 		} catch (e) {
 			Logger.error(
 				`Resolve review thread failed: ${e}`,
 				PullRequestModel.ID,
 			);
+
 			this.undoOptimisticResolveState(oldThread);
 		}
 	}
@@ -2444,8 +2568,11 @@ export class PullRequestModel
 			// optimistically update
 			if (oldThread && oldThread.viewerCanUnresolve) {
 				oldThread.isResolved = false;
+
 				oldThread.viewerCanUnresolve = false;
+
 				oldThread.viewerCanResolve = true;
+
 				this._onDidChangeReviewThreads.fire({
 					added: [],
 					changed: [oldThread],
@@ -2483,19 +2610,23 @@ export class PullRequestModel
 					data.unresolveReviewThread.thread,
 					this.githubRepository,
 				);
+
 				this._reviewThreadsCache.splice(index, 1, thread);
+
 				this._onDidChangeReviewThreads.fire({
 					added: [],
 					changed: [thread],
 					removed: [],
 				});
 			}
+
 			Logger.debug(`Unresolve review thread - done`, PullRequestModel.ID);
 		} catch (e) {
 			Logger.error(
 				`Unresolve review thread failed: ${e}`,
 				PullRequestModel.ID,
 			);
+
 			this.undoOptimisticResolveState(oldThread);
 		}
 	}
@@ -2517,7 +2648,9 @@ export class PullRequestModel
 			if (!data) {
 				throw new Error("Enable auto-merge failed.");
 			}
+
 			this.item.autoMerge = true;
+
 			this.item.autoMergeMethod = mergeMethod;
 		} catch (e) {
 			if (
@@ -2551,6 +2684,7 @@ export class PullRequestModel
 			if (!data) {
 				throw new Error("Disable auto-merge failed.");
 			}
+
 			this.item.autoMerge = false;
 		} catch (e) {
 			if (
@@ -2579,6 +2713,7 @@ export class PullRequestModel
 		if (!schema.DequeuePullRequest) {
 			return false;
 		}
+
 		try {
 			await mutate<DequeuePullRequestResponse>({
 				mutation: schema.DequeuePullRequest,
@@ -2593,6 +2728,7 @@ export class PullRequestModel
 				`Dequeue pull request ${this.number} - done`,
 				GitHubRepository.ID,
 			);
+
 			this.mergeQueueEntry = undefined;
 
 			return true;
@@ -2617,6 +2753,7 @@ export class PullRequestModel
 		if (!schema.EnqueuePullRequest) {
 			return;
 		}
+
 		try {
 			const { data } = await mutate<EnqueuePullRequestResponse>({
 				mutation: schema.EnqueuePullRequest,
@@ -2682,6 +2819,7 @@ export class PullRequestModel
 
 			hasNextPage =
 				data.repository.pullRequest.files.pageInfo.hasNextPage;
+
 			after = data.repository.pullRequest.files.pageInfo.endCursor;
 		} while (hasNextPage);
 
@@ -2691,6 +2829,7 @@ export class PullRequestModel
 	}
 
 	private markFilesInProgressRefCount: Map<string, number> = new Map();
+
 	private updateMarkFilesInProgressRefCount(
 		filePathOrSubpaths: string[],
 		direction: "increment" | "decrement",
@@ -2705,13 +2844,16 @@ export class PullRequestModel
 			} else {
 				count--;
 			}
+
 			if (count === 0) {
 				this.markFilesInProgressRefCount.delete(f);
+
 				completed.push(f);
 			} else {
 				this.markFilesInProgressRefCount.set(f, count);
 			}
 		}
+
 		return completed;
 	}
 
@@ -2750,6 +2892,7 @@ export class PullRequestModel
 					`,
 				)}
 			}`;
+
 			await mutate<void>({ mutation });
 		}
 
@@ -2771,6 +2914,7 @@ export class PullRequestModel
 			allFilenames,
 			"decrement",
 		);
+
 		completed.forEach((path) =>
 			this.setFileViewedState(
 				path,
@@ -2806,21 +2950,27 @@ export class PullRequestModel
 		switch (viewedState) {
 			case ViewedState.DISMISSED: {
 				this._viewedFiles.delete(filePath);
+
 				this._unviewedFiles.delete(filePath);
 
 				break;
 			}
+
 			case ViewedState.UNVIEWED: {
 				this._viewedFiles.delete(filePath);
+
 				this._unviewedFiles.add(filePath);
 
 				break;
 			}
+
 			case ViewedState.VIEWED: {
 				this._viewedFiles.add(filePath);
+
 				this._unviewedFiles.delete(filePath);
 			}
 		}
+
 		this._fileChangeViewedState[fileSubpath] = viewedState;
 
 		if (event) {

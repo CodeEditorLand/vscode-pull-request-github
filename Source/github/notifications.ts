@@ -30,9 +30,13 @@ const DEFAULT_POLLING_DURATION = 60;
 
 export class Notification {
 	public readonly identifier;
+
 	public readonly threadId: number;
+
 	public readonly repositoryName: string;
+
 	public readonly pullRequestNumber: number;
+
 	public pullRequestModel?: PullRequestModel;
 
 	constructor(
@@ -43,28 +47,39 @@ export class Notification {
 		pullRequestModel?: PullRequestModel,
 	) {
 		this.identifier = identifier;
+
 		this.threadId = threadId;
+
 		this.repositoryName = repositoryName;
+
 		this.pullRequestNumber = pullRequestNumber;
+
 		this.pullRequestModel = pullRequestModel;
 	}
 }
 
 export class NotificationProvider extends Disposable {
 	private static ID = "NotificationProvider";
+
 	private readonly _gitHubPrsTree: PullRequestsTreeDataProvider;
+
 	private readonly _credentialStore: CredentialStore;
+
 	private _authProvider: AuthProvider | undefined;
 	// The key uniquely identifies a PR from a Repository. The key is created with `getPrIdentifier`
 	private _notifications: Map<string, Notification[]>;
+
 	private readonly _reposManager: RepositoriesManager;
 
 	private _pollingDuration: number;
+
 	private _lastModified: string;
+
 	private _pollingHandler: NodeJS.Timeout | null;
 
 	private _onDidChangeNotifications: vscode.EventEmitter<vscode.Uri[]> =
 		this._register(new vscode.EventEmitter());
+
 	public readonly onDidChangeNotifications =
 		this._onDidChangeNotifications.event;
 
@@ -74,13 +89,19 @@ export class NotificationProvider extends Disposable {
 		reposManager: RepositoriesManager,
 	) {
 		super();
+
 		this._gitHubPrsTree = gitHubPrsTree;
+
 		this._credentialStore = credentialStore;
+
 		this._reposManager = reposManager;
+
 		this._notifications = new Map<string, Notification[]>();
 
 		this._lastModified = "";
+
 		this._pollingDuration = DEFAULT_POLLING_DURATION;
+
 		this._pollingHandler = null;
 
 		this.registerAuthProvider(credentialStore);
@@ -100,6 +121,7 @@ export class NotificationProvider extends Disposable {
 				}
 			}),
 		);
+
 		this._register(
 			gitHubPrsTree.onDidChange(() => {
 				if (NotificationProvider.isPRNotificationsOn()) {
@@ -163,6 +185,7 @@ export class NotificationProvider extends Disposable {
 		if (pullRequest instanceof PullRequestModel) {
 			return `${pullRequest.remote.url}:${pullRequest.number}`;
 		}
+
 		const splitPrUrl = pullRequest.subject.url.split("/");
 
 		const prNumber = splitPrUrl[splitPrUrl.length - 1];
@@ -192,6 +215,7 @@ export class NotificationProvider extends Disposable {
 			"{0} notifications",
 			this._notifications.size,
 		);
+
 		treeView.badge =
 			this._notifications.size !== 0
 				? {
@@ -260,6 +284,7 @@ export class NotificationProvider extends Disposable {
 
 	public refreshOrLaunchPolling() {
 		this._lastModified = "";
+
 		this.checkNotificationSetting();
 	}
 
@@ -271,12 +296,17 @@ export class NotificationProvider extends Disposable {
 			this.startPolling();
 		} else if (!notificationsTurnedOn && this._pollingHandler !== null) {
 			clearInterval(this._pollingHandler);
+
 			this._lastModified = "";
+
 			this._pollingHandler = null;
+
 			this._pollingDuration = DEFAULT_POLLING_DURATION;
 
 			this._onDidChangeNotifications.fire(this.uriFromNotifications());
+
 			this._notifications.clear();
+
 			this.updateViewBadge();
 		}
 	}
@@ -292,6 +322,7 @@ export class NotificationProvider extends Disposable {
 				notificationUris.push(createPRNodeUri(identifier));
 			}
 		}
+
 		return notificationUris;
 	}
 
@@ -320,6 +351,7 @@ export class NotificationProvider extends Disposable {
 		if (!github) {
 			return;
 		}
+
 		await github.octokit.call(
 			github.octokit.api.activity.markThreadAsRead,
 			{
@@ -339,8 +371,11 @@ export class NotificationProvider extends Disposable {
 			}
 
 			const uris = this.uriFromNotifications();
+
 			this._onDidChangeNotifications.fire(uris);
+
 			this._notifications.delete(identifier);
+
 			this.updateViewBadge();
 		}
 	}
@@ -351,6 +386,7 @@ export class NotificationProvider extends Disposable {
 		if (response === undefined) {
 			return;
 		}
+
 		const { data, headers } = response;
 
 		const pollTimeSuggested = Number(headers["x-poll-interval"]);
@@ -364,10 +400,13 @@ export class NotificationProvider extends Disposable {
 				NotificationProvider.isPRNotificationsOn()
 			) {
 				Logger.appendLine("Notifications: Clearing interval");
+
 				clearInterval(this._pollingHandler);
+
 				Logger.appendLine(
 					`Notifications: Starting new polling interval with ${this._pollingDuration}`,
 				);
+
 				this.startPolling();
 			}
 		}
@@ -376,9 +415,11 @@ export class NotificationProvider extends Disposable {
 		if (this._lastModified === headers["last-modified"]) {
 			return;
 		}
+
 		this._lastModified = headers["last-modified"] ?? "";
 
 		const prNodesToUpdate = this.uriFromNotifications();
+
 		this._notifications.clear();
 
 		const currentRepos = new Map<string, GitHubRepository>();
@@ -464,6 +505,7 @@ export class NotificationProvider extends Disposable {
 
 	private startPolling() {
 		this.pollForNewNotifications();
+
 		this._pollingHandler = setInterval(
 			function (notificationProvider: NotificationProvider) {
 				notificationProvider.pollForNewNotifications();
@@ -471,6 +513,7 @@ export class NotificationProvider extends Disposable {
 			this._pollingDuration * 1000,
 			this,
 		);
+
 		this._register({ dispose: () => clearInterval(this._pollingHandler!) });
 	}
 }

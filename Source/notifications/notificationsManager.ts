@@ -19,6 +19,7 @@ import { NotificationsProvider } from "./notificationsProvider";
 
 export interface INotificationTreeItems {
 	readonly notifications: NotificationTreeItem[];
+
 	readonly hasNextPage: boolean;
 }
 
@@ -36,6 +37,7 @@ export class NotificationsManager
 	> = this._register(
 		new vscode.EventEmitter<NotificationTreeDataItem | undefined | void>(),
 	);
+
 	readonly onDidChangeTreeData: vscode.Event<
 		NotificationTreeDataItem | undefined | void
 	> = this._onDidChangeTreeData.event;
@@ -43,12 +45,17 @@ export class NotificationsManager
 	private readonly _onDidChangeNotifications = this._register(
 		new vscode.EventEmitter<NotificationTreeItem[]>(),
 	);
+
 	readonly onDidChangeNotifications = this._onDidChangeNotifications.event;
 
 	private _pageCount: number = 1;
+
 	private _hasNextPage: boolean = false;
+
 	private _dateTime: Date = new Date();
+
 	private _fetchNotifications: boolean = false;
+
 	private _notifications = new Map<string, NotificationTreeItem>();
 
 	private _sortingMethod: NotificationsSortMethod =
@@ -60,7 +67,9 @@ export class NotificationsManager
 
 	constructor(private readonly _notificationProvider: NotificationsProvider) {
 		super();
+
 		this._register(this._onDidChangeTreeData);
+
 		this._register(this._onDidChangeNotifications);
 	}
 
@@ -95,6 +104,7 @@ export class NotificationsManager
 		if (isNotificationTreeItem(element)) {
 			return this._resolveNotificationTreeItem(element);
 		}
+
 		return this._resolveLoadMoreNotificationsTreeItem();
 	}
 
@@ -126,6 +136,7 @@ export class NotificationsManager
 						new vscode.ThemeColor("issues.closed"),
 					);
 		}
+
 		if (
 			notification.subject.type === NotificationSubjectType.PullRequest &&
 			model instanceof PullRequestModel
@@ -140,9 +151,13 @@ export class NotificationsManager
 						new vscode.ThemeColor("pullRequests.merged"),
 					);
 		}
+
 		item.description = `${notification.owner}/${notification.name}`;
+
 		item.contextValue = notification.subject.type;
+
 		item.resourceUri = toNotificationUri({ key: element.notification.key });
+
 		item.command = {
 			command: "notification.chatSummarizeNotification",
 			title: "Summarize Notification",
@@ -157,10 +172,12 @@ export class NotificationsManager
 			vscode.l10n.t("Load More Notifications..."),
 			vscode.TreeItemCollapsibleState.None,
 		);
+
 		item.command = {
 			title: "Load More Notifications",
 			command: "notifications.loadMore",
 		};
+
 		item.contextValue = "loadMoreNotifications";
 
 		return item;
@@ -188,6 +205,7 @@ export class NotificationsManager
 				string,
 				NotificationTreeItem
 			>();
+
 			await Promise.all(
 				notificationsData.notifications.map(async (notification) => {
 					const model =
@@ -210,6 +228,7 @@ export class NotificationsManager
 			for (const [key, value] of notificationTreeItems.entries()) {
 				this._notifications.set(key, value);
 			}
+
 			this._hasNextPage = notificationsData.hasNextPage;
 
 			this._fetchNotifications = false;
@@ -238,6 +257,7 @@ export class NotificationsManager
 				}
 
 				notification.priority = priority;
+
 				notification.priorityReason = priorityReasoning;
 
 				this._notifications.set(key, notification);
@@ -245,6 +265,7 @@ export class NotificationsManager
 		}
 
 		const notifications = Array.from(this._notifications.values());
+
 		this._onDidChangeNotifications.fire(notifications);
 
 		return {
@@ -264,11 +285,14 @@ export class NotificationsManager
 	public refresh(): void {
 		if (this._notifications.size !== 0) {
 			const updates = Array.from(this._notifications.values());
+
 			this._onDidChangeNotifications.fire(updates);
 		}
 
 		this._pageCount = 1;
+
 		this._dateTime = new Date();
+
 		this._notifications.clear();
 
 		this._refresh(true);
@@ -276,16 +300,19 @@ export class NotificationsManager
 
 	public loadMore(): void {
 		this._pageCount++;
+
 		this._refresh(true);
 	}
 
 	public _refresh(fetch: boolean): void {
 		this._fetchNotifications = fetch;
+
 		this._onDidChangeTreeData.fire();
 	}
 
 	public async markAsRead(notificationIdentifier: {
 		threadId: string;
+
 		notificationKey: string;
 	}): Promise<void> {
 		const notification = this._notifications.get(
@@ -296,6 +323,7 @@ export class NotificationsManager
 			await this._notificationProvider.markAsRead(notificationIdentifier);
 
 			this._onDidChangeNotifications.fire([notification]);
+
 			this._notifications.delete(notificationIdentifier.notificationKey);
 
 			this._refresh(false);
@@ -308,6 +336,7 @@ export class NotificationsManager
 		}
 
 		this._sortingMethod = method;
+
 		this._refresh(false);
 	}
 

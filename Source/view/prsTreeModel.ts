@@ -36,6 +36,7 @@ export enum UnsatisfiedChecks {
 
 interface PRStatusChange {
 	pullRequest: PullRequestModel;
+
 	status: UnsatisfiedChecks;
 }
 
@@ -44,19 +45,27 @@ export class PrsTreeModel extends Disposable {
 		FolderRepositoryManager,
 		vscode.Disposable[]
 	> = new Map();
+
 	private readonly _onDidChangePrStatus: vscode.EventEmitter<string[]> =
 		this._register(new vscode.EventEmitter<string[]>());
+
 	public readonly onDidChangePrStatus = this._onDidChangePrStatus.event;
+
 	private readonly _onDidChangeData: vscode.EventEmitter<FolderRepositoryManager | void> =
 		this._register(
 			new vscode.EventEmitter<FolderRepositoryManager | void>(),
 		);
+
 	public readonly onDidChangeData = this._onDidChangeData.event;
+
 	private _expandedQueries: Set<string> = new Set();
+
 	private _hasLoaded: boolean = false;
+
 	private _onLoaded: vscode.EventEmitter<void> = this._register(
 		new vscode.EventEmitter<void>(),
 	);
+
 	public readonly onLoaded = this._onLoaded.event;
 
 	// Key is identifier from createPRNodeUri
@@ -85,8 +94,10 @@ export class PrsTreeModel extends Disposable {
 
 					if (this._activePRDisposables.has(manager)) {
 						disposeAll(this._activePRDisposables.get(manager)!);
+
 						this._activePRDisposables.delete(manager);
 					}
+
 					if (manager.activePullRequest) {
 						this._activePRDisposables.set(manager, [
 							manager.activePullRequest.onDidChangeComments(
@@ -103,10 +114,12 @@ export class PrsTreeModel extends Disposable {
 		for (const manager of this._reposManager.folderManagers) {
 			repoEvents(manager);
 		}
+
 		this._register(
 			this._reposManager.onDidChangeFolderRepositories((changed) => {
 				if (changed.added) {
 					repoEvents(changed.added);
+
 					this._onDidChangeData.fire(changed.added);
 				}
 			}),
@@ -127,6 +140,7 @@ export class PrsTreeModel extends Disposable {
 			} else {
 				this._expandedQueries.delete(element.id);
 			}
+
 			this._context.workspaceState.update(
 				EXPANDED_QUERIES_STATE,
 				Array.from(this._expandedQueries.keys()),
@@ -141,6 +155,7 @@ export class PrsTreeModel extends Disposable {
 		) {
 			return new Set();
 		}
+
 		return this._expandedQueries;
 	}
 
@@ -150,6 +165,7 @@ export class PrsTreeModel extends Disposable {
 
 	private set hasLoaded(value: boolean) {
 		this._hasLoaded = value;
+
 		this._onLoaded.fire();
 	}
 
@@ -159,11 +175,13 @@ export class PrsTreeModel extends Disposable {
 
 	public clearCache() {
 		this._cachedPRs.clear();
+
 		this._onDidChangeData.fire();
 	}
 
 	public clearRepo(folderRepoManager: FolderRepositoryManager) {
 		this._cachedPRs.delete(folderRepoManager);
+
 		this._onDidChangeData.fire(folderRepoManager);
 	}
 
@@ -179,6 +197,7 @@ export class PrsTreeModel extends Disposable {
 		for (let i = 0; i < pullRequests.length; i += 100) {
 			const sliceEnd =
 				i + 100 < pullRequests.length ? i + 100 : pullRequests.length;
+
 			checks.push(
 				...(await Promise.all(
 					pullRequests.slice(i, sliceEnd).map((pullRequest) => {
@@ -208,6 +227,7 @@ export class PrsTreeModel extends Disposable {
 			if (!check || check.state === CheckState.Unknown) {
 				continue;
 			}
+
 			if (check.state !== CheckState.Success) {
 				for (const status of check.statuses) {
 					if (status.state === CheckState.Failure) {
@@ -216,20 +236,25 @@ export class PrsTreeModel extends Disposable {
 						newStatus |= UnsatisfiedChecks.CIPending;
 					}
 				}
+
 				if (newStatus === UnsatisfiedChecks.None) {
 					newStatus |= UnsatisfiedChecks.CIPending;
 				}
 			}
+
 			const identifier = createPRNodeIdentifier(pullRequest);
 
 			const oldState = this._queriedPullRequests.get(identifier);
 
 			if (oldState === undefined || oldState.status !== newStatus) {
 				const newState = { pullRequest, status: newStatus };
+
 				changedStatuses.push(identifier);
+
 				this._queriedPullRequests.set(identifier, newState);
 			}
 		}
+
 		this._onDidChangePrStatus.fire(changedStatuses);
 	}
 
@@ -243,8 +268,10 @@ export class PrsTreeModel extends Disposable {
 
 		if (!cache) {
 			cache = new Map();
+
 			this._cachedPRs.set(folderRepoManager, cache);
 		}
+
 		return cache;
 	}
 
@@ -266,6 +293,7 @@ export class PrsTreeModel extends Disposable {
 				(pr.isClosed && useReviewConfiguration.closed) ||
 				(pr.isMerged && useReviewConfiguration.merged),
 		);
+
 		cache.set(PRType.LocalPullRequest, {
 			hasMorePages: false,
 			hasUnsearchedRepositories: false,
@@ -279,6 +307,7 @@ export class PrsTreeModel extends Disposable {
 		this._telemetry.sendTelemetryEvent("pr.expand.local");
 		// Don't await this._getChecks. It fires an event that will be listened to.
 		this._getChecks(prs);
+
 		this.hasLoaded = true;
 
 		return {
@@ -304,6 +333,7 @@ export class PrsTreeModel extends Disposable {
 			{ fetchNextPage },
 			query,
 		);
+
 		cache.set(query, prs);
 
 		/* __GDPR__
@@ -312,6 +342,7 @@ export class PrsTreeModel extends Disposable {
 		this._telemetry.sendTelemetryEvent("pr.expand.query");
 		// Don't await this._getChecks. It fires an event that will be listened to.
 		this._getChecks(prs.items);
+
 		this.hasLoaded = true;
 
 		return prs;
@@ -331,6 +362,7 @@ export class PrsTreeModel extends Disposable {
 		const prs = await folderRepoManager.getPullRequests(PRType.All, {
 			fetchNextPage,
 		});
+
 		cache.set(PRType.All, prs);
 
 		/* __GDPR__
@@ -339,6 +371,7 @@ export class PrsTreeModel extends Disposable {
 		this._telemetry.sendTelemetryEvent("pr.expand.all");
 		// Don't await this._getChecks. It fires an event that will be listened to.
 		this._getChecks(prs.items);
+
 		this.hasLoaded = true;
 
 		return prs;
@@ -346,6 +379,7 @@ export class PrsTreeModel extends Disposable {
 
 	override dispose() {
 		super.dispose();
+
 		disposeAll(Array.from(this._activePRDisposables.values()).flat());
 	}
 }

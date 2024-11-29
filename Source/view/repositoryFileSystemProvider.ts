@@ -32,8 +32,11 @@ export abstract class RepositoryFileSystemProvider extends ReadonlyFileSystemPro
 					"Found at least one repository.",
 					"RepositoryFileSystemProvider",
 				);
+
 				eventDisposable?.dispose();
+
 				eventDisposable = undefined;
+
 				resolve();
 			});
 		});
@@ -46,14 +49,17 @@ export abstract class RepositoryFileSystemProvider extends ReadonlyFileSystemPro
 					"Timed out while waiting for repositories.",
 					"RepositoryFileSystemProvider",
 				);
+
 				resolve();
 			}, milliseconds);
 		});
+
 		await Promise.race([openPromise, timeoutPromise]);
 
 		if (timeout) {
 			clearTimeout(timeout);
 		}
+
 		if (eventDisposable) {
 			(eventDisposable as vscode.Disposable).dispose();
 		}
@@ -63,6 +69,7 @@ export abstract class RepositoryFileSystemProvider extends ReadonlyFileSystemPro
 		if (this.credentialStore.isAnyAuthenticated()) {
 			return;
 		}
+
 		return new Promise((resolve) =>
 			this.credentialStore.onDidGetSession(() => resolve()),
 		);

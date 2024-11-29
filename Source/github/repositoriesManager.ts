@@ -29,13 +29,17 @@ import {
 
 export interface ItemsResponseResult<T> {
 	items: T[];
+
 	hasMorePages: boolean;
+
 	hasUnsearchedRepositories: boolean;
 }
 
 export interface PullRequestDefaults {
 	owner: string;
+
 	repo: string;
+
 	base: string;
 }
 
@@ -43,19 +47,23 @@ export class RepositoriesManager extends Disposable {
 	static ID = "RepositoriesManager";
 
 	private _folderManagers: FolderRepositoryManager[] = [];
+
 	private _subs: Map<FolderRepositoryManager, vscode.Disposable[]>;
 
 	private _onDidChangeState = new vscode.EventEmitter<void>();
+
 	readonly onDidChangeState: vscode.Event<void> =
 		this._onDidChangeState.event;
 
 	private _onDidChangeFolderRepositories = new vscode.EventEmitter<{
 		added?: FolderRepositoryManager;
 	}>();
+
 	readonly onDidChangeFolderRepositories =
 		this._onDidChangeFolderRepositories.event;
 
 	private _onDidLoadAnyRepositories = new vscode.EventEmitter<void>();
+
 	readonly onDidLoadAnyRepositories = this._onDidLoadAnyRepositories.event;
 
 	private _state: ReposManagerState = ReposManagerState.Initializing;
@@ -65,7 +73,9 @@ export class RepositoriesManager extends Disposable {
 		private _telemetry: ITelemetry,
 	) {
 		super();
+
 		this._subs = new Map();
+
 		vscode.commands.executeCommand(
 			"setContext",
 			ReposManagerStateContext,
@@ -81,6 +91,7 @@ export class RepositoriesManager extends Disposable {
 				count++;
 			}
 		}
+
 		commands.setContext(contexts.ACTIVE_PR_COUNT, count);
 	}
 
@@ -92,6 +103,7 @@ export class RepositoriesManager extends Disposable {
 		const disposables = [
 			folderManager.onDidLoadRepositories((state) => {
 				this.state = state;
+
 				this._onDidLoadAnyRepositories.fire();
 			}),
 			folderManager.onDidChangeActivePullRequest(() =>
@@ -101,6 +113,7 @@ export class RepositoriesManager extends Disposable {
 				this.removeRepo(folderManager.repository),
 			),
 		];
+
 		this._subs.set(folderManager, disposables);
 	}
 
@@ -128,10 +141,15 @@ export class RepositoriesManager extends Disposable {
 					index,
 					this._folderManagers.length,
 				);
+
 				this._folderManagers = this._folderManagers.slice(0, index);
+
 				this._folderManagers.push(folderManager);
+
 				this._folderManagers.push(...arrayEnd);
+
 				this.updateActiveReviewCount();
+
 				this._onDidChangeFolderRepositories.fire({
 					added: folderManager,
 				});
@@ -139,8 +157,11 @@ export class RepositoriesManager extends Disposable {
 				return;
 			}
 		}
+
 		this._folderManagers.push(folderManager);
+
 		this.updateActiveReviewCount();
+
 		this._onDidChangeFolderRepositories.fire({ added: folderManager });
 	}
 
@@ -154,11 +175,17 @@ export class RepositoriesManager extends Disposable {
 		if (existingFolderManagerIndex > -1) {
 			const folderManager =
 				this._folderManagers[existingFolderManagerIndex];
+
 			disposeAll(this._subs.get(folderManager)!);
+
 			this._subs.delete(folderManager);
+
 			this._folderManagers.splice(existingFolderManagerIndex);
+
 			folderManager.dispose();
+
 			this.updateActiveReviewCount();
+
 			this._onDidChangeFolderRepositories.fire({});
 		}
 	}
@@ -169,6 +196,7 @@ export class RepositoriesManager extends Disposable {
 		if (issueModel === undefined) {
 			return undefined;
 		}
+
 		return this.getManagerForRepository(
 			issueModel.remote.owner,
 			issueModel.remote.repositoryName,
@@ -210,6 +238,7 @@ export class RepositoriesManager extends Disposable {
 				return folderManager;
 			}
 		}
+
 		return undefined;
 	}
 
@@ -236,6 +265,7 @@ export class RepositoriesManager extends Disposable {
 
 	set state(state: ReposManagerState) {
 		const stateChange = state !== this._state;
+
 		this._state = state;
 
 		if (stateChange) {
@@ -244,6 +274,7 @@ export class RepositoriesManager extends Disposable {
 				ReposManagerStateContext,
 				state,
 			);
+
 			this._onDidChangeState.fire();
 		}
 	}
@@ -254,6 +285,7 @@ export class RepositoriesManager extends Disposable {
 
 	async clearCredentialCache(): Promise<void> {
 		await this._credentialStore.reset();
+
 		this.state = ReposManagerState.Initializing;
 	}
 
@@ -261,6 +293,7 @@ export class RepositoriesManager extends Disposable {
 		if (enterprise === false) {
 			return !!this._credentialStore.login(AuthProvider.github);
 		}
+
 		const { dotComRemotes, enterpriseRemotes, unknownRemotes } =
 			await findDotComAndEnterpriseRemotes(this.folderManagers);
 
@@ -280,6 +313,7 @@ export class RepositoriesManager extends Disposable {
 					`Enterprise login selected, but no possible enterprise remotes discovered (${dotComRemotes.length} .com)`,
 				);
 			}
+
 			if (remoteToUse) {
 				const promptResult = await vscode.window.showInformationMessage(
 					vscode.l10n.t(
@@ -352,6 +386,7 @@ export class RepositoriesManager extends Disposable {
 				AuthProvider.githubEnterprise,
 			);
 		}
+
 		let github;
 
 		if (
@@ -360,6 +395,7 @@ export class RepositoriesManager extends Disposable {
 		) {
 			github = await this._credentialStore.login(AuthProvider.github);
 		}
+
 		return !!github || !!githubEnterprise;
 	}
 

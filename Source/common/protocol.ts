@@ -18,6 +18,7 @@ export enum ProtocolType {
 
 export class Protocol {
 	public type: ProtocolType = ProtocolType.OTHER;
+
 	public host: string = "";
 
 	public owner: string = "";
@@ -39,6 +40,7 @@ export class Protocol {
 
 		try {
 			this.url = vscode.Uri.parse(uriString);
+
 			this.type = this.getType(this.url.scheme);
 
 			this.host = this.getHostName(this.url.authority);
@@ -46,10 +48,12 @@ export class Protocol {
 			if (this.host) {
 				this.repositoryName =
 					this.getRepositoryName(this.url.path) || "";
+
 				this.owner = this.getOwnerName(this.url.path) || "";
 			}
 		} catch (e) {
 			Logger.error(`Failed to parse '${uriString}'`);
+
 			vscode.window.showWarningMessage(
 				vscode.l10n.t(
 					"Unable to parse remote '{0}'. Please check that it is correctly formatted.",
@@ -85,10 +89,15 @@ export class Protocol {
 		if (!sshConfig) {
 			return false;
 		}
+
 		const { Hostname, HostName, path } = sshConfig;
+
 		this.host = HostName || Hostname;
+
 		this.owner = this.getOwnerName(path) || "";
+
 		this.repositoryName = this.getRepositoryName(path) || "";
+
 		this.type = ProtocolType.SSH;
 
 		return true;
@@ -115,6 +124,7 @@ export class Protocol {
 		if (normalized.endsWith("/")) {
 			normalized = normalized.substr(0, normalized.length - 1);
 		}
+
 		const lastIndex = normalized.lastIndexOf("/");
 
 		const lastSegment = normalized.substr(lastIndex + 1);
@@ -200,8 +210,11 @@ export class Protocol {
 
 	update(change: {
 		type?: ProtocolType;
+
 		host?: string;
+
 		owner?: string;
+
 		repositoryName?: string;
 	}): Protocol {
 		if (change.type) {

@@ -6,7 +6,9 @@ export { Disposable } from "vscode";
 
 export interface RemoteProvider {
 	readonly id: string;
+
 	readonly name: string;
+
 	readonly domain: string;
 }
 
@@ -14,15 +16,21 @@ export interface CreatePullRequestActionContext {
 	readonly type: "createPullRequest";
 
 	readonly repoPath: string;
+
 	readonly branch: {
 		readonly name: string;
+
 		readonly upstream: string | undefined;
+
 		readonly isRemote: boolean;
 	};
+
 	readonly remote:
 		| {
 				readonly name: string;
+
 				readonly provider?: RemoteProvider;
+
 				readonly url?: string;
 		  }
 		| undefined;
@@ -32,9 +40,12 @@ export interface OpenPullRequestActionContext {
 	readonly type: "openPullRequest";
 
 	readonly repoPath: string;
+
 	readonly provider: RemoteProvider | undefined;
+
 	readonly pullRequest: {
 		readonly id: string;
+
 		readonly url: string;
 	};
 }

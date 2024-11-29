@@ -29,7 +29,9 @@ interface RestResponse {
 
 export class RateLogger {
 	private bulkhead: BulkheadPolicy = bulkhead(140);
+
 	private static ID = "RateLimit";
+
 	private hasLoggedLowRateLimit: boolean = false;
 
 	constructor(
@@ -65,6 +67,7 @@ export class RateLogger {
 				return undefined;
 			}
 		}
+
 		const log = `Extension rate limit remaining: ${this.bulkhead.executionSlots}, ${info}`;
 
 		if (this.bulkhead.executionSlots < 5) {
@@ -90,11 +93,13 @@ export class RateLogger {
 
 		try {
 			const resolvedResult = await result;
+
 			rateLimitInfo = resolvedResult?.data?.rateLimit;
 		} catch (e) {
 			// Ignore errors here since we're just trying to log the rate limit.
 			return;
 		}
+
 		const isSearch = info?.startsWith("/search/");
 
 		if ((rateLimitInfo?.limit ?? 5000) < 5000) {
@@ -110,6 +115,7 @@ export class RateLogger {
 				);
 			}
 		}
+
 		const remaining = `${isRest ? "REST" : "GraphQL"} Rate limit remaining: ${rateLimitInfo?.remaining}, cost: ${rateLimitInfo?.cost}, ${info}`;
 
 		if ((rateLimitInfo?.remaining ?? 1000) < 1000 && !isSearch) {
@@ -120,8 +126,10 @@ export class RateLogger {
 				this.telemetry.sendTelemetryErrorEvent(
 					"pr.lowRateLimitRemaining",
 				);
+
 				this.hasLoggedLowRateLimit = true;
 			}
+
 			Logger.warn(remaining, RateLogger.ID);
 		} else {
 			Logger.debug(remaining, RateLogger.ID);
@@ -140,12 +148,14 @@ export class RateLogger {
 			// Ignore errors here since we're just trying to log the rate limit.
 			return;
 		}
+
 		const rateLimit: RateLimit = {
 			cost: -1,
 			limit: Number(result.headers["x-ratelimit-limit"]),
 			remaining: Number(result.headers["x-ratelimit-remaining"]),
 			resetAt: "",
 		};
+
 		this.logRateLimit(info, Promise.resolve({ data: { rateLimit } }), true);
 	}
 }
@@ -172,6 +182,7 @@ export class LoggingApolloClient {
 		if (result === undefined) {
 			throw new Error("API call count has exceeded a rate limit.");
 		}
+
 		this._rateLogger.logRateLimit(logInfo, result as any);
 
 		return result;
@@ -189,6 +200,7 @@ export class LoggingApolloClient {
 		if (result === undefined) {
 			throw new Error("API call count has exceeded a rate limit.");
 		}
+
 		this._rateLogger.logRateLimit(logInfo, result as any);
 
 		return result;
@@ -219,6 +231,7 @@ export class LoggingOctokit {
 		if (result === undefined) {
 			throw new Error("API call count has exceeded a rate limit.");
 		}
+
 		this._rateLogger.logRestRateLimit(
 			logInfo,
 			result as Promise<unknown> as Promise<RestResponse>,

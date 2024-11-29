@@ -16,9 +16,13 @@ export interface LoadMoreNotificationsTreeItem {
 
 export interface NotificationTreeItem {
 	readonly notification: Notification;
+
 	readonly model: IssueModel;
+
 	priority?: string;
+
 	priorityReason?: string;
+
 	readonly kind: "notification";
 }
 

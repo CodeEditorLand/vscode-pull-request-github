@@ -56,6 +56,7 @@ class GitHubCommitNode extends TreeNode {
 		if (!this.model.gitHubRepository) {
 			return [];
 		}
+
 		const { octokit, remote } = await this.model.gitHubRepository.ensure();
 
 		const { data } = await octokit.call(octokit.api.repos.compareCommits, {
@@ -70,6 +71,7 @@ class GitHubCommitNode extends TreeNode {
 		if (!rawFiles) {
 			return [];
 		}
+
 		return rawFiles.map((file) => {
 			return new GitHubFileChangeNode(
 				this,
@@ -149,8 +151,11 @@ abstract class CompareChangesTreeProvider
 	implements vscode.TreeDataProvider<TreeNode>, BaseTreeNode
 {
 	private _view: vscode.TreeView<TreeNode>;
+
 	private _children: TreeNode[] | undefined;
+
 	private _onDidChangeTreeData = new vscode.EventEmitter<TreeNode | void>();
+
 	readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
 	get view(): vscode.TreeView<TreeNode> {
@@ -163,6 +168,7 @@ abstract class CompareChangesTreeProvider
 
 	constructor(protected readonly model: CreatePullRequestDataModel) {
 		super();
+
 		this._register(
 			model.onDidChange(() => {
 				this._onDidChangeTreeData.fire();
@@ -223,6 +229,7 @@ abstract class CompareChangesTreeProvider
 						),
 					);
 			}
+
 			return {};
 		}
 	}
@@ -251,6 +258,7 @@ abstract class CompareChangesTreeProvider
 
 			return [];
 		}
+
 		return this._children;
 	}
 
@@ -335,12 +343,15 @@ class CompareChangesFilesTreeProvider extends CompareChangesTreeProvider {
 		if (!preReviewer) {
 			return markdown;
 		}
+
 		if (!markdown) {
 			markdown = new vscode.MarkdownString();
 		} else {
 			markdown.appendMarkdown("\n\n");
 		}
+
 		markdown.supportThemeIcons = true;
+
 		markdown.appendMarkdown(
 			`[${vscode.l10n.t("$(sparkle) {0} Code Review", preReviewer.title)}](command:pr.preReview)`,
 		);
@@ -372,6 +383,7 @@ class CompareChangesFilesTreeProvider extends CompareChangesTreeProvider {
 						comment: "{Locked='](command:git.publish)'}",
 					}),
 				);
+
 				message.isTrusted = { enabledCommands: ["git.publish"] };
 				(this.view as vscode.TreeView2<TreeNode>).message =
 					this.addReviewMessage(message);
@@ -454,8 +466,11 @@ class CompareChangesCommitsTreeProvider extends CompareChangesTreeProvider {
 
 export class CompareChanges extends Disposable {
 	private readonly _filesView: vscode.TreeView<TreeNode>;
+
 	private readonly _filesDataProvider: CompareChangesFilesTreeProvider;
+
 	private readonly _commitsView: vscode.TreeView<TreeNode>;
+
 	private readonly _commitsDataProvider: CompareChangesCommitsTreeProvider;
 
 	constructor(
@@ -463,23 +478,29 @@ export class CompareChanges extends Disposable {
 		private model: CreatePullRequestDataModel,
 	) {
 		super();
+
 		this._filesDataProvider = this._register(
 			new CompareChangesFilesTreeProvider(model, folderRepoManager),
 		);
+
 		this._filesView = this._register(
 			vscode.window.createTreeView("github:compareChangesFiles", {
 				treeDataProvider: this._filesDataProvider,
 			}),
 		);
+
 		this._filesDataProvider.view = this._filesView;
+
 		this._commitsDataProvider = this._register(
 			new CompareChangesCommitsTreeProvider(model, folderRepoManager),
 		);
+
 		this._commitsView = this._register(
 			vscode.window.createTreeView("github:compareChangesCommits", {
 				treeDataProvider: this._commitsDataProvider,
 			}),
 		);
+
 		this._commitsDataProvider.view = this._commitsView;
 
 		this.initialize();
@@ -501,12 +522,14 @@ export class CompareChanges extends Disposable {
 					this.model.gitHubContentProvider,
 				),
 			);
+
 			this._register(
 				vscode.workspace.registerFileSystemProvider(
 					Schemes.GitPr,
 					this.model.gitContentProvider,
 				),
 			);
+
 			this._register(
 				toDisposable(() => CompareChangesTreeProvider.closeTabs()),
 			);

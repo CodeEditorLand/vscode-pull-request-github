@@ -13,16 +13,20 @@ import { concatAsyncIterable, MimeTypes, RepoToolBase } from "./toolsUtils";
 
 interface ConvertToQuerySyntaxParameters {
 	naturalLanguageString: string;
+
 	repo?: {
 		owner?: string;
+
 		name?: string;
 	};
 }
 
 interface ConvertToQuerySyntaxResult {
 	query: string;
+
 	repo?: {
 		owner?: string;
+
 		name?: string;
 	};
 }
@@ -291,6 +295,7 @@ You are getting ready to make a GitHub search query. Given a natural language qu
 				} else {
 					goodLabels.push(labelOrOperator);
 				}
+
 				continue;
 			}
 			// Make sure it does start with `label:`
@@ -303,16 +308,19 @@ You are getting ready to make a GitHub search query. Given a natural language qu
 			if (labelPrefixMatch) {
 				label = labelPrefixMatch[1];
 			}
+
 			if (allLabels.find((l) => l.name === label)) {
 				goodLabels.push(label);
 			}
 		}
+
 		if (
 			goodLabels.length > 0 &&
 			isAndOrOr(goodLabels[goodLabels.length - 1])
 		) {
 			goodLabels = goodLabels.slice(0, goodLabels.length - 1);
 		}
+
 		return goodLabels;
 	}
 
@@ -327,9 +335,11 @@ You are getting ready to make a GitHub search query. Given a natural language qu
 		if (baseQuery.includes(freeForm)) {
 			return "";
 		}
+
 		if (labels.includes(freeForm)) {
 			return "";
 		}
+
 		if (labels.some((label) => freeForm.includes(label))) {
 			return "";
 		}
@@ -337,6 +347,7 @@ You are getting ready to make a GitHub search query. Given a natural language qu
 		if (freeForm.includes("issue")) {
 			return "";
 		}
+
 		return freeForm;
 	}
 
@@ -354,6 +365,7 @@ You are getting ready to make a GitHub search query. Given a natural language qu
 			if (part.startsWith("label:")) {
 				continue;
 			}
+
 			const propAndVal = part.split(":");
 
 			if (propAndVal.length === 2) {
@@ -364,12 +376,14 @@ You are getting ready to make a GitHub search query. Given a natural language qu
 				if (!label.match(/^[a-zA-Z]+$/)) {
 					continue;
 				}
+
 				if (!this.validateSpecificQueryPart(label, value)) {
 					continue;
 				}
 			} else if (!part.startsWith("-")) {
 				continue;
 			}
+
 			reformedQuery = `${reformedQuery} ${part}`;
 		}
 
@@ -397,6 +411,7 @@ You are getting ready to make a GitHub search query. Given a natural language qu
 		if (!query) {
 			return;
 		}
+
 		const fixedLabels = this.validateQuery(
 			query,
 			labelsList,
@@ -429,7 +444,9 @@ You are getting ready to make a GitHub search query. Given a natural language qu
 
 			if (originalRepo.includes("/")) {
 				const ownerAndRepo = originalRepo.split("/");
+
 				owner = ownerAndRepo[0];
+
 				name = ownerAndRepo[1];
 			}
 
@@ -442,10 +459,13 @@ You are getting ready to make a GitHub search query. Given a natural language qu
 					repoRegex,
 					`repo:${orgMatch[1]}/${originalRepo}`,
 				);
+
 				owner = orgMatch[1];
+
 				name = originalRepo;
 			}
 		}
+
 		return {
 			query: newQuery,
 			repo: owner && name ? { owner, name } : undefined,
@@ -488,6 +508,7 @@ You are getting ready to make a GitHub search query. Given a natural language qu
 				await this.labelsAssistantPrompt(folderManager, labels),
 			),
 		];
+
 		messages.push(
 			vscode.LanguageModelChatMessage.User(
 				this.labelsUserPrompt(naturalLanguageString),
@@ -511,6 +532,7 @@ You are getting ready to make a GitHub search query. Given a natural language qu
 				this.freeFormAssistantPrompt(),
 			),
 		];
+
 		messages.push(
 			vscode.LanguageModelChatMessage.User(
 				this.freeFormUserPrompt(naturalLanguageString),
@@ -534,6 +556,7 @@ You are getting ready to make a GitHub search query. Given a natural language qu
 				await this.fullQueryAssistantPrompt(folderManager),
 			),
 		];
+
 		messages.push(
 			vscode.LanguageModelChatMessage.User(
 				this.fullQueryUserPrompt(naturalLanguageString),
@@ -611,6 +634,7 @@ You are getting ready to make a GitHub search query. Given a natural language qu
 		if (!result) {
 			throw new Error("Unable to form a query.");
 		}
+
 		Logger.debug(`Query \`${result.query}\``, ConvertToSearchSyntaxTool.ID);
 
 		return {
@@ -648,6 +672,7 @@ export class SearchTool extends RepoToolBase<SearchToolParameters> {
 		const { folderManager } = await this.getRepoInfo(options);
 
 		const parameterQuery = options.parameters.query;
+
 		Logger.debug(
 			`Searching with query \`${parameterQuery}\``,
 			SearchTool.ID,
@@ -660,9 +685,11 @@ export class SearchTool extends RepoToolBase<SearchToolParameters> {
 				`No issues found for ${parameterQuery}. Make sure the query is valid.`,
 			);
 		}
+
 		const result: SearchToolResult = {
 			arrayOfIssues: searchResult.items.map((i) => i.item),
 		};
+
 		Logger.debug(
 			`Found ${result.arrayOfIssues.length} issues, first issue ${result.arrayOfIssues[0]?.number}.`,
 			SearchTool.ID,
