@@ -35,7 +35,7 @@ The issue completion is triggered by typing `#` or by running the **Trigger Sugg
 
 ![Issue Completion SCM](images/issueCompletionSCM.png)
 
-In the Source Control commit message and in most other files, the completion will insert the issue number. In markdown files, it will insert a markdown link to the issue such as `[#1234](HTTPS://github.com/Microsoft/vscode-pull-request-github/issues/1234)`. For the SCM input box you can configure what is inserted for the completion using `"githubIssues.issueCompletionFormatScm": "${issueNumberLabel}"`.
+In the Source Control commit message and in most other files, the completion will insert the issue number. In markdown files, it will insert a markdown link to the issue such as `[#1234](https://github.com/Microsoft/vscode-pull-request-github/issues/1234)`. For the SCM input box you can configure what is inserted for the completion using `"githubIssues.issueCompletionFormatScm": "${issueNumberLabel}"`.
 
 If triggering issue completion on `#` is too noisy for you, you can configure that trigger character to be ignored with the `"githubIssues.ignoreCompletionTrigger"` setting.
 
