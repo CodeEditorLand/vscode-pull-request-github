@@ -1428,7 +1428,7 @@ export class PullRequestModel
 				input: {
 					pullRequestId: this.graphNodeId,
 					teamIds: teamReviewers,
-					userIds: reviewers,
+					userIds: reviewers.filter(r => !r.startsWith('BOT')),
 				},
 			},
 		});
