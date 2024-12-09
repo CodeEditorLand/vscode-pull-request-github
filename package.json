@@ -1433,68 +1433,12 @@
 				},
 				"githubPullRequests.showPullRequestNumberInTree": {
 					"default": false,
-					"description": "%githubPullRequests.showPullRequestNumberInTree.description%",
-					"type": "boolean"
+					"description": "%githubPullRequests.showPullRequestNumberInTree.description%"
 				},
-				"githubPullRequests.terminalLinksHandler": {
-					"default": "ask",
-					"description": "%githubPullRequests.terminalLinksHandler.description%",
-					"enum": [
-						"github",
-						"vscode",
-						"ask"
-					],
-					"enumDescriptions": [
-						"%githubPullRequests.terminalLinksHandler.github%",
-						"%githubPullRequests.terminalLinksHandler.vscode%",
-						"%githubPullRequests.terminalLinksHandler.ask%"
-					],
-					"type": "string"
-				},
-				"githubPullRequests.upstreamRemote": {
-					"default": "add",
-					"enum": [
-						"add",
-						"never"
-					],
-					"markdownDescription": "%githubPullRequests.upstreamRemote.description%",
-					"markdownEnumDescriptions": [
-						"%githubPullRequests.upstreamRemote.add%",
-						"%githubPullRequests.upstreamRemote.never%"
-					],
-					"type": "string"
-				},
-				"githubPullRequests.useReviewMode": {
-					"default": "auto",
-					"description": "%githubPullRequests.useReviewMode.description%",
-					"oneOf": [
-						{
-							"additionalProperties": false,
-							"properties": {
-								"closed": {
-									"default": false,
-									"description": "%githubPullRequests.useReviewMode.closed%",
-									"type": "boolean"
-								},
-								"merged": {
-									"default": false,
-									"description": "%githubPullRequests.useReviewMode.merged%",
-									"type": "boolean"
-								}
-							},
-							"required": [
-								"merged",
-								"closed"
-							],
-							"type": "object"
-						},
-						{
-							"enum": [
-								"auto"
-							],
-							"type": "string"
-						}
-					]
+				"githubIssues.alwaysPromptForNewIssueRepo": {
+					"type": "boolean",
+					"default": false,
+					"description": "%githubIssues.alwaysPromptForNewIssueRepo.description%"
 				}
 			},
 			"title": "GitHub Pull Requests",
