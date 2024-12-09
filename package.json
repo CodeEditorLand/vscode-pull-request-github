@@ -3627,9 +3627,9 @@
 		]
 	},
 	"dependencies": {
+		"@codeeditorland/prompt-tsx": "^0.3.0-alpha.12",
 		"@octokit/rest": "18.2.1",
 		"@octokit/types": "6.10.1",
-		"@vscode/prompt-tsx": "^0.3.0-alpha.12",
 		"apollo-boost": "^0.4.9",
 		"apollo-link-context": "1.0.20",
 		"cockatiel": "^3.1.1",
@@ -3718,7 +3718,7 @@
 	"icon": "resources/icons/github_logo.png",
 	"l10n": "./dist/browser/extension",
 	"main": "./dist/extension",
-	"name": "vscode-pull-request-github",
+	"name": "@codeeditorland/pull-request-github",
 	"scripts": {
 		"browsertest": "yarn run browsertest:preprocess && node ./dist/browser/test/runTests.js",
 		"browsertest:preprocess": "tsc ./src/test/browser/runTests.ts --outDir ./dist/browser/test --rootDir ./src/test/browser --target es6 --module commonjs",
