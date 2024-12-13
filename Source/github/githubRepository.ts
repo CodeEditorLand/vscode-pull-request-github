@@ -1627,8 +1627,7 @@ export class GitHubRepository extends Disposable {
 				parseGraphQLIssue(data.repository.pullRequest, this),
 			);
 		} catch (e) {
-			Logger.error(`Unable to fetch PR: ${e}`, this.id);
-
+			Logger.error(`Unable to fetch issue: ${e}`, this.id);
 			return;
 		}
 	}

@@ -2,6 +2,58 @@
 	"name": "@codeeditorland/pull-request-github",
 	"displayName": "%displayName%",
 	"description": "%description%",
+	"icon": "resources/icons/github_logo.png",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/Microsoft/vscode-pull-request-github"
+	},
+	"bugs": {
+		"url": "https://github.com/Microsoft/vscode-pull-request-github/issues"
+	},
+	"enabledApiProposals": [
+		"activeComment",
+		"codiconDecoration",
+		"codeActionRanges",
+		"commentingRangeHint",
+		"commentReactor",
+		"commentReveal",
+		"commentThreadApplicability",
+		"contribAccessibilityHelpContent",
+		"contribCommentEditorActionsMenu",
+		"contribCommentPeekContext",
+		"contribCommentThreadAdditionalMenu",
+		"contribCommentsViewThreadMenus",
+		"contribEditorContentMenu",
+		"contribShareMenu",
+		"diffCommand",
+		"fileComments",
+		"quickDiffProvider",
+		"shareProvider",
+		"tokenInformation",
+		"treeViewMarkdownMessage"
+	],
+	"version": "0.102.0",
+	"publisher": "GitHub",
+	"engines": {
+		"vscode": "^1.96.0"
+	},
+	"categories": [
+		"Other",
+		"AI",
+		"Chat"
+	],
+	"extensionDependencies": [
+		"vscode.github-authentication"
+	],
+	"activationEvents": [
+		"onStartupFinished",
+		"onFileSystem:newIssue",
+		"onFileSystem:pr",
+		"onFileSystem:githubpr",
+		"onFileSystem:review"
+	],
+	"browser": "./dist/browser/extension",
+	"l10n": "./dist/browser/extension",
 	"main": "./dist/extension",
 	"browser": "./dist/browser/extension",
 	"scripts": {
@@ -965,15 +1017,13 @@
 					"type": "array"
 				},
 				"githubIssues.ignoreUserCompletionTrigger": {
-					"default": [
-						"python"
-					],
-					"description": "%githubIssues.ignoreUserCompletionTrigger.description%",
+					"type": "array",
 					"items": {
-						"description": "%githubIssues.ignoreUserCompletionTrigger.items%",
-						"type": "string"
+						"type": "string",
+						"description": "%githubIssues.ignoreUserCompletionTrigger.items%"
 					},
-					"type": "array"
+					"default": [],
+					"description": "%githubIssues.ignoreUserCompletionTrigger.description%"
 				},
 				"githubIssues.issueBranchTitle": {
 					"default": "${user}/issue${issueNumber}",
@@ -3046,7 +3096,7 @@
 				{
 					"command": "review.openFile",
 					"group": "inline@0",
-					"when": "openDiffOnClick && view == prStatus:github && viewItem =~ /filechange(?!:DELETE)/"
+					"when": "openDiffOnClick && view == prStatus:github && viewItem =~ /filechange(?!:DELETE)/ && config.git.showInlineOpenFileAction"
 				},
 				{
 					"command": "pr.openDiffView",
