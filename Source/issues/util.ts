@@ -564,16 +564,12 @@ async function getUpstream(
 
 	for (
 		let branchIndex = 0;
-
 		branchIndex < branchNames.length && !bestRef;
-
 		branchIndex++
 	) {
 		for (
 			let remoteIndex = 0;
-
 			remoteIndex < remoteNames.length && !bestRef;
-
 			remoteIndex++
 		) {
 			try {

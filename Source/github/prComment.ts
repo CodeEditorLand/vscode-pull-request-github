@@ -3,17 +3,22 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as path from 'path';
-import * as vscode from 'vscode';
-import { IComment } from '../common/comment';
-import { emojify, ensureEmojis } from '../common/emoji';
-import Logger from '../common/logger';
-import { DataUri } from '../common/uri';
-import { ALLOWED_USERS, JSDOC_NON_USERS, PHPDOC_NON_USERS } from '../common/user';
-import { stringReplaceAsync } from '../common/utils';
-import { GitHubRepository } from './githubRepository';
-import { IAccount } from './interface';
-import { updateCommentReactions } from './utils';
+import * as path from "path";
+import * as vscode from "vscode";
+
+import { IComment } from "../common/comment";
+import { emojify, ensureEmojis } from "../common/emoji";
+import Logger from "../common/logger";
+import { DataUri } from "../common/uri";
+import {
+	ALLOWED_USERS,
+	JSDOC_NON_USERS,
+	PHPDOC_NON_USERS,
+} from "../common/user";
+import { stringReplaceAsync } from "../common/utils";
+import { GitHubRepository } from "./githubRepository";
+import { IAccount } from "./interface";
+import { updateCommentReactions } from "./utils";
 
 export interface GHPRCommentThread extends vscode.CommentThread2 {
 	gitHubThreadId: string;
@@ -260,7 +265,12 @@ export class GHPRComment extends CommentBase {
 
 	private replacedBody: string;
 
-	constructor(private readonly context: vscode.ExtensionContext, comment: IComment, parent: GHPRCommentThread, private readonly githubRepositories?: GitHubRepository[]) {
+	constructor(
+		private readonly context: vscode.ExtensionContext,
+		comment: IComment,
+		parent: GHPRCommentThread,
+		private readonly githubRepositories?: GitHubRepository[],
+	) {
 		super(parent);
 
 		this.rawComment = comment;
@@ -534,9 +544,11 @@ ${lineContents}
 		return `${body}  \n\n_${this.rawComment.specialDisplayBodyPostfix}_`;
 	}
 
-	private async replaceBody(body: string | vscode.MarkdownString): Promise<string> {
+	private async replaceBody(
+		body: string | vscode.MarkdownString,
+	): Promise<string> {
 		const emojiPromise = ensureEmojis(this.context);
-		Logger.trace('Replace comment body', GHPRComment.ID);
+		Logger.trace("Replace comment body", GHPRComment.ID);
 		if (body instanceof vscode.MarkdownString) {
 			const permalinkReplaced = await this.replacePermalink(body.value);
 
@@ -591,7 +603,9 @@ ${lineContents}
 
 		const permalinkReplaced = await this.replacePermalink(linkified);
 		await emojiPromise;
-		return this.postpendSpecialAuthorComment(emojify(this.replaceImg(this.replaceSuggestion(permalinkReplaced))));
+		return this.postpendSpecialAuthorComment(
+			emojify(this.replaceImg(this.replaceSuggestion(permalinkReplaced))),
+		);
 	}
 
 	protected async doSetBody(

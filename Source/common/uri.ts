@@ -593,7 +593,6 @@ export function fromNotificationUri(
 	} catch (e) {}
 }
 
-
 interface IssueFileQuery {
 	origin: string;
 }
@@ -609,15 +608,21 @@ interface RepoUriQuery {
 
 export function toNewIssueUri(params: NewIssueUriParams) {
 	const query: IssueFileQuery = {
-		origin: params.originUri.toString()
+		origin: params.originUri.toString(),
 	};
 	if (params.repoUriParams) {
 		query.origin = toRepoUri(params.repoUriParams).toString();
 	}
-	return vscode.Uri.from({ scheme: Schemes.NewIssue, path: '/NewIssue.md', query: JSON.stringify(query) });
+	return vscode.Uri.from({
+		scheme: Schemes.NewIssue,
+		path: "/NewIssue.md",
+		query: JSON.stringify(query),
+	});
 }
 
-export function fromNewIssueUri(uri: vscode.Uri): NewIssueUriParams | undefined {
+export function fromNewIssueUri(
+	uri: vscode.Uri,
+): NewIssueUriParams | undefined {
 	if (uri.scheme !== Schemes.NewIssue) {
 		return;
 	}
@@ -627,9 +632,9 @@ export function fromNewIssueUri(uri: vscode.Uri): NewIssueUriParams | undefined 
 		const repoUri = fromRepoUri(originUri);
 		return {
 			originUri,
-			repoUriParams: repoUri
+			repoUriParams: repoUri,
 		};
-	} catch (e) { }
+	} catch (e) {}
 }
 
 export interface RepoUriParams {
@@ -640,42 +645,45 @@ export interface RepoUriParams {
 
 function toRepoUri(params: RepoUriParams) {
 	const repoQuery: RepoUriQuery = {
-		folderManagerRootUri: params.repoRootUri.toString()
+		folderManagerRootUri: params.repoRootUri.toString(),
 	};
-	return vscode.Uri.from({ scheme: Schemes.Repo, path: `${params.owner}/${params.repo}`, query: JSON.stringify(repoQuery) });
+	return vscode.Uri.from({
+		scheme: Schemes.Repo,
+		path: `${params.owner}/${params.repo}`,
+		query: JSON.stringify(repoQuery),
+	});
 }
 
 export function fromRepoUri(uri: vscode.Uri): RepoUriParams | undefined {
 	if (uri.scheme !== Schemes.Repo) {
 		return;
 	}
-	const [owner, repo] = uri.path.split('/');
+	const [owner, repo] = uri.path.split("/");
 	try {
 		const query = JSON.parse(uri.query);
 		const repoRootUri = vscode.Uri.parse(query.folderManagerRootUri);
 		return {
 			owner,
 			repo,
-			repoRootUri
+			repoRootUri,
 		};
-	} catch (e) { }
+	} catch (e) {}
 }
 
-
 export enum Schemes {
-	File = 'file',
-	Review = 'review', // File content for a checked out PR
-	Pr = 'pr', // File content from GitHub for non-checkout PR
-	PRNode = 'prnode',
-	FileChange = 'filechange', // Tree items, for decorations
-	GithubPr = 'githubpr', // File content from GitHub in create flow
-	GitPr = 'gitpr', // File content from git in create flow
-	VscodeVfs = 'vscode-vfs', // Remote Repository
-	Comment = 'comment', // Comments from the VS Code comment widget
-	MergeOutput = 'merge-output', // Merge output
-	Notification = 'notification', // Notification tree items in the notification view
-	NewIssue = 'newissue', // New issue file
-	Repo = 'repo' // New issue file for passing data
+	File = "file",
+	Review = "review", // File content for a checked out PR
+	Pr = "pr", // File content from GitHub for non-checkout PR
+	PRNode = "prnode",
+	FileChange = "filechange", // Tree items, for decorations
+	GithubPr = "githubpr", // File content from GitHub in create flow
+	GitPr = "gitpr", // File content from git in create flow
+	VscodeVfs = "vscode-vfs", // Remote Repository
+	Comment = "comment", // Comments from the VS Code comment widget
+	MergeOutput = "merge-output", // Merge output
+	Notification = "notification", // Notification tree items in the notification view
+	NewIssue = "newissue", // New issue file
+	Repo = "repo", // New issue file for passing data
 }
 
 export function resolvePath(from: vscode.Uri, to: string) {

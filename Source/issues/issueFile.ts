@@ -3,24 +3,28 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as vscode from 'vscode';
-import { Remote } from '../api/api';
-import { fromNewIssueUri, Schemes } from '../common/uri';
-import { FolderRepositoryManager, PullRequestDefaults } from '../github/folderRepositoryManager';
-import { IProject } from '../github/interface';
-import { RepositoriesManager } from '../github/repositoriesManager';
+import * as vscode from "vscode";
+
+import { Remote } from "../api/api";
+import { fromNewIssueUri, Schemes } from "../common/uri";
+import {
+	FolderRepositoryManager,
+	PullRequestDefaults,
+} from "../github/folderRepositoryManager";
+import { IProject } from "../github/interface";
+import { RepositoriesManager } from "../github/repositoriesManager";
 
 export interface NewIssueFileOptions {
 	title?: string;
 	body?: string;
-	assignees?: string[] | undefined,
-	remote?: Remote,
+	assignees?: string[] | undefined;
+	remote?: Remote;
 }
 
-export const ASSIGNEES = vscode.l10n.t('Assignees:');
-export const LABELS = vscode.l10n.t('Labels:');
-export const MILESTONE = vscode.l10n.t('Milestone:');
-export const PROJECTS = vscode.l10n.t('Projects:');
+export const ASSIGNEES = vscode.l10n.t("Assignees:");
+export const LABELS = vscode.l10n.t("Labels:");
+export const MILESTONE = vscode.l10n.t("Milestone:");
+export const PROJECTS = vscode.l10n.t("Projects:");
 
 export const NEW_ISSUE_SCHEME = "newIssue";
 
@@ -144,7 +148,8 @@ export class NewIssueFileCompletionProvider
 		) {
 			return [];
 		}
-		const originFile = fromNewIssueUri(document.uri)?.repoUriParams?.repoRootUri;
+		const originFile = fromNewIssueUri(document.uri)?.repoUriParams
+			?.repoRootUri;
 		if (!originFile) {
 			return [];
 		}
@@ -252,7 +257,21 @@ export class NewIssueCache {
 	}
 }
 
-export async function extractMetadataFromFile(repositoriesManager: RepositoriesManager): Promise<{ labels: string[] | undefined, milestone: number | undefined, projects: IProject[] | undefined, assignees: string[] | undefined, title: string, body: string | undefined, originUri: vscode.Uri, repoUri?: vscode.Uri } | undefined> {
+export async function extractMetadataFromFile(
+	repositoriesManager: RepositoriesManager,
+): Promise<
+	| {
+			labels: string[] | undefined;
+			milestone: number | undefined;
+			projects: IProject[] | undefined;
+			assignees: string[] | undefined;
+			title: string;
+			body: string | undefined;
+			originUri: vscode.Uri;
+			repoUri?: vscode.Uri;
+	  }
+	| undefined
+> {
 	let text: string;
 
 	if (
@@ -268,7 +287,9 @@ export async function extractMetadataFromFile(repositoriesManager: RepositoriesM
 	}
 	let folderManager: FolderRepositoryManager | undefined;
 	if (params.repoUriParams?.repoRootUri) {
-		folderManager = repositoriesManager.getManagerForFile(params.repoUriParams.repoRootUri);
+		folderManager = repositoriesManager.getManagerForFile(
+			params.repoUriParams.repoRootUri,
+		);
 	} else {
 		folderManager = repositoriesManager.getManagerForFile(originUri);
 	}
@@ -310,8 +331,8 @@ export async function extractMetadataFromFile(repositoriesManager: RepositoriesM
 	let assignees: string[] | undefined;
 
 	text = text.substring(indexOfEmptyLine + 2).trim();
-	if (text.startsWith('<!--')) {
-		const indexOfCommentEnd = text.indexOf('-->');
+	if (text.startsWith("<!--")) {
+		const indexOfCommentEnd = text.indexOf("-->");
 		if (indexOfCommentEnd < 0) {
 			return;
 		} else {

@@ -51,13 +51,15 @@ export class UserHoverProvider implements vscode.HoverProvider {
 				const username = match[1];
 				// JS and TS doc checks
 				const JS_TS_LANGUAGE_IDS = [
-					'javascript',
-					'javascriptreact',
-					'typescript',
-					'typescriptreact',
+					"javascript",
+					"javascriptreact",
+					"typescript",
+					"typescriptreact",
 				];
-				if (JS_TS_LANGUAGE_IDS.includes(document.languageId)
-					&& JSDOC_NON_USERS.indexOf(username) >= 0) {
+				if (
+					JS_TS_LANGUAGE_IDS.includes(document.languageId) &&
+					JSDOC_NON_USERS.indexOf(username) >= 0
+				) {
 					return;
 				}
 				// PHP doc checks

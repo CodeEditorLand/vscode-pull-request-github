@@ -5,9 +5,10 @@
 
 // Copied from https://github.com/microsoft/vscode/blob/af33df91a45498435bc47f16444d91db4582ce48/extensions/git/src/emoji.ts
 
-'use strict';
-import { TextDecoder } from 'util';
-import { ExtensionContext, Uri, workspace } from 'vscode';
+"use strict";
+
+import { TextDecoder } from "util";
+import { ExtensionContext, Uri, workspace } from "vscode";
 
 const emojiRegex = /:([-+_a-z0-9]+):/g;
 
@@ -24,8 +25,14 @@ export async function ensureEmojis(context: ExtensionContext) {
 }
 
 async function loadEmojiMap(context: ExtensionContext) {
-	const uri = (Uri as any).joinPath(context.extensionUri, 'resources', 'emojis.json');
-	emojiMap = JSON.parse(new TextDecoder('utf8').decode(await workspace.fs.readFile(uri)));
+	const uri = (Uri as any).joinPath(
+		context.extensionUri,
+		"resources",
+		"emojis.json",
+	);
+	emojiMap = JSON.parse(
+		new TextDecoder("utf8").decode(await workspace.fs.readFile(uri)),
+	);
 }
 
 export function emojify(message: string) {
