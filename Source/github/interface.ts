@@ -441,9 +441,9 @@ export interface PullRequestCheckStatus {
 	description: string | null;
 
 	targetUrl: string | null;
-
-	context: string;
-
+	context: string; // Job name
+	workflowName: string | undefined;
+	event: string | undefined;
 	isRequired: boolean;
 }
 

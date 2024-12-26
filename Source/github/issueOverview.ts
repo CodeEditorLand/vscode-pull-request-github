@@ -107,12 +107,10 @@ export class IssueOverviewPanel<
 				enableScripts: true,
 				retainContextWhenHidden: true,
 
-				// And restrict the webview to only loading content from our extension's `dist` directory.
-				localResourceRoots: [
-					vscode.Uri.joinPath(_extensionUri, "dist"),
-				],
-			}),
-		);
+			// And restrict the webview to only loading content from our extension's `dist` directory.
+			localResourceRoots: [vscode.Uri.joinPath(_extensionUri, 'dist')],
+			enableFindWidget: true
+		}));
 
 		this._webview = this._panel.webview;
 

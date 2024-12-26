@@ -1550,9 +1550,8 @@ export class GitHubRepository extends Disposable {
 
 	async getPullRequest(id: number): Promise<PullRequestModel | undefined> {
 		try {
-			Logger.debug(`Fetch pull request ${id} - enter`, this.id);
-
 			const { query, remote, schema } = await this.ensure();
+			Logger.debug(`Fetch pull request ${remote.owner}/${remote.repositoryName} ${id} - enter`, this.id);
 
 			const { data } = await query<PullRequestResponse>(
 				{
@@ -2238,10 +2237,10 @@ export class GitHubRepository extends Disposable {
 						number: number,
 					},
 				},
-				true,
-			); // There's an issue with the GetChecks that can result in SAML errors.
+			});
 		} catch (e) {
-			if (isSamlError(e.message)) {
+			// There's an issue with the GetChecks that can result in SAML errors.
+			if (isSamlError(e)) {
 				// There seems to be an issue with fetching status checks if you haven't SAML'd with every org you have
 				// The issue is specifically with the CheckSuite property. Make the query again, but without that property.
 				if (!captureUseFallbackChecks) {
@@ -2280,51 +2279,45 @@ export class GitHubRepository extends Disposable {
 					statuses: [],
 				}
 			: {
-					state: this.mapStateAsCheckState(statusCheckRollup.state),
-					statuses: statusCheckRollup.contexts.nodes.map(
-						(context) => {
-							if (isCheckRun(context)) {
-								return {
-									id: context.id,
-									url: context.checkSuite?.app?.url,
-									avatarUrl:
-										context.checkSuite?.app?.logoUrl &&
-										getAvatarWithEnterpriseFallback(
-											context.checkSuite.app.logoUrl,
-											undefined,
-											this.remote.isEnterprise,
-										),
-									state: this.mapStateAsCheckState(
-										context.conclusion,
-									),
-									description: context.title,
-									context: context.name,
-									targetUrl: context.detailsUrl,
-									isRequired: context.isRequired,
-								};
-							} else {
-								return {
-									id: context.id,
-									url: context.targetUrl ?? undefined,
-									avatarUrl: context.avatarUrl
-										? getAvatarWithEnterpriseFallback(
-												context.avatarUrl,
-												undefined,
-												this.remote.isEnterprise,
-											)
-										: undefined,
-									state: this.mapStateAsCheckState(
-										context.state,
-									),
-									description: context.description,
-									context: context.context,
-									targetUrl: context.targetUrl,
-									isRequired: context.isRequired,
-								};
-							}
-						},
-					),
-				};
+				state: this.mapStateAsCheckState(statusCheckRollup.state),
+				statuses: statusCheckRollup.contexts.nodes.map(context => {
+					if (isCheckRun(context)) {
+						return {
+							id: context.id,
+							url: context.checkSuite?.app?.url,
+							avatarUrl:
+								context.checkSuite?.app?.logoUrl &&
+								getAvatarWithEnterpriseFallback(
+									context.checkSuite.app.logoUrl,
+									undefined,
+									this.remote.isEnterprise,
+								),
+							state: this.mapStateAsCheckState(context.conclusion),
+							description: context.title,
+							context: context.name,
+							workflowName: context.checkSuite?.workflowRun?.workflow.name,
+							event: context.checkSuite?.workflowRun?.event,
+							targetUrl: context.detailsUrl,
+							isRequired: context.isRequired,
+						};
+					} else {
+						return {
+							id: context.id,
+							url: context.targetUrl ?? undefined,
+							avatarUrl: context.avatarUrl
+								? getAvatarWithEnterpriseFallback(context.avatarUrl, undefined, this.remote.isEnterprise)
+								: undefined,
+							state: this.mapStateAsCheckState(context.state),
+							description: context.description,
+							context: context.context,
+							workflowName: undefined,
+							event: undefined,
+							targetUrl: context.targetUrl,
+							isRequired: context.isRequired,
+						};
+					}
+				}),
+			};
 
 		let reviewRequirement: PullRequestReviewRequirement | null = null;
 
@@ -2350,6 +2343,8 @@ export class GitHubRepository extends Disposable {
 							"Waiting for status to be reported",
 						),
 						context: context,
+						workflowName: undefined,
+						event: undefined,
 						targetUrl: prUrl,
 						isRequired: true,
 					});

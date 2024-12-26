@@ -1172,6 +1172,12 @@ export interface CheckRun {
 
 			url: string;
 		} | null;
+		workflowRun?: {
+			event: string;
+			workflow: {
+				name: string;
+			};
+		};
 	};
 
 	isRequired: boolean;
