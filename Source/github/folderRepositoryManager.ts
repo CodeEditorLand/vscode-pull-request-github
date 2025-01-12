@@ -41,8 +41,8 @@ import { ConflictModel } from './conflictGuide';
 import { ConflictResolutionCoordinator } from './conflictResolutionCoordinator';
 import { Conflict, ConflictResolutionModel } from './conflictResolutionModel';
 import { CredentialStore } from './credentials';
-import { GitHubRepository, GraphQLError, GraphQLErrorType, ItemsData, PullRequestData, TeamReviewerRefreshKind, ViewerPermission } from './githubRepository';
-import { MergeMethod as GraphQLMergeMethod, MergePullRequestInput, MergePullRequestResponse, PullRequestState, UserResponse } from './graphql';
+import { GitHubRepository, GraphQLError, GraphQLErrorType, IMetadata, ItemsData, PULL_REQUEST_PAGE_SIZE, PullRequestData, TeamReviewerRefreshKind, ViewerPermission } from './githubRepository';
+import { MergeMethod as GraphQLMergeMethod, MergePullRequestInput, MergePullRequestResponse, PullRequestResponse, PullRequestState, UserResponse } from './graphql';
 import { IAccount, ILabel, IMilestone, IProject, IPullRequestsPagingOptions, Issue, ITeam, MergeMethod, PRType, PullRequestMergeability, RepoAccessAndMergeMethods, User } from './interface';
 import { IssueModel } from './issueModel';
 import { PullRequestGitHelper, PullRequestMetadata } from './pullRequestGitHelper';
@@ -51,7 +51,9 @@ import {
 	convertRESTIssueToRawPullRequest,
 	convertRESTPullRequestToRawPullRequest,
 	getOverrideBranch,
+	getPRFetchQuery,
 	loginComparator,
+	parseGraphQLPullRequest,
 	parseGraphQLTimelineEvents,
 	parseGraphQLUser,
 	teamComparator,
@@ -1085,7 +1087,7 @@ export class FolderRepositoryManager extends Disposable {
 						if (type === PRType.All) {
 							return githubRepository.getAllPullRequests(pageNumber);
 						} else {
-							return githubRepository.getPullRequestsForCategory(resolvedQuery || '', pageNumber);
+							return this.getPullRequestsForCategory(githubRepository, resolvedQuery || '', pageNumber);
 						}
 					}
 					case PagedDataType.IssueSearch: {
@@ -1144,6 +1146,85 @@ export class FolderRepositoryManager extends Disposable {
 			hasUnsearchedRepositories: false,
 			totalCount: itemData.totalCount
 		};
+	}
+
+	async getPullRequestsForCategory(githubRepository: GitHubRepository, categoryQuery: string, page?: number): Promise<PullRequestData | undefined> {
+		let repo: IMetadata | undefined;
+		try {
+			Logger.debug(`Fetch pull request category ${categoryQuery} - enter`, this.id);
+			const { octokit, query, schema } = await githubRepository.ensure();
+
+			const user = await githubRepository.getAuthenticatedUser();
+			// Search api will not try to resolve repo that redirects, so get full name first
+			repo = await githubRepository.getMetadata();
+			const { data, headers } = await octokit.call(octokit.api.search.issuesAndPullRequests, {
+				q: getPRFetchQuery(user, categoryQuery),
+				per_page: PULL_REQUEST_PAGE_SIZE,
+				page: page || 1,
+			});
+
+			const promises: Promise<{ data: PullRequestResponse, repo: GitHubRepository } | undefined>[] = data.items.map(async (item) => {
+				const protocol = new Protocol(item.repository_url);
+
+				const prRepo = await this.createGitHubRepositoryFromOwnerName(protocol.owner, protocol.repositoryName);
+				const { data } = await query<PullRequestResponse>({
+					query: schema.PullRequest,
+					variables: {
+						owner: prRepo.remote.owner,
+						name: prRepo.remote.repositoryName,
+						number: item.number
+					}
+				});
+				return { data, repo: prRepo };
+			});
+
+			const hasMorePages = !!headers.link && headers.link.indexOf('rel="next"') > -1;
+			const pullRequestResponses = await Promise.all(promises);
+
+			const pullRequests = pullRequestResponses
+				.map(response => {
+					if (!response?.data.repository) {
+						Logger.appendLine('Pull request doesn\'t appear to exist.', this.id);
+						return null;
+					}
+
+					// Pull requests fetched with a query can be from any repo.
+					// We need to use the correct GitHubRepository for this PR.
+					return response.repo.createOrUpdatePullRequestModel(
+						parseGraphQLPullRequest(response.data.repository.pullRequest, response.repo),
+					);
+				})
+				.filter(item => item !== null) as PullRequestModel[];
+
+			Logger.debug(`Fetch pull request category ${categoryQuery} - done`, this.id);
+
+			return {
+				items: pullRequests,
+				hasMorePages,
+				totalCount: data.total_count
+			};
+		} catch (e) {
+			Logger.error(`Fetching pull request with query failed: ${e}`, this.id);
+			if (e.code === 404) {
+				// not found
+				vscode.window.showWarningMessage(
+					`Fetching pull requests for remote ${githubRepository.remote.remoteName} with query failed, please check if the repo ${repo?.full_name} is valid.`,
+				);
+			} else {
+				throw e;
+			}
+		}
+		return undefined;
+	}
+
+	isPullRequestAssociatedWithOpenRepository(pullRequest: PullRequestModel): boolean {
+		const remote = pullRequest.githubRepository.remote;
+		const repository = this.repository.state.remotes.find(repo => repo.name === remote.remoteName);
+		if (repository) {
+			return true;
+		}
+
+		return false;
 	}
 
 	async getPullRequests(
@@ -1695,16 +1776,17 @@ export class FolderRepositoryManager extends Disposable {
 				branchInfos.set(branchName, value!);
 			}
 		});
+		Logger.debug(`Found ${branchInfos.size} possible branches to delete`, this.id);
+		Logger.trace(`Branches to delete: ${JSON.stringify(Array.from(branchInfos.keys()))}`, this.id);
 
 		const actions: (vscode.QuickPickItem & { metadata: PullRequestMetadata; legacy?: boolean })[] = [];
 		branchInfos.forEach((value, key) => {
 			if (value.metadata) {
 				const activePRUrl = this.activePullRequest && this.activePullRequest.base.repositoryCloneUrl;
 				const matchesActiveBranch = activePRUrl
-					? activePRUrl.owner === value.metadata.owner &&
-					activePRUrl.repositoryName === value.metadata.repositoryName &&
-					this.activePullRequest &&
-					this.activePullRequest.number === value.metadata.prNumber
+					? (activePRUrl.owner === value.metadata.owner &&
+						activePRUrl.repositoryName === value.metadata.repositoryName &&
+						this.activePullRequest?.number === value.metadata.prNumber)
 					: false;
 
 				if (!matchesActiveBranch) {
@@ -1715,6 +1797,9 @@ export class FolderRepositoryManager extends Disposable {
 						picked: false,
 						metadata: value.metadata!,
 					});
+				} else {
+					Logger.debug(`Skipping ${value.metadata.prNumber}, active PR is #${this.activePullRequest?.number}`, this.id);
+					Logger.trace(`Skipping active branch ${key}`, this.id);
 				}
 			}
 		});
@@ -1876,24 +1961,27 @@ export class FolderRepositoryManager extends Disposable {
 			progress.report({ message: vscode.l10n.t('Deleted {0} of {1} branches', deletedBranches, totalBranches) });
 		};
 
-		const hideConfig = async (branch: string) => {
+		const deleteConfig = async (branch: string) => {
+			await PullRequestGitHelper.associateBaseBranchWithBranch(this.repository, branch, undefined);
 			await PullRequestGitHelper.associateBranchWithPullRequest(this.repository, undefined, branch);
 		};
+
+		// delete configs first since that can't be parallelized
+		for (const pick of picks) {
+			await deleteConfig(pick.label);
+		}
 
 		// batch deleting the branches to avoid consuming all available resources
 		await batchPromiseAll(picks, 5, async (pick) => {
 			try {
 				await this.repository.deleteBranch(pick.label, true);
 				if ((await PullRequestGitHelper.getMatchingPullRequestMetadataForBranch(this.repository, pick.label))) {
-					await hideConfig(pick.label);
+					console.log(`Branch ${pick.label} was not deleted`);
 				}
 				reportProgress();
 			} catch (e) {
 				if (typeof e.stderr === 'string' && e.stderr.includes('not found')) {
-					// TODO: The git extension API doesn't support removing configs
-					// If that support is added we should remove the config as it is no longer useful.
 					nonExistantBranches.add(pick.label);
-					await hideConfig(pick.label);
 					reportProgress();
 				} else if (typeof e.stderr === 'string' && e.stderr.includes('unable to access') && needsRetry) {
 					// There is contention for the related git files

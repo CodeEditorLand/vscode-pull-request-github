@@ -1908,14 +1908,9 @@ export function insertNewCommitsSinceReview(
 	}
 }
 
-export function getPRFetchQuery(
-	repo: string,
-	user: string,
-	query: string,
-): string {
+export function getPRFetchQuery(user: string, query: string): string {
 	const filter = query.replace(/\$\{user\}/g, user);
-
-	return `is:pull-request ${filter} type:pr repo:${repo}`;
+	return `is:pull-request ${filter} type:pr`;
 }
 
 export function isInCodespaces(): boolean {
@@ -1999,76 +1994,63 @@ export function sanitizeIssueTitle(title: string): string {
 		.replace(/\s+/g, "-");
 }
 
-const VARIABLE_PATTERN = /\$\{(.*?)\}/g;
+const SINCE_VALUE_PATTERN = /-([0-9]+)([d])/;
+function computeSinceValue(sinceValue: string | undefined): string {
+	const match = sinceValue ? SINCE_VALUE_PATTERN.exec(sinceValue) : undefined;
+	const date = new Date();
+	if (match && match.length === 3 && match[2] === 'd') {
+		const dateOffset = parseInt(match[1]) * (24 * 60 * 60 * 1000);
+		date.setTime(date.getTime() - dateOffset);
+	}
+	const month = `${date.getMonth() + 1}`;
+	const day = `${date.getDate()}`;
+	return `${date.getFullYear()}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+}
 
+const VARIABLE_PATTERN = /\$\{([^-]*?)(-.*?)?\}/g;
 export async function variableSubstitution(
 	value: string,
 	issueModel?: IssueModel,
 	defaults?: PullRequestDefaults,
 	user?: string,
 ): Promise<string> {
-	return value.replace(
-		VARIABLE_PATTERN,
-		(match: string, variable: string) => {
-			let result: string;
-
-			switch (variable) {
-				case "user":
-					result = user ? user : match;
-
-					break;
-
-				case "issueNumber":
-					result = issueModel ? `${issueModel.number}` : match;
-
-					break;
-
-				case "issueNumberLabel":
-					result = issueModel
-						? `${getIssueNumberLabel(issueModel, defaults)}`
-						: match;
-
-					break;
-
-				case "issueTitle":
-					result = issueModel ? issueModel.title : match;
-
-					break;
-
-				case "repository":
-					result = defaults ? defaults.repo : match;
-
-					break;
-
-				case "owner":
-					result = defaults ? defaults.owner : match;
-
-					break;
-
-				case "sanitizedIssueTitle":
-					result = issueModel
-						? sanitizeIssueTitle(issueModel.title)
-						: match; // check what characters are permitted
-					break;
-
-				case "sanitizedLowercaseIssueTitle":
-					result = issueModel
-						? sanitizeIssueTitle(issueModel.title).toLowerCase()
-						: match;
-
-					break;
-
-				default:
-					result = match;
-
-					break;
-			}
-
-			Logger.debug(`${match} -> ${result}`, "VariableSubstitution");
-
-			return result;
-		},
-	);
+	return value.replace(VARIABLE_PATTERN, (match: string, variable: string, extra: string) => {
+		let result: string;
+		switch (variable) {
+			case 'user':
+				result = user ? user : match;
+				break;
+			case 'issueNumber':
+				result = issueModel ? `${issueModel.number}` : match;
+				break;
+			case 'issueNumberLabel':
+				result = issueModel ? `${getIssueNumberLabel(issueModel, defaults)}` : match;
+				break;
+			case 'issueTitle':
+				result = issueModel ? issueModel.title : match;
+				break;
+			case 'repository':
+				result = defaults ? defaults.repo : match;
+				break;
+			case 'owner':
+				result = defaults ? defaults.owner : match;
+				break;
+			case 'sanitizedIssueTitle':
+				result = issueModel ? sanitizeIssueTitle(issueModel.title) : match; // check what characters are permitted
+				break;
+			case 'sanitizedLowercaseIssueTitle':
+				result = issueModel ? sanitizeIssueTitle(issueModel.title).toLowerCase() : match;
+				break;
+			case 'today':
+				result = computeSinceValue(extra);
+				break;
+			default:
+				result = match;
+				break;
+		}
+		Logger.debug(`${match} -> ${result}`, 'VariableSubstitution');
+		return result;
+	});
 }
 
 export function getIssueNumberLabel(

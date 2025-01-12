@@ -33,9 +33,9 @@ export class InMemFileChange implements SimpleFileChange {
 		public readonly fileName: string,
 		public readonly previousFileName: string | undefined,
 		public readonly patch: string,
-		public readonly diffHunks: DiffHunk[],
+		public readonly diffHunks: DiffHunk[] | undefined,
 		public readonly blobUrl: string,
-	) {}
+	) { }
 }
 
 export class SlimFileChange implements SimpleFileChange {
@@ -45,5 +45,5 @@ export class SlimFileChange implements SimpleFileChange {
 		public readonly status: GitChangeType,
 		public readonly fileName: string,
 		public readonly previousFileName: string | undefined,
-	) {}
+	) { }
 }

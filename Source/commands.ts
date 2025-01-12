@@ -10,6 +10,7 @@ import { Repository } from './api/api';
 import { GitErrorCodes } from './api/api1';
 import { CommentReply, findActiveHandler, resolveCommentHandler } from './commentHandlerResolver';
 import { IComment } from './common/comment';
+import { commands } from './common/executeCommands';
 import Logger from './common/logger';
 import { FILE_LIST_LAYOUT, PR_SETTINGS_NAMESPACE } from './common/settingKeys';
 import { ITelemetry } from './common/telemetry';
@@ -1485,6 +1486,15 @@ ${contents}
 	context.subscriptions.push(
 		vscode.commands.registerCommand('pr.addFileComment', async () => {
 			return vscode.commands.executeCommand('workbench.action.addComment', { fileComment: true });
+		}));
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('pr.toggleEditorCommentingOn', async () => {
+			commands.executeCommand('workbench.action.toggleCommenting');
+		}));
+	context.subscriptions.push(
+		vscode.commands.registerCommand('pr.toggleEditorCommentingOff', async () => {
+			commands.executeCommand('workbench.action.toggleCommenting');
 		}));
 
 	context.subscriptions.push(
