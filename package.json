@@ -3641,7 +3641,7 @@
 		"@types/glob": "8.1.0",
 		"@types/lru-cache": "7.10.10",
 		"@types/marked": "6.0.0",
-		"@types/node": "22.10.9",
+		"@types/node": "22.10.10",
 		"@types/sinon": "17.0.3",
 		"@types/temp": "0.9.4",
 		"assert": "2.1.0",
