@@ -404,20 +404,13 @@ export namespace DataUri {
 		) {
 			// The cache is getting big, we should clean it up.
 			const toDelete = cacheLogOrder.splice(0, 50);
-
-			await Promise.all(
-				toDelete.map(async (id) => {
-					try {
-						await vscode.workspace.fs.delete(
-							vscode.Uri.joinPath(cacheLocation(context), id),
-						);
-					} catch (e) {
-						Logger.error(
-							`Failed to delete avatar from cache: ${e}`,
-						);
-					}
-				}),
-			);
+			await Promise.all(toDelete.map(async (id) => {
+				try {
+					await vscode.workspace.fs.delete(vscode.Uri.joinPath(cacheLocation(context), id));
+				} catch (e) {
+					Logger.error(`Failed to delete avatar from cache: ${e}`, 'avatarCirclesAsImageDataUris');
+				}
+			}));
 		}
 
 		await vscode.workspace.fs.writeFile(
