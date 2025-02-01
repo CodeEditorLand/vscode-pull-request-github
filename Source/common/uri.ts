@@ -664,19 +664,20 @@ export function fromRepoUri(uri: vscode.Uri): RepoUriParams | undefined {
 }
 
 export enum Schemes {
-	File = "file",
-	Review = "review", // File content for a checked out PR
-	Pr = "pr", // File content from GitHub for non-checkout PR
-	PRNode = "prnode",
-	FileChange = "filechange", // Tree items, for decorations
-	GithubPr = "githubpr", // File content from GitHub in create flow
-	GitPr = "gitpr", // File content from git in create flow
-	VscodeVfs = "vscode-vfs", // Remote Repository
-	Comment = "comment", // Comments from the VS Code comment widget
-	MergeOutput = "merge-output", // Merge output
-	Notification = "notification", // Notification tree items in the notification view
-	NewIssue = "newissue", // New issue file
-	Repo = "repo", // New issue file for passing data
+	File = 'file',
+	Review = 'review', // File content for a checked out PR
+	Pr = 'pr', // File content from GitHub for non-checkout PR
+	PRNode = 'prnode',
+	FileChange = 'filechange', // Tree items, for decorations
+	GithubPr = 'githubpr', // File content from GitHub in create flow
+	GitPr = 'gitpr', // File content from git in create flow
+	VscodeVfs = 'vscode-vfs', // Remote Repository
+	Comment = 'comment', // Comments from the VS Code comment widget
+	MergeOutput = 'merge-output', // Merge output
+	Notification = 'notification', // Notification tree items in the notification view
+	NewIssue = 'newissue', // New issue file
+	Repo = 'repo', // New issue file for passing data
+	Git = 'git', // File content from the git extension
 }
 
 export function resolvePath(from: vscode.Uri, to: string) {
