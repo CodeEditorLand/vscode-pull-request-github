@@ -25,6 +25,7 @@
 		"update-dts": "cd \"src/@types\" && npx vscode-dts main && npx vscode-dts dev",
 		"watch:web": "webpack --watch --mode development --config-name extension:webworker --config-name webviews"
 	},
+	"l10n": "./dist/browser/extension",
 	"contributes": {
 		"chatParticipants": [
 			{
@@ -3640,8 +3641,8 @@
 		"events": "3.3.0",
 		"fast-deep-equal": "3.1.3",
 		"lru-cache": "11.0.2",
-		"marked": "15.0.6",
-		"ssh-config": "5.0.2",
+		"marked": "15.0.7",
+		"ssh-config": "5.0.3",
 		"stream-http": "3.2.0",
 		"tunnel": "0.0.6",
 		"url-search-params-polyfill": "8.2.5",
@@ -3653,7 +3654,7 @@
 		"@types/glob": "8.1.0",
 		"@types/lru-cache": "7.10.10",
 		"@types/marked": "6.0.0",
-		"@types/node": "22.13.0",
+		"@types/node": "22.13.1",
 		"@types/sinon": "17.0.3",
 		"@types/temp": "0.9.4",
 		"assert": "2.1.0",
@@ -3720,6 +3721,5 @@
 		"shareProvider",
 		"tokenInformation",
 		"treeViewMarkdownMessage"
-	],
-	"l10n": "./dist/browser/extension"
+	]
 }
