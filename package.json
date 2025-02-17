@@ -3630,7 +3630,7 @@
 	],
 	"dependencies": {
 		"@codeeditorland/prompt-tsx": "0.0.1",
-		"@octokit/rest": "21.1.0",
+		"@octokit/rest": "21.1.1",
 		"@octokit/types": "13.8.0",
 		"apollo-boost": "0.4.9",
 		"apollo-link-context": "1.0.20",
@@ -3654,7 +3654,7 @@
 		"@types/glob": "8.1.0",
 		"@types/lru-cache": "7.10.10",
 		"@types/marked": "6.0.0",
-		"@types/node": "22.13.1",
+		"@types/node": "22.13.4",
 		"@types/sinon": "17.0.3",
 		"@types/temp": "0.9.4",
 		"assert": "2.1.0",
